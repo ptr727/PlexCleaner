@@ -449,7 +449,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A0["RemuxByExtension()"] --> A1{"ReMux option on and the extension is in ReMuxExtensions?"}
+  A0["RemuxByExtension()"] --> A1{"ReMux option on or the remux command, and the extension is in ReMuxExtensions?"}
   A1 -->|no| AOK(["Continue"])
   A1 -->|yes| A2{"IsRenameCollision(): another file holds the .mkv name?"}
   A2 -->|yes| AF(["Fail, the file is not deleted"])
@@ -479,7 +479,7 @@ flowchart TD
   C3 --> COK
 ```
 
-`RemoveCoverArt()` removes the cover art each tool reports, and it does not repeat a removal an earlier run could not complete.
+`RemoveCoverArt()` removes the cover art each tool reports, and it does not repeat a removal that could not complete.
 
 ```mermaid
 flowchart TD
@@ -507,7 +507,7 @@ flowchart TD
   D13 --> DOK
 ```
 
-A file that keeps cover art after a removal carries `RemovedCoverArt`. A later run, and the cleanup re-run of the same run, then skip the removal while only FfProbe or MediaInfo reports cover art.
+A file that keeps cover art after a removal carries `RemovedCoverArt`. The cleanup re-run of the same run then skips the removal while only FfProbe or MediaInfo reports cover art. With `UseSidecarFiles` on, a later run skips it too.
 
 `RemoveTags()` clears the attachments and the tags in place.
 
@@ -580,18 +580,18 @@ flowchart TD
   S5 -->|yes| AOK
 ```
 
-`ReportUnrepairedMetadataErrors()` warns about errors left because `ReMux` or `SetTrackFlags` is off, naming the errors and the option, and the file passes. It logs IETF tags left unset because `SetIetfLanguageTags` is off at Information, since that opt-out is deliberate. A run that finds `SetFlags` with the flags still missing does not set them again. So a file whose flags do not stick is edited once.
+`ReportUnrepairedMetadataErrors()` warns about errors left because `ReMux` or `SetTrackFlags` is off, naming the errors and the option, and the file passes. It logs IETF tags left unset because `SetIetfLanguageTags` is off at Information, since that opt-out is deliberate. A run that finds `SetFlags` with the flags still missing does not set them again. With `UseSidecarFiles` on, a file whose flags do not stick is edited once.
 
 ### Closed Captions
 
 ```mermaid
 flowchart TD
-  A0["RemoveClosedCaptions()"] --> A1{"RemoveClosedCaptions option on?"}
+  A0["RemoveClosedCaptions()"] --> A1{"RemoveClosedCaptions option on, or the removeclosedcaptions command?"}
   A1 -->|no| AOK(["Continue"])
   A1 -->|yes| F0["FindClosedCaptionTracks()"]
   F0 --> F1{"Any tool flags captions on a video track?"}
   F1 -->|yes| FOUND
-  F1 -->|no| F2{"State has ScannedCaptions, Verified, VerifyFailed or ClearedCaptions?"}
+  F1 -->|no| F2{"Process command, and the state has ScannedCaptions, Verified, VerifyFailed or ClearedCaptions?"}
   F2 -->|yes| AOK
   F2 -->|no| F3["FfProbe caption scan"]
   F3 -->|scan fails| FAIL(["Fail"])
@@ -684,7 +684,7 @@ flowchart TD
   RM -->|yes| RX["Convert.ReMuxToMkv() with the kept tracks, sets ReMuxed, Refresh()"]
 ```
 
-`RemoveDuplicateTracks()` keeps one track of each type for each language.
+`RemoveDuplicateTracks()` removes the duplicate tracks within each language.
 
 ```mermaid
 flowchart TD
@@ -819,7 +819,7 @@ A repair failure that records state sets `RepairFailed` and `VerifyFailed` toget
 
 ### State Flags by Step
 
-The table lists the `StatesType` flags each step sets, and the flags it clears. A rename adds `FileReNamed` and keeps the flags set so far. When a sidecar already exists under the new name, its stored flags join them.
+The table lists the `StatesType` flags each step sets, and the flags it clears. A rename adds `FileReNamed` and keeps the flags set so far. When a sidecar already exists under the new name, its stored flags join them, or only `FileModified` when the media differs from it.
 
 | Step | Sets | Clears |
 | --- | --- | --- |
