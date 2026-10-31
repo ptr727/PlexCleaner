@@ -23,6 +23,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         .ProcessOptions
         .ReEncodeAudioFormats;
     private readonly bool _autoRepair = Program.Config.VerifyOptions.AutoRepair;
+    private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
     private readonly int _maximumBitrate = Program.Config.VerifyOptions.MaximumBitrate;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
@@ -36,6 +37,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         Program.Config.ProcessOptions.ReEncode = true;
         Program.Config.ProcessOptions.DeInterlace = true;
         Program.Config.VerifyOptions.AutoRepair = true;
+        Program.Config.VerifyOptions.DeleteInvalidFiles = true;
         Program.Config.VerifyOptions.MaximumBitrate = MaximumBitrate;
 
         // An empty tools folder makes every tool without a fake fail to launch
@@ -59,6 +61,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         Program.Config.ProcessOptions.DeInterlace = _deInterlace;
         Program.Config.ProcessOptions.ReEncodeAudioFormats = _reEncodeAudioFormats;
         Program.Config.VerifyOptions.AutoRepair = _autoRepair;
+        Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
         Program.Config.VerifyOptions.MaximumBitrate = _maximumBitrate;
         Directory.Delete(_directory, true);
     }
@@ -82,7 +85,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         return nextRun;
     }
 
-    private static string Packets(long streamIndex, bool exceeded)
+    private string CatPackets(string name, long streamIndex, bool exceeded)
     {
         JsonArray packets = [];
         if (exceeded)
@@ -99,14 +102,14 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
                 }
             );
         }
-        return new JsonObject { ["packets"] = packets }.ToJsonString();
+        string fileName = Path.Combine(_directory, name + ".json");
+        File.WriteAllText(fileName, new JsonObject { ["packets"] = packets }.ToJsonString());
+        return $"cat \"{fileName}\"";
     }
 
-    // The first packet analysis reads the first output, every later one reads the second
+    // The first packet analysis runs the first command, every later one runs the second
     private void WriteFakeFfProbe(string first, string later)
     {
-        File.WriteAllText(Path.Combine(_directory, "packets1.json"), first);
-        File.WriteAllText(Path.Combine(_directory, "packets2.json"), later);
         string props = Path.Combine(_directory, "FfProbeInfoData.json");
         FakeTools.WriteScript(
             Tools.FfProbe.GetToolPath(),
@@ -115,7 +118,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
             *-show_packets*)
                 step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
                 echo $step > "$0.step"
-                [ $step -eq 1 ] && cat "{{_directory}}/packets1.json" || cat "{{_directory}}/packets2.json" ;;
+                if [ $step -eq 1 ]; then {{first}}; else {{later}}; fi ;;
             *) cat "{{props}}" ;;
             esac
 
@@ -206,7 +209,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         ProcessFile processFile = CreateProcessFile(state);
-        string packets = Packets(processFile.FfProbeProps.Video[0].Id, exceeded);
+        string packets = CatPackets("packets", processFile.FfProbeProps.Video[0].Id, exceeded);
         WriteFakeFfProbe(packets, packets);
         FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), "exit 0\n");
 
@@ -262,14 +265,22 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         _ = modified.Should().BeFalse();
     }
 
-    [Fact]
-    public void VerifyAndRepair_ReEncodeRepair_MeasuresBitrateAgain()
+    [Theory]
+    [InlineData(false, SidecarFile.StatesType.Verified | SidecarFile.StatesType.Repaired)]
+    [InlineData(true, SidecarFile.StatesType.Repaired | SidecarFile.StatesType.BitrateExceeded)]
+    public void VerifyAndRepair_ReEncodeRepair_MeasuresBitrateAgain(
+        bool reMeasureToolError,
+        SidecarFile.StatesType expected
+    )
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None);
         WriteSampleToolData();
-        WriteFakeFfProbe(Packets(processFile.FfProbeProps.Video[0].Id, true), Packets(0, false));
+        WriteFakeFfProbe(
+            CatPackets("first", processFile.FfProbeProps.Video[0].Id, true),
+            reMeasureToolError ? "kill -9 $$" : CatPackets("later", 0, false)
+        );
 
         // Verify fails, the remux tier's verify fails, then the re-encode tier verifies clean
         string ffMpeg = Tools.FfMpeg.GetToolPath();
@@ -292,11 +303,42 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
 
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("4");
         _ = File.ReadAllText(Tools.FfProbe.GetToolPath() + ".step").Trim().Should().Be("2");
-        _ = ToolErrorScope.Count.Should().Be(0);
-        const SidecarFile.StatesType expected =
-            SidecarFile.StatesType.Verified | SidecarFile.StatesType.Repaired;
+        _ = ToolErrorScope.Count.Should().Be(reMeasureToolError ? 1 : 0);
         _ = processFile.State.Should().Be(expected);
         _ = NextRun(processFile).State.Should().Be(expected);
+        _ = modified.Should().BeTrue();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_RemuxRepairAfterBitrateToolError_LeavesVerifiedUnset()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None);
+        WriteSampleToolData();
+        WriteFakeFfProbe("kill -9 $$", "kill -9 $$");
+
+        // Verify fails, then the remux tier verifies clean
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        FakeTools.WriteScript(
+            ffMpeg,
+            """
+            step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
+            echo $step > "$0.step"
+            [ $step -eq 1 ] && exit 1
+            exit 0
+
+            """
+        );
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
+
+        _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("2");
+        _ = File.ReadAllText(Tools.FfProbe.GetToolPath() + ".step").Trim().Should().Be("1");
+        _ = ToolErrorScope.Count.Should().Be(1);
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.Repaired);
+        _ = NextRun(processFile).State.Should().Be(SidecarFile.StatesType.Repaired);
         _ = modified.Should().BeTrue();
     }
 

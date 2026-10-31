@@ -1807,9 +1807,7 @@ public class ProcessFile
         // Warning only
         _ = VerifyHdrProfile();
 
-        // Verify bitrate
-        // Warning only
-        // Sets or clears the BitrateExceeded state
+        // Verify bitrate, sets or clears the BitrateExceeded state
         _bitrateToolError = !VerifyBitrate();
 
         // Verify media streams, VerifyAndRepair() stops on a tool error before it reads canRepair
@@ -2044,11 +2042,10 @@ public class ProcessFile
         // Calculate bitrate, a failure is a warning and keeps the last measured state
         // Return false only when a tool error ended the analysis
         int toolErrors = ToolErrorScope.Count;
-        int signals = ToolErrorScope.SignalCount;
         if (!GetBitrateInfo(out BitrateInfo? bitrateInfo) || bitrateInfo == null)
         {
             Log.Warning("Failed to calculate bitrate info : {FileName}", FileInfo.FullName);
-            return ToolErrorScope.Count == toolErrors && ToolErrorScope.SignalCount == signals;
+            return ToolErrorScope.Count == toolErrors;
         }
 
         // Print bitrate
