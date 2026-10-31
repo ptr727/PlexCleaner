@@ -87,7 +87,7 @@ public class SidecarFile
         }
 
         // Set the JSON info
-        if (!SetJsonInfo())
+        if (!SetJsonInfo(true))
         {
             return false;
         }
@@ -178,7 +178,8 @@ public class SidecarFile
 
         // Did the media file or tools change
         // Do not log if not current, updates are intentional
-        if (modified || !IsMediaAndToolsCurrent(false))
+        bool refreshTools = modified || !IsMediaAndToolsCurrent(false);
+        if (refreshTools)
         {
             // Get updated tool info
             if (!GetToolInfo())
@@ -188,7 +189,7 @@ public class SidecarFile
         }
 
         // Set the JSON info from tool info
-        if (!SetJsonInfo())
+        if (!SetJsonInfo(refreshTools))
         {
             return false;
         }
@@ -252,9 +253,9 @@ public class SidecarFile
         return true;
     }
 
-    private bool IsMediaAndToolsCurrent(bool log) =>
+    internal bool IsMediaAndToolsCurrent(bool log) =>
         IsMediaCurrent(log)
-        && (IsToolsCurrent(log) || Program.Config.ProcessOptions.SidecarUpdateOnToolChange);
+        && (IsToolsCurrent(log) || !Program.Config.ProcessOptions.SidecarUpdateOnToolChange);
 
     private bool IsStateCurrent() => State == _sidecarJson?.State;
 
@@ -482,7 +483,7 @@ public class SidecarFile
         return true;
     }
 
-    private bool SetJsonInfo()
+    private bool SetJsonInfo(bool stampToolVersions)
     {
         // Create or update the sidecar JSON object
         _sidecarJson ??= new SidecarFileJsonSchema();
@@ -494,9 +495,12 @@ public class SidecarFile
         _sidecarJson.MediaHash = ComputeHash();
 
         // Tool version info
-        _sidecarJson.FfProbeToolVersion = Tools.FfProbe.Info.Version;
-        _sidecarJson.MkvMergeToolVersion = Tools.MkvMerge.Info.Version;
-        _sidecarJson.MediaInfoToolVersion = Tools.MediaInfo.Info.Version;
+        if (stampToolVersions)
+        {
+            _sidecarJson.FfProbeToolVersion = Tools.FfProbe.Info.Version;
+            _sidecarJson.MkvMergeToolVersion = Tools.MkvMerge.Info.Version;
+            _sidecarJson.MediaInfoToolVersion = Tools.MediaInfo.Info.Version;
+        }
 
         // Compressed tool info
         _sidecarJson.FfProbeData = StringCompression.Compress(_ffProbeJson);
