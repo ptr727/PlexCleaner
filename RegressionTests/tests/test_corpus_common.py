@@ -1,8 +1,11 @@
 """Tests for the pure parsing and classification helpers in corpus_common."""
 
+import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import corpus_common as cc
 
@@ -111,6 +114,41 @@ class FindRunTests(unittest.TestCase):
     def test_explicit_absolute_and_relative(self) -> None:
         self.assertEqual(cc.find_run("/some/abs"), Path("/some/abs"))
         self.assertEqual(cc.find_run("rel"), cc.REG_DIR / "rel")
+
+    @staticmethod
+    def _run(root: Path, name: str, mtime: int, info: dict[str, str]) -> None:
+        d = root / name
+        d.mkdir()
+        (d / "buildinfo.json").write_text(json.dumps(info))
+        log = d / "PlexCleaner_process.log"
+        log.write_text("")
+        os.utime(log, (mtime, mtime))
+
+    def test_newer_reduced_run_is_not_the_full_default(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self._run(root, "0.9.0-gz", 500, {"Channel": "develop", "Corpus": "full"})
+            self._run(root, "1.0.0-ga", 1000, {"Channel": "develop", "Corpus": "full"})
+            self._run(root, "1.0.1-gb-reduced", 2000, {"Channel": "develop", "Corpus": "reduced"})
+            with mock.patch.object(cc, "REG_DIR", root):
+                self.assertEqual(cc.find_run(None), root / "1.0.0-ga")
+                self.assertEqual(cc.find_run(None, corpus="reduced"), root / "1.0.1-gb-reduced")
+
+    def test_run_without_corpus_field_is_full(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self._run(root, "1.0.0-ga", 1000, {"Channel": "develop"})
+            self._run(root, "1.0.1-gb-reduced", 2000, {"Channel": "develop", "Corpus": "reduced"})
+            with mock.patch.object(cc, "REG_DIR", root):
+                self.assertEqual(cc.find_run(None), root / "1.0.0-ga")
+
+    def test_no_matching_run_exits(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self._run(root, "1.0.1-gb-reduced", 2000, {"Channel": "develop", "Corpus": "reduced"})
+            with mock.patch.object(cc, "REG_DIR", root), self.assertRaises(SystemExit) as cm:
+                cc.find_run(None)
+        self.assertIn("no develop full-corpus run", str(cm.exception.code))
 
 
 class HeadClipTests(unittest.TestCase):
