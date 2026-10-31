@@ -137,7 +137,7 @@ public class ProcessFile
         }
         catch
         {
-            modified = !UndoRename(tempName);
+            modified |= !UndoRename(tempName);
             throw;
         }
 
