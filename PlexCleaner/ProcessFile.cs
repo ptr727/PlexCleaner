@@ -280,15 +280,16 @@ public class ProcessFile
         FfProbeProps.AnyErrors || MkvMergeProps.AnyErrors || MediaInfoProps.AnyErrors;
 
     public bool HasMetadataErrors(TrackProps.StateType stateType) =>
-        FfProbeProps.GetTrackList().Any(item => item.State == stateType)
-        || MkvMergeProps.GetTrackList().Any(item => item.State == stateType)
-        || MediaInfoProps.GetTrackList().Any(item => item.State == stateType);
+        AnyTrack(item => item.State == stateType);
 
-    // True when any track needs any of the actions
+    // Any of the actions, so a group such as StreamActions can be passed
     public bool HasMetadataErrors(TrackProps.ActionsType actions) =>
-        FfProbeProps.GetTrackList().Any(item => (item.Actions & actions) != 0)
-        || MkvMergeProps.GetTrackList().Any(item => (item.Actions & actions) != 0)
-        || MediaInfoProps.GetTrackList().Any(item => (item.Actions & actions) != 0);
+        AnyTrack(item => (item.Actions & actions) != 0);
+
+    private bool AnyTrack(Func<TrackProps, bool> predicate) =>
+        FfProbeProps.GetTrackList().Any(predicate)
+        || MkvMergeProps.GetTrackList().Any(predicate)
+        || MediaInfoProps.GetTrackList().Any(predicate);
 
     public void ClearMetadataErrors()
     {
@@ -694,13 +695,9 @@ public class ProcessFile
         // Detected: tracks needing flags set
         Log.Warning(
             "Track flags to be set detected : Tracks: {Tracks} : {FileName}",
-            MkvMergeProps.Video.Count(item => item.Actions.HasFlag(TrackProps.ActionsType.SetFlags))
-                + MkvMergeProps.Audio.Count(item =>
-                    item.Actions.HasFlag(TrackProps.ActionsType.SetFlags)
-                )
-                + MkvMergeProps.Subtitle.Count(item =>
-                    item.Actions.HasFlag(TrackProps.ActionsType.SetFlags)
-                ),
+            MkvMergeProps
+                .GetTrackList()
+                .Count(item => item.Actions.HasFlag(TrackProps.ActionsType.SetFlags)),
             FileInfo.FullName
         );
 
@@ -1824,8 +1821,8 @@ public class ProcessFile
 
         // Find all tracks that need re-encoding
         // Use FfProbeInfo for matching logic
-        // Selected is ReEncode
-        // NotSelected is Keep
+        // Selected has the ReEncode action
+        // NotSelected is copied
         SelectMediaProps selectMediaProps = FindNeedReEncode();
         if (selectMediaProps.Selected.Count == 0)
         {
@@ -2964,8 +2961,8 @@ public class ProcessFile
     {
         // Filter logic values are based on FfProbe attributes
         // Start with empty selection
-        // Selected is ReEncode
-        // NotSelected is Keep
+        // Selected has the ReEncode action
+        // NotSelected is copied
         SelectMediaProps selectMediaProps = new(FfProbeProps);
 
         // Add audio and video tracks

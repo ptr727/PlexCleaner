@@ -554,7 +554,7 @@ flowchart TD
   M1 -->|no| M6
   M1 -->|yes| M2{"A track in the Remove state, with the ReMux action, or with the SetLanguage action and SetIetfLanguageTags on?"}
   M2 -->|no| M6
-  M2 -->|yes| M3["Convert.ReMuxToMkv(): drop tracks MediaInfo marked Remove, else a full remux"]
+  M2 -->|yes| M3["Convert.ReMuxToMkv(): drop tracks MediaInfo put in the Remove state, else a full remux"]
   M3 -->|fail| RXF(["Fail, no VerifyFailed"])
   M3 --> M4["Sets ReMuxed, Refresh()"]
   M4 --> M5{"Targeted errors still present?"}
@@ -585,7 +585,7 @@ flowchart TD
   S5 -->|yes| AOK
 ```
 
-`ReportUnrepairedMetadataErrors()` warns about errors left because `ReMux` or `SetTrackFlags` is off, naming the errors and the option, and the file passes. A track needing more than one repair is reported for each, since its actions combine. It logs IETF tags left unset because `SetIetfLanguageTags` is off at Information, since that opt-out is deliberate. A run that finds `SetFlags` with the flags still missing does not set them again. With `UseSidecarFiles` on, a file whose flags do not stick is edited once.
+`ReportUnrepairedMetadataErrors()` warns about errors left because `ReMux` or `SetTrackFlags` is off, naming the errors and the option, and the file passes. A track needing more than one repair is reported for each, since its actions combine. It logs IETF tags left unset because `SetIetfLanguageTags` is off at Information, since that opt-out is deliberate. A run that finds the sidecar `SetFlags` flag with the track flags still missing does not set them again. With `UseSidecarFiles` on, a file whose flags do not stick is edited once.
 
 ### Closed Captions
 
@@ -729,7 +729,7 @@ flowchart TD
   S1 --> S2{"Audio selected and no video selected?"}
   S2 -->|yes| S3["Also select video that is not h264, hevc or av1"]
   S2 -->|no| SA
-  S3 --> SA["SelectMediaProps.SetActions(): the selected tracks get the ReEncode action, every track stays Keep"]
+  S3 --> SA["Every track is set to Keep, and SelectMediaProps.SetActions() gives the selected tracks the ReEncode action"]
   SA --> S4{"Anything selected?"}
   S4 -->|no| AOK
   S4 -->|yes| S5{"State has ReEncoded?"}
@@ -826,17 +826,17 @@ A repair failure that records state sets `RepairFailed` and `VerifyFailed` toget
 
 ### Track State and Actions
 
-Each track carries a state and a set of actions. Both are rebuilt from the tool output on every `Refresh()` and are never stored in the sidecar. The state is what happens to the track as a whole, so it holds one value. The actions are what the track needs done, so any combination holds, and finding one never erases another.
+Each track carries a state and a set of actions. Both live only in memory and are never stored in the sidecar. Parsing the tool output sets the `Remove` and `Unsupported` states and the `SetLanguage`, `SetFlags` and `ReMux` actions. Processing steps set the others, and `Refresh()` parses the tool output again, which discards them. The state is what happens to the track as a whole, so it holds one value. The actions are what the track needs done, so any combination holds, and finding one never erases another.
 
 ```mermaid
 flowchart TD
   T["Track"] --> ST["State, one of: None, Keep, Remove, Unsupported"]
   T --> AC["Actions, any combination"]
   AC --> AA["AttributeActions change the track metadata: SetLanguage, SetFlags"]
-  AC --> SA["StreamActions rewrite the file streams: ReMux, ReEncode, DeInterlace"]
+  AC --> SA["StreamActions rewrite the file: ReMux, ReEncode, DeInterlace"]
 ```
 
-A remux copies the streams into a new container, and a re-encode or deinterlace encodes them again. An attribute action is applied in place by MkvPropEdit, or by the metadata remux, as `RepairMetadataErrors()` shows. Every action belongs to exactly one group, and `TrackActionsTests` checks that.
+A remux copies the streams into a new file, and a re-encode or deinterlace encodes them again. An attribute action is applied in place by MkvPropEdit, or by the metadata remux, as `RepairMetadataErrors()` shows. Every action belongs to exactly one group, and `TrackActionsTests` checks that.
 
 | Value | Kind | Set by |
 | --- | --- | --- |
@@ -844,7 +844,7 @@ A remux copies the streams into a new container, and a re-encode or deinterlace 
 | `Unsupported` | State | Parsing a track that has no format or codec |
 | `SetLanguage` | Attribute action | `TrackProps.SetLanguage()` when the IETF tag is missing and maps from the ISO tag |
 | `SetFlags` | Attribute action | `TrackProps.SetFlagsFromTitle()` when the title names a flag that is not set |
-| `ReMux` | Stream action | Parsing a language tag that conflicts with its IETF tag, cannot be mapped, or is invalid |
+| `ReMux` | Stream action | Parsing a language tag that conflicts with its IETF tag, cannot be mapped, or is invalid. Also a missing language tag beside an IETF tag, or a tag language that differs from the language tag |
 | `ReEncode` | Stream action | `FindNeedReEncode()` through `SelectMediaProps.SetActions()` |
 | `DeInterlace` | Stream action | `DeInterlace()` before HandBrake runs |
 

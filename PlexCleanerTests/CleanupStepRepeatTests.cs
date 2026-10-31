@@ -335,6 +335,42 @@ public sealed class CleanupStepRepeatTests : IDisposable
     }
 
     [Fact]
+    public void RepairMetadataErrors_TrackNeedsRemuxAndFlags_RemuxesThenSetsFlags()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+
+        // The remux fixes the language tags and keeps the title that asks for a flag
+        string remuxed = Path.Combine(_directory, "remuxed.json");
+        ProcessFile processFile = CreateProcessFile(
+            SidecarFile.StatesType.None,
+            mkvMerge: data =>
+            {
+                JsonNode properties = AudioProperties(data);
+                properties["language"] = "eng";
+                properties["language_ietf"] = "de";
+                properties["track_name"] = "Commentary";
+            },
+            mkvMergeRemuxBody: $"cp \"{remuxed}\" \"{_directory}/MkvMergeInfoData.json\""
+        );
+        JsonNode mkvMerge = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.orig.json"))
+        )!;
+        AudioProperties(mkvMerge)["track_name"] = "Commentary";
+        File.WriteAllText(remuxed, mkvMerge.ToJsonString());
+
+        bool modified = false;
+        _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
+
+        _ = modified.Should().BeTrue();
+        _ = Calls.Should().Equal("mkvmerge", "mkvpropedit");
+        _ = processFile
+            .State.Should()
+            .HaveFlag(SidecarFile.StatesType.ReMuxed)
+            .And.HaveFlag(SidecarFile.StatesType.SetFlags)
+            .And.NotHaveFlag(SidecarFile.StatesType.VerifyFailed);
+    }
+
+    [Fact]
     public void RepairMetadataErrors_RewriteDropsFlagsInRun_SetsThemInCleanupReRun()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");

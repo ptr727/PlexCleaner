@@ -20,8 +20,8 @@ public static class Convert
         Debug.Assert(inputName != tempName);
 
         // Convert using ffmpeg
-        // Selected is ReEncode
-        // NotSelected is Keep
+        // Selected has the ReEncode action
+        // NotSelected is copied
         Log.Information("Reencode using FfMpeg : {FileName}", inputName);
         if (!Tools.FfMpeg.ConvertToMkv(inputName, selectMediaProps, tempName))
         {

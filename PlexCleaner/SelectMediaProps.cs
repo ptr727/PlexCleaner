@@ -124,7 +124,7 @@ public class SelectMediaProps
         NotSelected.Subtitle.ForEach(item => item.State = notSelectState);
     }
 
-    // Adds the actions to the selected tracks and clears them from the not selected tracks
+    // Clearing NotSelected stops a repeated selection from leaving a stale action
     public void SetActions(TrackProps.ActionsType actions)
     {
         Selected.Video.ForEach(item => item.Actions |= actions);

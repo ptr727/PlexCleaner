@@ -350,8 +350,8 @@ public partial class FfMpeg
             File.Delete(outputName);
 
             // Create an input and output ignore or copy or convert track map
-            // Selected is ReEncode
-            // NotSelected is Keep
+            // Selected has the ReEncode action
+            // NotSelected is copied
             CreateTrackArgs(selectMediaProps, out string inputMap, out string outputMap);
 
             // Build command line
