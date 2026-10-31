@@ -189,7 +189,6 @@ public class SidecarFile
         }
 
         // Set the JSON info from tool info
-        // Keep the stored tool versions when the tool data was not refreshed
         if (!SetJsonInfo(refreshTools))
         {
             return false;

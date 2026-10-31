@@ -74,7 +74,6 @@ public sealed class ToolChangeSenseTests : IDisposable
         ]!.GetValue<string>();
         Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
 
-        // No tool is installed, so a tool rerun would fail the open
         SidecarFile sidecarFile = new(mediaFile);
         _ = sidecarFile.Read(out _).Should().BeTrue();
         sidecarFile.State = SidecarFile.StatesType.Verified;
