@@ -2,6 +2,9 @@ using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
 using ptr727.Utilities;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -61,7 +64,8 @@ public sealed class CleanupStepRepeatTests : IDisposable
         SidecarFile.StatesType state,
         Action<JsonNode>? mkvMerge = null,
         Action<JsonNode>? mediaInfo = null,
-        string mkvPropEditBody = ""
+        string mkvPropEditBody = "",
+        string mkvMergeRemuxBody = ""
     )
     {
         string mediaFile = FakeTools.CopyUnverifiedSample(_directory, state);
@@ -91,7 +95,8 @@ public sealed class CleanupStepRepeatTests : IDisposable
             case "$*" in
             *--identify*) cat "{{Path.Combine(_directory, "MkvMergeInfoData.json")}}" ;;
             *) echo mkvmerge >> "{{CallsFile}}"
-                for a; do case $a in *.tmp*) echo mkvmerge > "$a" ;; esac; done ;;
+                for a; do case $a in *.tmp*) echo mkvmerge > "$a" ;; esac; done
+                {{mkvMergeRemuxBody}} ;;
             esac
 
             """
@@ -209,30 +214,131 @@ public sealed class CleanupStepRepeatTests : IDisposable
         _ = Calls.Should().Equal("mkvpropedit");
     }
 
-    [Fact]
-    public void RepairMetadataErrors_RepairOptionsOff_ContinuesWithoutEditing()
+    private sealed class CapturingSink : ILogEventSink
+    {
+        public List<LogEvent> Events { get; } = [];
+
+        public void Emit(LogEvent logEvent) => Events.Add(logEvent);
+    }
+
+    private static List<LogEvent> Capture(Action action)
+    {
+        CapturingSink sink = new();
+        ILogger original = Log.Logger;
+        Logger capture = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .WriteTo.Sink(sink)
+            .CreateLogger();
+        Log.Logger = capture;
+        try
+        {
+            action();
+        }
+        finally
+        {
+            Log.Logger = original;
+            capture.Dispose();
+        }
+        return sink.Events;
+    }
+
+    [Theory]
+    [InlineData("ReMux", LogEventLevel.Warning)]
+    [InlineData("SetIetfLanguageTags", LogEventLevel.Information)]
+    [InlineData("SetTrackFlags", LogEventLevel.Warning)]
+    public void RepairMetadataErrors_RepairOptionOff_ReportsAndContinuesWithoutEditing(
+        string option,
+        LogEventLevel level
+    )
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
-        Program.Config.ProcessOptions.ReMux = false;
-        Program.Config.ProcessOptions.SetTrackFlags = false;
+        Program.Config.ProcessOptions.ReMux = option != "ReMux";
+        Program.Config.ProcessOptions.SetIetfLanguageTags = option != "SetIetfLanguageTags";
+        Program.Config.ProcessOptions.SetTrackFlags = option != "SetTrackFlags";
         ProcessFile processFile = CreateProcessFile(
             SidecarFile.StatesType.None,
             mkvMerge: data =>
             {
-                // A language tag that does not match its IETF tag needs a remux
                 JsonNode properties = AudioProperties(data);
-                properties["language"] = "eng";
-                properties["language_ietf"] = "de";
-                TrackProperties(data, "video")["track_name"] = "Commentary";
+                switch (option)
+                {
+                    // A language tag that does not match its IETF tag needs a remux
+                    case "ReMux":
+                        properties["language"] = "eng";
+                        properties["language_ietf"] = "de";
+                        break;
+                    // A language tag with no IETF tag needs one set
+                    case "SetIetfLanguageTags":
+                        properties["language"] = "eng";
+                        _ = properties.AsObject().Remove("language_ietf");
+                        break;
+                    default:
+                        properties["track_name"] = "Commentary";
+                        break;
+                }
             }
         );
-        _ = processFile.HasMetadataErrors(TrackProps.StateType.ReMux).Should().BeTrue();
-        _ = processFile.HasMetadataErrors(TrackProps.StateType.SetFlags).Should().BeTrue();
 
         bool modified = false;
-        _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
+        List<LogEvent> events = Capture(() =>
+            processFile.RepairMetadataErrors(ref modified).Should().BeTrue()
+        );
+
         _ = modified.Should().BeFalse();
         _ = Calls.Should().BeEmpty();
         _ = processFile.State.Should().NotHaveFlag(SidecarFile.StatesType.VerifyFailed);
+        _ = events
+            .Should()
+            .ContainSingle(item =>
+                item.MessageTemplate.Text.Contains(option + " option not enabled")
+            )
+            .Which.Level.Should()
+            .Be(level);
+    }
+
+    [Fact]
+    public void RepairMetadataErrors_TrackFlagsStick_LeavesSetFlagsUnset()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+
+        // Flags that stick leave no SetFlags, so a later rewrite that drops them is repaired
+        ProcessFile processFile = CreateProcessFile(
+            SidecarFile.StatesType.None,
+            mkvMerge: data => AudioProperties(data)["track_name"] = "Commentary",
+            mkvPropEditBody: $"cp \"{_directory}/MkvMergeInfoData.orig.json\" \"{_directory}/MkvMergeInfoData.json\""
+        );
+        bool modified = false;
+        _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
+        _ = modified.Should().BeTrue();
+        _ = Calls.Should().Equal("mkvpropedit");
+        _ = processFile.State.Should().NotHaveFlag(SidecarFile.StatesType.SetFlags);
+        _ = processFile.HasMetadataErrors(TrackProps.StateType.SetFlags).Should().BeFalse();
+    }
+
+    [Fact]
+    public void RepairMetadataErrors_RewriteDropsFlagsInRun_SetsThemInCleanupReRun()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+
+        // The remux stands in for a rewrite that drops a flag
+        string dropped = Path.Combine(_directory, "dropped.json");
+        ProcessFile processFile = CreateProcessFile(
+            SidecarFile.StatesType.None,
+            mediaInfo: AddMediaInfoCoverArt,
+            mkvMergeRemuxBody: $"cp \"{dropped}\" \"{_directory}/MkvMergeInfoData.json\"; cp \"{_directory}/MediaInfoData.orig.json\" \"{_directory}/MediaInfoData.json\""
+        );
+        JsonNode mkvMerge = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.json"))
+        )!;
+        AudioProperties(mkvMerge)["track_name"] = "Commentary";
+        File.WriteAllText(dropped, mkvMerge.ToJsonString());
+
+        bool modified = false;
+        _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
+        _ = processFile.RemoveCoverArt(ref modified).Should().BeTrue();
+        _ = processFile.HasMetadataErrors(TrackProps.StateType.SetFlags).Should().BeTrue();
+        _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
+
+        _ = Calls.Should().Equal("mkvmerge", "mkvpropedit");
     }
 }
