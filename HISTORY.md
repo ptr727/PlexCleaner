@@ -11,10 +11,10 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Renamed the Docker image scripts, so update anything that calls `/Test/Test.sh` or `/PlexCleaner/Version.sh` to use `/Test/test.sh` or `/PlexCleaner/version.sh`.
     - The test script runs as a non-root user and writes its output under `/tmp/PlexCleaner-Test`.
   - Files an earlier version marked `VerifyFailed`, or marked `Verified` with the `Verify` option off, are not verified again automatically.
-    - Run the `createsidecar` command to reset every file's state, or the [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin to re-verify files marked `RepairFailed`.
+    - Run the `createsidecar` command on the affected folders to reset their state, or the [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin to re-verify files marked `RepairFailed`.
   - A non-monotonic DTS seen only after decode is repaired by remux only, and a file the remux cannot fix is marked `RepairFailed` and `PostDecodeTimestamps`.
   - An exception in one file fails only that file instead of ending the run, and the error summary names the failed step.
-  - `DeleteInvalidFiles` keeps a file that was canceled, read-only, blocked by a rename collision, marked `PostDecodeTimestamps`, or whose tool run did not finish.
+  - `DeleteInvalidFiles` keeps a file after an exception, a cancel, a rename collision, or an unfinished tool run, and keeps a read-only or `PostDecodeTimestamps` file.
   - With the `Verify` option off, a file is no longer marked `Verified`, and the sidecar records a clean full-file interlace or caption scan.
   - Automatic processing skips re-encoding a file it already re-encoded, or deinterlacing one it already deinterlaced, while the `reencode` and `deinterlace` commands still force it.
   - When a step rewrites a file, processing repeats every cleanup step, and cleanup it cannot finish is logged rather than retried every run.
