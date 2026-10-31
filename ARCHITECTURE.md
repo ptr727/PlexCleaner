@@ -425,7 +425,7 @@ flowchart TD
 
 The remux steps rewrite the container and set `ReMuxed`. `RemoveTags()` and `RemoveAttachments()` edit the file in place with MkvPropEdit.
 
-`Convert.ReMuxToMkv()` remuxes the whole file to the `.mkv` name. A node labeled with it in the charts below runs this flow.
+`Convert.ReMuxToMkv()` remuxes the whole file to the `.mkv` name, and a node that names it without a track selection runs this flow. With a track selection, it remuxes once with MkvMerge to `.tmp3`, with no FfMpeg fallback, then moves the output the same way.
 
 ```mermaid
 flowchart TD
@@ -485,7 +485,7 @@ flowchart TD
 flowchart TD
   D0["RemoveCoverArt()"] --> D1{"Any tool reports cover art?"}
   D1 -->|no| DOK(["Continue"])
-  D1 -->|yes| D2{"State has RemovedCoverArt, and only FfProbe or MediaInfo reports cover art?"}
+  D1 -->|yes| D2{"Cover art remained after an earlier removal, and MkvMerge reports none?"}
   D2 -->|yes| DOK
   D2 -->|no| D3{"ReMux option on?"}
   D3 -->|no| DF(["Fail"])
@@ -522,7 +522,7 @@ flowchart TD
   E2 -->|yes| E3["MkvPropEdit clears tags, sets ClearedTags, warns when it was already set"]
 ```
 
-`MakeExtensionLowercase()` renames through a `.tmp7` name, and it fails the file without a rename when another file holds the lowercase name. When the second move throws, it moves the file back, and the result names the `.tmp7` path when that move fails too. `Convert.ReMuxToMkv()` with a track selection uses MkvMerge alone, with no FfMpeg fallback.
+`MakeExtensionLowercase()` renames through a `.tmp7` name, and it fails the file without a rename when another file holds the lowercase name. When the second move throws, it moves the file back, and the result names the `.tmp7` path when that move fails too.
 
 ### Metadata and Structure Repair
 
@@ -615,14 +615,14 @@ The HDR refusal is deliberate, so captions fail the file rather than pass unremo
 
 ```mermaid
 flowchart TD
-  A0["DeInterlace()"] --> A1{"DeInterlace option on?"}
+  A0["DeInterlace()"] --> A1{"DeInterlace option on, or the deinterlace command?"}
   A1 -->|no| AOK(["Continue"])
   A1 -->|yes| F0["FindInterlacedTracks()"]
   F0 --> F1{"Any tool flags a video track as interlaced?"}
   F1 -->|yes| FOUND
   F1 -->|no| F2{"--quickscan set?"}
   F2 -->|yes| AOK
-  F2 -->|no| F3{"State has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
+  F2 -->|no| F3{"Process command, and the state has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
   F3 -->|yes| AOK
   F3 -->|no| F4["FfMpeg idet scan"]
   F4 -->|"scan fails or no result"| FAIL(["Fail"])
@@ -716,7 +716,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A0["ReEncode()"] --> A1{"ReEncode option on?"}
+  A0["ReEncode()"] --> A1{"ReEncode option on, or the reencode command?"}
   A1 -->|no| AOK(["Continue"])
   A1 -->|yes| S0["FindNeedReEncode(): FfProbe tracks"]
   S0 --> S1["Select video matching ReEncodeVideo, and audio whose format is in ReEncodeAudioFormats"]
