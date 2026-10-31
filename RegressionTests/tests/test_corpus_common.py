@@ -127,6 +127,7 @@ class FindRunTests(unittest.TestCase):
     def test_newer_reduced_run_is_not_the_full_default(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
+            self._run(root, "0.9.0-gz", 500, {"Channel": "develop", "Corpus": "full"})
             self._run(root, "1.0.0-ga", 1000, {"Channel": "develop", "Corpus": "full"})
             self._run(root, "1.0.1-gb-reduced", 2000, {"Channel": "develop", "Corpus": "reduced"})
             with mock.patch.object(cc, "REG_DIR", root):
@@ -145,8 +146,9 @@ class FindRunTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             self._run(root, "1.0.1-gb-reduced", 2000, {"Channel": "develop", "Corpus": "reduced"})
-            with mock.patch.object(cc, "REG_DIR", root), self.assertRaises(SystemExit):
+            with mock.patch.object(cc, "REG_DIR", root), self.assertRaises(SystemExit) as cm:
                 cc.find_run(None)
+        self.assertIn("no develop full-corpus run", str(cm.exception.code))
 
 
 class HeadClipTests(unittest.TestCase):
