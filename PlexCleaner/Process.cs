@@ -699,6 +699,9 @@ public static class Process
         return writesSucceeded;
     }
 
+    // Set when a settings write fails, so the next call retries it
+    internal static bool s_ignoreListWritePending;
+
     internal static bool RegisterInvalidFiles(
         List<ProcessResultJsonSchema.ProcessResult> failedResults,
         string settingsFile
@@ -719,8 +722,8 @@ public static class Process
         // Prune entries for missing files, but only where the parent folder exists, an unmounted share keeps its entries
         modified |= ignoreList.RemoveWhere(IsMissingFile) > 0;
 
-        // Update JSON settings if modified
-        if (!modified)
+        // Update JSON settings if modified, or if an earlier write failed
+        if (!modified && !s_ignoreListWritePending)
         {
             return true;
         }
@@ -732,11 +735,13 @@ public static class Process
         try
         {
             ConfigFileJsonSchema.ToFile(settingsFile, Program.Config);
+            s_ignoreListWritePending = false;
             return true;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             Log.Error("Failed to write settings file : {SettingsFile}", settingsFile);
+            s_ignoreListWritePending = true;
             return false;
         }
     }
@@ -744,6 +749,25 @@ public static class Process
     private static bool IsMissingFile(string fileName)
     {
         string? folder = Path.GetDirectoryName(fileName);
-        return !string.IsNullOrEmpty(folder) && Directory.Exists(folder) && !File.Exists(fileName);
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder) || File.Exists(fileName))
+        {
+            return false;
+        }
+
+        // File.Exists hides access and IO errors, and is case sensitive on Linux, so list the folder
+        try
+        {
+            EnumerationOptions options = new()
+            {
+                MatchCasing = MatchCasing.CaseInsensitive,
+                MatchType = MatchType.Simple,
+                IgnoreInaccessible = false,
+            };
+            return !Directory.EnumerateFiles(folder, Path.GetFileName(fileName), options).Any();
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            return false;
+        }
     }
 }
