@@ -62,7 +62,7 @@ public sealed class PostRunWriteTests : IDisposable
     {
         string settingsFile = Path.Combine(_directory, "settings.json");
         string kept = Path.Combine(_directory, "kept.mkv");
-        string deleted = Path.Combine(_directory, "deleted.mkv");
+        string deleted = Path.Combine(_directory, "gone", "deleted.mkv");
         File.WriteAllText(kept, string.Empty);
         bool result = Process.RegisterInvalidFiles(
             [
@@ -153,7 +153,7 @@ public sealed class PostRunWriteTests : IDisposable
         bool result = Process.RegisterInvalidFiles(
             [
                 CreateResult(
-                    Path.Combine(_directory, "deleted.mkv"),
+                    Path.Combine(_directory, "gone", "deleted.mkv"),
                     SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.FileDeleted
                 ),
             ],
@@ -309,6 +309,11 @@ public sealed class PostRunWriteTests : IDisposable
         File.SetUnixFileMode(folder, UnixFileMode.None);
         try
         {
+            // A DAC-override capability still reads the folder, so the exception path is not reached
+            if (File.Exists(entry))
+            {
+                return;
+            }
             _ = Process
                 .RegisterInvalidFiles([], Path.Combine(_directory, "settings.json"))
                 .Should()

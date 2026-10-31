@@ -755,7 +755,7 @@ public static class Process
         }
 
         // File.Exists hides access and IO errors, and is case sensitive on Linux, so list the folder
-        // Compare names directly, a pattern would treat * and ? in a name as wildcards
+        // Names are compared directly because a pattern treats asterisk and question mark as wildcards
         try
         {
             string name = Path.GetFileName(fileName);
