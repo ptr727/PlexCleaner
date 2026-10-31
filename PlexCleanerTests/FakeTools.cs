@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using PlexCleaner;
+using ptr727.Utilities;
 
 namespace PlexCleanerTests;
 
@@ -18,7 +19,10 @@ internal static class FakeTools
     }
 
     // The sample sidecar supplies the media props, so only the step under test needs a tool
-    public static string CopyUnverifiedSample(string directory)
+    public static string CopyUnverifiedSample(
+        string directory,
+        SidecarFile.StatesType state = SidecarFile.StatesType.None
+    )
     {
         Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "8.0.1" };
         Tools.MkvMerge.Info = new MediaToolInfo(Tools.MkvMerge) { Version = "96.0" };
@@ -31,8 +35,48 @@ internal static class FakeTools
         JsonNode sidecar = JsonNode.Parse(
             File.ReadAllText(Path.Combine(sampleDirectory, "Sidecar.v5.PlexCleaner"))
         )!;
-        sidecar["State"] = (int)SidecarFile.StatesType.None;
+        sidecar["State"] = (int)state;
         File.WriteAllText(Path.Combine(directory, "name.PlexCleaner"), sidecar.ToJsonString());
         return mediaFile;
+    }
+
+    // The tools return the stored sample data, so a media refresh after a replace can run
+    public static void WriteSampleToolData(string directory)
+    {
+        JsonNode stored = JsonNode.Parse(
+            File.ReadAllText(
+                Path.Combine(
+                    PlexCleanerFixture.GetSamplesAbsoluteDirectory(),
+                    "Sidecar.v5.PlexCleaner"
+                )
+            )
+        )!;
+        foreach (string key in new[] { "MediaInfoData", "MkvMergeInfoData", "FfProbeInfoData" })
+        {
+            File.WriteAllText(
+                Path.Combine(directory, key + ".json"),
+                StringCompression.Decompress(stored[key]!.GetValue<string>())
+            );
+        }
+        WriteScript(
+            Tools.MediaInfo.GetToolPath(),
+            $"cat \"{Path.Combine(directory, "MediaInfoData.json")}\"\n"
+        );
+        WriteScript(
+            Tools.FfProbe.GetToolPath(),
+            $"cat \"{Path.Combine(directory, "FfProbeInfoData.json")}\"\n"
+        );
+
+        // A remux writes its tool name into each temp output
+        WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            $$"""
+            case "$*" in
+            *--identify*) cat "{{Path.Combine(directory, "MkvMergeInfoData.json")}}" ;;
+            *) for a; do case $a in *.tmp*) echo mkvmerge > "$a" ;; esac; done ;;
+            esac
+
+            """
+        );
     }
 }

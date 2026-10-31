@@ -1,7 +1,6 @@
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
-using ptr727.Utilities;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -68,12 +67,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
 
     private ProcessFile CreateProcessFile(SidecarFile.StatesType state)
     {
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
-        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
-        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
-        sidecar["State"] = (int)state;
-        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
-        ProcessFile processFile = new(mediaFile);
+        ProcessFile processFile = new(FakeTools.CopyUnverifiedSample(_directory, state));
         _ = processFile.GetMediaProps().Should().BeTrue();
         return processFile;
     }
@@ -120,34 +114,6 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
                 echo $step > "$0.step"
                 if [ $step -eq 1 ]; then {{first}}; else {{later}}; fi ;;
             *) cat "{{props}}" ;;
-            esac
-
-            """
-        );
-    }
-
-    // The media refresh after a replace reads the stored sample tool data
-    private void WriteSampleToolData()
-    {
-        string sidecarFile = Path.Combine(_directory, "name.PlexCleaner");
-        JsonNode stored = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
-        foreach (string key in new[] { "MediaInfoData", "MkvMergeInfoData", "FfProbeInfoData" })
-        {
-            File.WriteAllText(
-                Path.Combine(_directory, key + ".json"),
-                StringCompression.Decompress(stored[key]!.GetValue<string>())
-            );
-        }
-        FakeTools.WriteScript(
-            Tools.MediaInfo.GetToolPath(),
-            $"cat \"{Path.Combine(_directory, "MediaInfoData.json")}\"\n"
-        );
-        FakeTools.WriteScript(
-            Tools.MkvMerge.GetToolPath(),
-            $$"""
-            case "$*" in
-            *--identify*) cat "{{Path.Combine(_directory, "MkvMergeInfoData.json")}}" ;;
-            *) for a; do case $a in *.tmp*) echo mkvmerge > "$a" ;; esac; done ;;
             esac
 
             """
@@ -276,7 +242,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None);
-        WriteSampleToolData();
+        FakeTools.WriteSampleToolData(_directory);
         WriteFakeFfProbe(
             CatPackets("first", processFile.FfProbeProps.Video[0].Id, true),
             reMeasureToolError ? "kill -9 $$" : CatPackets("later", 0, false)
@@ -315,7 +281,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None);
-        WriteSampleToolData();
+        FakeTools.WriteSampleToolData(_directory);
         WriteFakeFfProbe("kill -9 $$", "kill -9 $$");
 
         // Verify fails, then the remux tier verifies clean
