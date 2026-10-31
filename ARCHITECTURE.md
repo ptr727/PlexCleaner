@@ -245,7 +245,7 @@ flowchart TD
   F --> G["Process.DeleteEmptyFolders(): DeleteEmptyFolders option, input folders only"]
   G -->|error or cancel| R1
   G -->|"monitor batch done"| MON2(["Back to the monitor loop"])
-  G --> W{"A settings or results file write failed?"}
+  G -->|"process command"| W{"A settings or results file write failed?"}
   W -->|yes| R1
   W -->|no| R0["Return 0, also when single files failed"]
   R0 --> S{"Signal received?"}
@@ -439,8 +439,9 @@ flowchart TD
   X1 --> X5{"The .mkv name is the input file itself?"}
   X4 --> X5
   X5 -->|yes| X6["Move over the input"]
-  X5 -->|no| X7["Move to the .mkv name, another file there makes the move throw after deleting .tmp2"]
-  X7 --> X8["Delete the input, a failed delete is logged"]
+  X5 -->|no| X7["Move to the .mkv name"]
+  X7 -->|"another file there"| XT(["Throw after deleting .tmp2, the input stays"])
+  X7 -->|moved| X8["Delete the input, a failed delete is logged"]
   X6 --> XOK(["Done"])
   X8 --> XOK
 ```
@@ -813,7 +814,7 @@ flowchart TD
   RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder, save state, fail"]
 ```
 
-`VerifyBitrate()` sets `BitrateExceeded` when a measured bitrate exceeds `MaximumBitrate`, and clears it when a measurement is within the limit. Where no measurement runs, the flag stays. That covers no limit, `--quickscan`, and every path the chart draws that skips `VerifyBitrate()`. A failed bitrate analysis warns and keeps the last measured state. When a tool error ended it, the file is not marked `Verified`, so the next run measures it again. A repair that re-encodes measures the repaired media again.
+`VerifyBitrate()` sets `BitrateExceeded` when a measured bitrate exceeds `MaximumBitrate`, and clears it when a measurement is within the limit. Where no measurement runs, the flag stays. That covers no limit, `--quickscan`, and every path the chart draws that skips `VerifyBitrate()`. A failed bitrate analysis warns and keeps the last measured state. When a tool error ended it, a file that passes or is repaired is not marked `Verified`, so the next run measures it again. A repair that re-encodes measures the repaired media again.
 
 A repair failure that records state sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote, which can hold `RepairFailed` without `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
 
