@@ -304,7 +304,7 @@ flowchart TD
 
 `Process.ProcessFile()` runs one file through the steps below, in this order. The node ids `P01` onward follow the order of the step calls in `Process.ProcessFile()`, and `ArchitectureDiagramTests` fails when they differ.
 
-A step that returns false leaves the chain at the abort node, except `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them. A step that throws while no cancel is requested also leaves the chain at the abort node.
+A step that returns false leaves the chain at the abort node, except `DeleteMismatchedSidecarFile()` and `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them. A step that throws while no cancel is requested also leaves the chain at the abort node.
 
 ```mermaid
 flowchart TD
@@ -315,7 +315,7 @@ flowchart TD
   G3 --> P01["IsWriteable()"]
   P01 -->|"read-only, skipped"| AB
   P01 --> P02["DeleteMismatchedSidecarFile()"]
-  P02 -->|"orphan sidecar deleted, S3"| AB
+  P02 -->|"orphan sidecar deleted"| SKP
   P02 --> G4{"SidecarFile.IsSidecarFile()"}
   G4 -->|yes| IGN
   G4 -->|no| P03["RemuxByExtension(): ReMux, ReMuxExtensions"]
@@ -371,8 +371,6 @@ flowchart TD
   G5 -->|yes| RET(["Result false, return the state and final path"])
   G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch, threw, or was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
   DF --> RET
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
-  class P02 suspect
 ```
 
 `ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`. A delete that throws is logged, and the file counts as not deleted.
@@ -748,7 +746,6 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 
 Each entry describes a branch the diagrams mark, as the code behaves today, and links the issue that tracks its fix. Update the diagram and remove the entry when the fix lands.
 
-- **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
 - **S6** ([#1073](https://github.com/ptr727/PlexCleaner/issues/1073)): `Convert.ReMuxToMkv()` moves its output to the `.mkv` name with overwrite, so `name.avi` replaces an existing `name.mkv`. `MakeExtensionLowercase()` replaces a lowercase sibling on a case-sensitive filesystem the same way.
 - **S7** ([#1074](https://github.com/ptr727/PlexCleaner/issues/1074)): `RepairMetadataErrors()` can pass with errors left. `RepairMetadataRemux()` does nothing with `ReMux` off, and `RepairMetadataFlags()` neither re-checks its result nor marks `VerifyFailed`.
 - **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. `ReEncode()` processes output that still matches its selection again on every run. `DeInterlace()` does the same while a tool still flags the video as interlaced, since its idet scan skips a file already `DeInterlaced`.
