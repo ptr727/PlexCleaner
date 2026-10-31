@@ -826,7 +826,7 @@ A repair failure that records state sets `RepairFailed` and `VerifyFailed` toget
 
 ### Track State and Actions
 
-Each track carries a state and a set of actions. Both live only in memory and are never stored in the sidecar. Parsing the tool output sets the `Remove` and `Unsupported` states and the `SetLanguage`, `SetFlags` and `ReMux` actions. Processing steps set the others, and `Refresh()` parses the tool output again, which discards them. The state is what happens to the track as a whole, so it holds one value. The actions are what the track needs done, so any combination holds, and finding one never erases another.
+Each track carries a state and a set of actions. Both live only in memory and are never stored in the sidecar. Parsing the tool output sets the states and actions the table below names for it. Processing steps set the rest, and `Refresh()` parses the tool output again, which discards every value a step set. The state is what happens to the track as a whole, so it holds one value. The actions are what the track needs done, so any combination holds, and finding one never erases another.
 
 ```mermaid
 flowchart TD
@@ -842,8 +842,8 @@ A remux copies the streams into a new file, and a re-encode or deinterlace encod
 | --- | --- | --- |
 | `Keep`, `Remove` | State | `SelectMediaProps.SetState()` and the remux steps that drop tracks, and MediaInfo parsing sets `Remove` for a VobSub subtitle with no muxing mode |
 | `Unsupported` | State | Parsing a track that has no format or codec |
-| `SetLanguage` | Attribute action | `TrackProps.SetLanguage()` when the IETF tag is missing and maps from the ISO tag |
-| `SetFlags` | Attribute action | `TrackProps.SetFlagsFromTitle()` when the title names a flag that is not set |
+| `SetLanguage` | Attribute action | Parsing, in `TrackProps.SetLanguage()`, when the IETF tag is missing and maps from the ISO tag |
+| `SetFlags` | Attribute action | Parsing, in `TrackProps.SetFlagsFromTitle()`, when the title names a flag that is not set |
 | `ReMux` | Stream action | Parsing a language tag that conflicts with its IETF tag, cannot be mapped, or is invalid. Also a missing language tag beside an IETF tag, or a tag language that differs from the language tag |
 | `ReEncode` | Stream action | `FindNeedReEncode()` through `SelectMediaProps.SetActions()` |
 | `DeInterlace` | Stream action | `DeInterlace()` before HandBrake runs |
