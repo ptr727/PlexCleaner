@@ -11,7 +11,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Renamed the Docker image scripts, so update anything that calls `/Test/Test.sh` or `/PlexCleaner/Version.sh` to use `/Test/test.sh` or `/PlexCleaner/version.sh`.
     - The test script runs as a non-root user and writes its output under `/tmp/PlexCleaner-Test`.
   - Files an earlier version marked `VerifyFailed`, or marked `Verified` with the `Verify` option off, are not verified again automatically.
-    - Run the `createsidecar` command on the affected folders to reset their state, or the [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin to re-verify files marked `RepairFailed`.
+    - Run the `createsidecar` command on the affected folders, which also clears the state that prevents a repeat conversion. The [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin re-verifies files marked `RepairFailed`.
   - A non-monotonic DTS seen only after decode is repaired by remux only, and a file the remux cannot fix is marked `RepairFailed` and `PostDecodeTimestamps`.
   - An exception in one file fails only that file instead of ending the run, and the error summary names the failed step.
   - `DeleteInvalidFiles` keeps a file after an exception, a cancel, a rename collision, or an unfinished tool run, and keeps a read-only or `PostDecodeTimestamps` file.
