@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
@@ -181,16 +180,13 @@ public sealed class ScanStateTests : IDisposable
     public void Read_ToolChange_ClearsVerifiedAndScannedFlags()
     {
         Program.Config.ProcessOptions.SidecarUpdateOnToolChange = true;
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
-        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
-        JsonNode sidecar = JsonNode.Parse(File.ReadAllText(sidecarFile))!;
-        sidecar["State"] = (int)(
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
             SidecarFile.StatesType.SetLanguage
-            | SidecarFile.StatesType.Verified
-            | SidecarFile.StatesType.ScannedInterlace
-            | SidecarFile.StatesType.ScannedCaptions
+                | SidecarFile.StatesType.Verified
+                | SidecarFile.StatesType.ScannedInterlace
+                | SidecarFile.StatesType.ScannedCaptions
         );
-        File.WriteAllText(sidecarFile, sidecar.ToJsonString());
         Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
 
         SidecarFile sidecarFileState = new(mediaFile);
