@@ -826,7 +826,7 @@ A repair failure that records state sets `RepairFailed` and `VerifyFailed` toget
 
 ### Track State and Actions
 
-Each track carries a state and a set of actions. Both live only in memory and are never stored in the sidecar. Parsing the tool output sets the states and actions the table below names for it. Processing steps set the rest, and `Refresh()` parses the tool output again, which discards every value a step set. The state is what happens to the track as a whole, so it holds one value. The actions are what the track needs done, so any combination holds, and finding one never erases another.
+Each track carries a state and a set of actions. Both live only in memory and are never stored in the sidecar. Parsing the tool output sets the states and actions the table below names for it. Processing steps set the rest. A `Refresh()` that reads the tool output again, as one after a step changes the media does, discards every value a step set. The state is what happens to the track as a whole, so it holds one value. The actions are what the track needs done, so any combination holds, and finding one never erases another.
 
 ```mermaid
 flowchart TD
