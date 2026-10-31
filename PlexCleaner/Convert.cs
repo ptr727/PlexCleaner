@@ -18,10 +18,6 @@ public static class Convert
         outputName = Path.ChangeExtension(inputName, ".mkv");
         string tempName = Path.ChangeExtension(inputName, ".tmp1");
         Debug.Assert(inputName != tempName);
-        if (!CanReplace(inputName, outputName))
-        {
-            return false;
-        }
 
         // Convert using ffmpeg
         // Selected is ReEncode
@@ -62,10 +58,6 @@ public static class Convert
         outputName = Path.ChangeExtension(inputName, ".mkv");
         string tempName = Path.ChangeExtension(inputName, ".tmp2");
         Debug.Assert(inputName != tempName);
-        if (!CanReplace(inputName, outputName))
-        {
-            return false;
-        }
 
         // MkvMerge and FfMpeg both have problems dealing with some AVI files, so we will try both
         // E.g. https://github.com/FFmpeg/FFmpeg/commit/8de1ee9f725aa3c550f425bd3120bcd95d5b2ea8
@@ -141,10 +133,6 @@ public static class Convert
         outputName = Path.ChangeExtension(inputName, ".mkv");
         string tempName = Path.ChangeExtension(inputName, ".tmp3");
         Debug.Assert(inputName != tempName);
-        if (!CanReplace(inputName, outputName))
-        {
-            return false;
-        }
 
         // ReMux keeping specific tracks
         // Selected is Keep
@@ -230,7 +218,7 @@ public static class Convert
 
     private static void ReplaceInput(string inputName, string tempName, string outputName)
     {
-        // Overwrite only the input itself, so a file created at the output name since the check fails the move
+        // Overwrite only the input itself, so another file at the output name fails the move
         bool inPlace = IsSameFile(inputName, outputName);
         try
         {
@@ -238,7 +226,7 @@ public static class Convert
         }
         catch
         {
-            File.Delete(tempName);
+            DeleteTempFile(tempName);
             throw;
         }
         if (inPlace)
@@ -257,6 +245,19 @@ public static class Convert
                 "Failed to delete the input after moving to the output : {FileName}",
                 inputName
             );
+        }
+    }
+
+    // A failed cleanup is logged so the move failure is the exception that propagates
+    private static void DeleteTempFile(string tempName)
+    {
+        try
+        {
+            File.Delete(tempName);
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            Log.Error("Failed to delete the temp file : {FileName}", tempName);
         }
     }
 }

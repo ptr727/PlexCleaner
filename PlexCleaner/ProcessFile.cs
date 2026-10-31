@@ -129,7 +129,7 @@ public class ProcessFile
         // Windows is case insensitive, so we need to rename in two steps
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp7");
         Debug.Assert(tempName != FileInfo.FullName);
-        File.Move(FileInfo.FullName, tempName, true);
+        File.Move(FileInfo.FullName, tempName, false);
         Debug.Assert(lowerName != tempName);
         try
         {

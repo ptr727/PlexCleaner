@@ -193,9 +193,10 @@ public sealed class RenameCollisionTests : IDisposable
     }
 
     [Fact]
-    public void ReMuxToMkv_OutputCreatedDuringRemux_KeepsItAndDeletesTemp()
+    public void ProcessFile_OutputCreatedDuringRemux_FailsAndKeepsBoth()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.ProcessOptions.ReMux = true;
         Tools.MkvMerge.Info = new MediaToolInfo(Tools.MkvMerge) { Version = "96.0" };
         string mediaFile = CreateFile("name.avi");
         string outputFile = Path.ChangeExtension(mediaFile, ".mkv");
@@ -206,14 +207,31 @@ public sealed class RenameCollisionTests : IDisposable
             $"for a; do case $a in *.tmp2) echo mkvmerge > \"$a\" ;; esac; done\necho newcomer > \"{outputFile}\"\n"
         );
 
-        _ = FluentActions
-            .Invoking(() => PlexCleaner.Convert.ReMuxToMkv(mediaFile, out _))
+        _ = Process
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
             .Should()
-            .Throw<IOException>();
+            .BeFalse();
 
+        _ = failedOperation.Should().Be(nameof(ProcessFile.RemuxByExtension));
         _ = File.ReadAllText(outputFile).Should().StartWith("newcomer");
         _ = File.ReadAllText(mediaFile).Should().Be("name.avi");
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ProcessFile_LowercaseWithTempNameTaken_FailsAndKeepsBoth()
+    {
+        string mediaFile = CreateFile("name.MKV");
+        string tempFile = CreateFile("name.tmp7");
+
+        _ = Process
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+            .Should()
+            .BeFalse();
+
+        _ = failedOperation.Should().Be(nameof(ProcessFile.MakeExtensionLowercase));
+        _ = File.ReadAllText(mediaFile).Should().Be("name.MKV");
+        _ = File.ReadAllText(tempFile).Should().Be("name.tmp7");
     }
 
     [Fact]
