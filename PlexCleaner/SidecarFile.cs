@@ -252,9 +252,9 @@ public class SidecarFile
         return true;
     }
 
-    private bool IsMediaAndToolsCurrent(bool log) =>
+    internal bool IsMediaAndToolsCurrent(bool log) =>
         IsMediaCurrent(log)
-        && (IsToolsCurrent(log) || Program.Config.ProcessOptions.SidecarUpdateOnToolChange);
+        && (IsToolsCurrent(log) || !Program.Config.ProcessOptions.SidecarUpdateOnToolChange);
 
     private bool IsStateCurrent() => State == _sidecarJson?.State;
 
