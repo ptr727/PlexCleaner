@@ -25,6 +25,9 @@ public class ProcessFile
     // Classification of the file's own stream verify, it chooses the repair
     private VerifyResult _lastVerifyResult;
 
+    // A rename blocked by an existing file says nothing about the media
+    private bool _renameCollision;
+
     public ProcessFile(string mediaFile)
     {
         FileInfo = new FileInfo(mediaFile);
@@ -116,19 +119,56 @@ public class ProcessFile
 
         // Make the extension lowercase
         Log.Information("Making file extension lowercase : {FileName}", FileInfo.FullName);
+        string lowerName = Path.ChangeExtension(FileInfo.FullName, lowerExtension);
+        if (IsRenameCollision(lowerName))
+        {
+            return false;
+        }
 
         // Rename the file
         // Windows is case insensitive, so we need to rename in two steps
         string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp7");
         Debug.Assert(tempName != FileInfo.FullName);
-        File.Move(FileInfo.FullName, tempName, true);
-        string lowerName = Path.ChangeExtension(FileInfo.FullName, lowerExtension);
+        File.Move(FileInfo.FullName, tempName, false);
         Debug.Assert(lowerName != tempName);
-        File.Move(tempName, lowerName, true);
+        try
+        {
+            File.Move(tempName, lowerName, false);
+        }
+        catch
+        {
+            modified |= !UndoRename(tempName);
+            throw;
+        }
 
         // Modified filename
         modified = true;
         return Refresh(lowerName);
+    }
+
+    private bool IsRenameCollision(string targetName)
+    {
+        if (Convert.CanReplace(FileInfo.FullName, targetName))
+        {
+            return false;
+        }
+        _renameCollision = true;
+        return true;
+    }
+
+    private bool UndoRename(string tempName)
+    {
+        try
+        {
+            File.Move(tempName, FileInfo.FullName, false);
+            return true;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            // Report where the media is
+            FileInfo = new FileInfo(tempName);
+            return false;
+        }
     }
 
     public bool IsWriteable() => FileInfo is { Exists: true, IsReadOnly: false };
@@ -161,6 +201,10 @@ public class ProcessFile
 
         // ReMux the file
         Log.Information("Remux file matched by extension : {FileName}", FileInfo.FullName);
+        if (IsRenameCollision(Path.ChangeExtension(FileInfo.FullName, ".mkv")))
+        {
+            return false;
+        }
 
         // ReMux the file, use the new filename
         if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
@@ -1786,6 +1830,7 @@ public class ProcessFile
         // Conditional
         if (
             !Program.Config.VerifyOptions.DeleteInvalidFiles
+            || _renameCollision
             || ToolErrorScope.Count > 0
             || ToolErrorScope.SignalCount > 0
             || Program.IsCancelledError()

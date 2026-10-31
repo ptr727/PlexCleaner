@@ -43,15 +43,7 @@ public static class Convert
             return false;
         }
 
-        // Rename the temp file to the output file
-        File.Move(tempName, outputName, true);
-
-        // If the input and output names are not the same, delete the input
-        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
-        {
-            File.Delete(inputName);
-        }
-
+        ReplaceInput(inputName, tempName, outputName);
         return true;
     }
 
@@ -113,15 +105,7 @@ public static class Convert
             }
         }
 
-        // Rename the temp file to the output file
-        File.Move(tempName, outputName, true);
-
-        // If the input and output names are not the same, delete the input
-        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
-        {
-            File.Delete(inputName);
-        }
-
+        ReplaceInput(inputName, tempName, outputName);
         return true;
     }
 
@@ -161,15 +145,7 @@ public static class Convert
             return false;
         }
 
-        // Rename the temp file to the output file
-        File.Move(tempName, outputName, true);
-
-        // If the input and output names are not the same, delete the input
-        if (!inputName.Equals(outputName, StringComparison.OrdinalIgnoreCase))
-        {
-            File.Delete(inputName);
-        }
-
+        ReplaceInput(inputName, tempName, outputName);
         return true;
     }
 
@@ -195,5 +171,93 @@ public static class Convert
         File.Move(tempName, fileName, true);
 
         return true;
+    }
+
+    // A rename or move onto targetName replaces an existing entry other than fileName itself
+    public static bool WouldReplaceOtherFile(string fileName, string targetName) =>
+        Path.Exists(targetName) && !IsSameFile(fileName, targetName);
+
+    private static bool IsSameFile(string fileName, string targetName)
+    {
+        if (fileName.Equals(targetName, StringComparison.Ordinal))
+        {
+            return true;
+        }
+        if (!fileName.Equals(targetName, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // A case-only rename names the file itself unless the directory lists the exact target name
+        string targetFileName = Path.GetFileName(targetName);
+        return Path.Exists(targetName)
+            && !Directory
+                .EnumerateFileSystemEntries(
+                    Path.GetDirectoryName(Path.GetFullPath(targetName))!,
+                    targetFileName,
+                    new EnumerationOptions
+                    {
+                        MatchCasing = MatchCasing.CaseInsensitive,
+                        AttributesToSkip = 0,
+                    }
+                )
+                .Any(entry =>
+                    Path.GetFileName(entry).Equals(targetFileName, StringComparison.Ordinal)
+                );
+    }
+
+    public static bool CanReplace(string fileName, string targetName)
+    {
+        if (!WouldReplaceOtherFile(fileName, targetName))
+        {
+            return true;
+        }
+        Log.Error("Target file already exists : {TargetName} : {FileName}", targetName, fileName);
+        return false;
+    }
+
+    private static void ReplaceInput(string inputName, string tempName, string outputName)
+    {
+        // Overwrite only the input itself, so another file at the output name fails the move
+        bool inPlace = IsSameFile(inputName, outputName);
+        try
+        {
+            File.Move(tempName, outputName, inPlace);
+        }
+        catch
+        {
+            DeleteTempFile(tempName);
+            throw;
+        }
+        if (inPlace)
+        {
+            return;
+        }
+
+        // The media is at the output name, so a failed delete still reports the output and the modification
+        try
+        {
+            File.Delete(inputName);
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            Log.Error(
+                "Failed to delete the input after moving to the output : {FileName}",
+                inputName
+            );
+        }
+    }
+
+    // A failed cleanup is logged so the move failure is the exception that propagates
+    private static void DeleteTempFile(string tempName)
+    {
+        try
+        {
+            File.Delete(tempName);
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            Log.Error("Failed to delete the temp file : {FileName}", tempName);
+        }
     }
 }
