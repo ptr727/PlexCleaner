@@ -292,4 +292,35 @@ public sealed class PostRunWriteTests : IDisposable
             .BeTrue();
         _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(hidden);
     }
+
+    [Fact]
+    public void RegisterInvalidFiles_UnreadableFolder_KeepsEntry()
+    {
+        // Root bypasses the mode, and Windows has no mode
+        if (OperatingSystem.IsWindows() || Environment.UserName == "root")
+        {
+            return;
+        }
+        string folder = Path.Combine(_directory, "locked");
+        _ = Directory.CreateDirectory(folder);
+        string entry = Path.Combine(folder, "a.mkv");
+        File.WriteAllText(entry, string.Empty);
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Add(entry);
+        File.SetUnixFileMode(folder, UnixFileMode.None);
+        try
+        {
+            _ = Process
+                .RegisterInvalidFiles([], Path.Combine(_directory, "settings.json"))
+                .Should()
+                .BeTrue();
+            _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(entry);
+        }
+        finally
+        {
+            File.SetUnixFileMode(
+                folder,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+            );
+        }
+    }
 }

@@ -759,7 +759,7 @@ public static class Process
         try
         {
             string name = Path.GetFileName(fileName);
-            EnumerationOptions options = new() { AttributesToSkip = 0 };
+            EnumerationOptions options = new() { AttributesToSkip = 0, IgnoreInaccessible = false };
             return !Directory
                 .EnumerateFiles(folder, "*", options)
                 .Any(item =>
