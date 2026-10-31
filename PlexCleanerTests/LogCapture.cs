@@ -13,6 +13,7 @@ internal static class LogCapture
         public void Emit(LogEvent logEvent) => Events.Add(logEvent);
     }
 
+    // Swaps the global Log.Logger, so every caller joins the Sequential collection
     public static IReadOnlyList<LogEvent> Capture(Action action)
     {
         CapturingSink sink = new();
