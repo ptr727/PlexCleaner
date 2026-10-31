@@ -107,7 +107,7 @@ public sealed class PostRunWriteTests : IDisposable
             CreateResult("failed.mkv", SidecarFile.StatesType.VerifyFailed)
         );
 
-        _ = Process.FinishProcessing(resultsJson, true).Should().BeFalse();
+        _ = Process.FinishProcessing(resultsJson).Should().BeFalse();
     }
 
     [Theory]
@@ -134,7 +134,7 @@ public sealed class PostRunWriteTests : IDisposable
             CreateResult("failed.mkv", SidecarFile.StatesType.VerifyFailed)
         );
 
-        _ = Process.FinishProcessing(resultsJson, true).Should().BeFalse();
+        _ = Process.FinishProcessing(resultsJson).Should().BeFalse();
         _ = File.Exists(settingsFile).Should().Be(!settingsFails);
         _ = File.Exists(resultsFile).Should().Be(settingsFails);
     }
@@ -174,21 +174,54 @@ public sealed class PostRunWriteTests : IDisposable
     }
 
     [Fact]
-    public void ProcessFiles_ResultsWriteFails_ReturnsFalse()
+    public void ProcessFiles_ResultsWriteFails_ReportsWriteFailure()
     {
         Program.Config.VerifyOptions.RegisterInvalidFiles = false;
         Program.Options.ResultsFile = Path.Combine(_directory, "missing", "results.json");
 
-        _ = Process.ProcessFiles([]).Should().BeFalse();
+        _ = Process.ProcessFiles([], out bool writeFailed).Should().BeTrue();
+        _ = writeFailed.Should().BeTrue();
     }
 
     [Fact]
-    public void ProcessFiles_ResultsWriteSucceeds_ReturnsTrue()
+    public void ProcessFiles_ResultsWriteSucceeds_ReportsNoFailure()
     {
         Program.Config.VerifyOptions.RegisterInvalidFiles = false;
         Program.Options.ResultsFile = Path.Combine(_directory, "results.json");
 
-        _ = Process.ProcessFiles([]).Should().BeTrue();
+        _ = Process.ProcessFiles([], out bool writeFailed).Should().BeTrue();
+        _ = writeFailed.Should().BeFalse();
         _ = File.Exists(Program.Options.ResultsFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void RegisterInvalidFiles_MissingFileInExistingFolder_IsPruned()
+    {
+        string present = Path.Combine(_directory, "present.mkv");
+        File.WriteAllText(present, string.Empty);
+        string missing = Path.Combine(_directory, "missing.mkv");
+        string unmounted = Path.Combine(_directory, "unmounted", "share.mkv");
+        Program.Config.ProcessOptions.FileIgnoreList.UnionWith([present, missing, unmounted]);
+        string settingsFile = Path.Combine(_directory, "settings.json");
+
+        bool result = Process.RegisterInvalidFiles([], settingsFile);
+
+        _ = result.Should().BeTrue();
+        _ = Program
+            .Config.ProcessOptions.FileIgnoreList.Should()
+            .BeEquivalentTo(present, unmounted);
+        _ = File.Exists(settingsFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void RegisterInvalidFiles_NothingToPrune_WritesNothing()
+    {
+        string present = Path.Combine(_directory, "present.mkv");
+        File.WriteAllText(present, string.Empty);
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Add(present);
+        string settingsFile = Path.Combine(_directory, "settings.json");
+
+        _ = Process.RegisterInvalidFiles([], settingsFile).Should().BeTrue();
+        _ = File.Exists(settingsFile).Should().BeFalse();
     }
 }

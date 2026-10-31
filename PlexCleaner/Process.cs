@@ -518,7 +518,7 @@ public static class Process
         }
     }
 
-    public static bool ProcessFiles(List<string> fileList)
+    public static bool ProcessFiles(List<string> fileList, out bool writeFailed)
     {
         // Log active options
         Log.Logger.LogOverrideContext()
@@ -593,11 +593,14 @@ public static class Process
             }
         );
 
-        return FinishProcessing(resultsJson, ret);
+        writeFailed = !FinishProcessing(resultsJson);
+        return ret;
     }
 
-    internal static bool FinishProcessing(ProcessResultJsonSchema resultsJson, bool ret)
+    internal static bool FinishProcessing(ProcessResultJsonSchema resultsJson)
     {
+        bool writesSucceeded = true;
+
         // Errors
         List<ProcessResultJsonSchema.ProcessResult> errorResults =
         [
@@ -647,7 +650,7 @@ public static class Process
             && !RegisterInvalidFiles(failedResults, Program.Options.SettingsFile)
         )
         {
-            ret = false;
+            writesSucceeded = false;
         }
 
         // Write the process results to file
@@ -689,11 +692,11 @@ public static class Process
                     "Failed to write results file : {ResultsFile}",
                     Program.Options.ResultsFile
                 );
-                ret = false;
+                writesSucceeded = false;
             }
         }
 
-        return ret;
+        return writesSucceeded;
     }
 
     internal static bool RegisterInvalidFiles(
@@ -702,27 +705,28 @@ public static class Process
     )
     {
         // Add failed items to the ignore list, a deleted file no longer exists to be ignored
-        bool newItems = false;
+        HashSet<string> ignoreList = Program.Config.ProcessOptions.FileIgnoreList;
+        bool modified = false;
         foreach (
             ProcessResultJsonSchema.ProcessResult item in failedResults.Where(item =>
                 !item.State.HasFlag(SidecarFile.StatesType.FileDeleted)
             )
         )
         {
-            if (Program.Config.ProcessOptions.FileIgnoreList.Add(item.NewFileName))
-            {
-                newItems = true;
-            }
+            modified |= ignoreList.Add(item.NewFileName);
         }
 
+        // Prune entries for missing files, but only where the parent folder exists, an unmounted share keeps its entries
+        modified |= ignoreList.RemoveWhere(IsMissingFile) > 0;
+
         // Update JSON settings if modified
-        if (!newItems)
+        if (!modified)
         {
             return true;
         }
         Log.Information(
             "Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}",
-            Program.Config.ProcessOptions.FileIgnoreList.Count,
+            ignoreList.Count,
             settingsFile
         );
         try
@@ -735,5 +739,11 @@ public static class Process
             Log.Error("Failed to write settings file : {SettingsFile}", settingsFile);
             return false;
         }
+    }
+
+    private static bool IsMissingFile(string fileName)
+    {
+        string? folder = Path.GetDirectoryName(fileName);
+        return !string.IsNullOrEmpty(folder) && Directory.Exists(folder) && !File.Exists(fileName);
     }
 }
