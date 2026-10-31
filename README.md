@@ -193,7 +193,17 @@ Choose an installation method based on your platform and requirements:
   - ⚠️ Binaries built but not tested in CI.
   - ⚠️ Manual tool installation required.
 
-PlexCleaner requires FFmpeg 8.0 or newer, and exits with an error at startup when an installed tool is older than its minimum version. The Docker image and the Windows automatic download provide a current FFmpeg, while a winget, manual, Linux, or macOS install must provide one.
+PlexCleaner exits with an error at startup when an installed tool is older than its minimum version. The minimum versions are:
+
+| Tool | Minimum version |
+| --- | --- |
+| FFmpeg and FFprobe | 8.0 |
+| HandBrake | 1.10.0 |
+| MediaInfo | 25.07 |
+| MKVToolNix | 94.0 |
+| 7-Zip | 25.01 |
+
+A version with a release prefix, a HandBrake nightly (by branch or build date), or an FFmpeg build named by date is compared by that. A version string that cannot be compared is accepted with a warning. The Docker image and the Windows automatic download provide current tools. A winget, manual, Linux, or macOS install must provide versions that meet the minimums.
 
 ### Docker
 

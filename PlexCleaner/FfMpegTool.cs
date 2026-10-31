@@ -77,11 +77,16 @@ public partial class FfMpeg
             // "ffmpeg version 4.3.1-1ubuntu0~20.04.sav1 Copyright (c) 2000-2020 the FFmpeg developers"
             // "ffprobe version 7.1.1-full_build-www.gyan.dev Copyright (c) 2007-2025 the FFmpeg developers"
             // "ffprobe version 5.1.6-0+deb12u1 Copyright (c) 2007-2024 the FFmpeg developers"
+            // "ffmpeg version N-121061-g0123456789 Copyright (c) 2000-2025 the FFmpeg developers"
 
             // Parse version
             string[] lines = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
             Match match = InstalledVersionRegex().Match(lines[0]);
-            Debug.Assert(match.Success && Version.TryParse(match.Groups["version"].Value, out _));
+            if (!match.Success)
+            {
+                match = BuildVersionRegex().Match(lines[0]);
+            }
+            Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
             return true;
         }
@@ -555,5 +560,9 @@ public partial class FfMpeg
             RegexOptions.IgnoreCase | RegexOptions.Multiline
         )]
         public static partial Regex InstalledVersionRegex();
+
+        // Development builds "N-121061-g0123456789" and "2025-08-25-git-abc-full_build-www.gyan.dev"
+        [GeneratedRegex(@"version\s+(?<version>\S+)", RegexOptions.IgnoreCase)]
+        public static partial Regex BuildVersionRegex();
     }
 }
