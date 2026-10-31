@@ -38,38 +38,36 @@ public sealed class SidecarRenameStateTests : IDisposable
         Directory.Delete(_directory, true);
     }
 
-    private static JsonNode ReadState(string sidecarPath, out int state)
-    {
-        JsonNode node = JsonNode.Parse(File.ReadAllText(sidecarPath))!;
-        state = node["State"]!.GetValue<int>();
-        return node;
-    }
+    private static int ReadState(string sidecarPath) =>
+        JsonNode.Parse(File.ReadAllText(sidecarPath))!["State"]!.GetValue<int>();
 
     [Fact]
     public void Open_SeededStateOverMatchingSidecar_KeepsBothStates()
     {
-        // name.MKV and name.mkv share name.PlexCleaner and the hash matches
+        // The sidecar name ignores the extension case, so the hash matches
         string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarPath = Path.Combine(_directory, "name.PlexCleaner");
         JsonNode stored = JsonNode.Parse(File.ReadAllText(sidecarPath))!;
         stored["State"] = (int)SidecarFile.StatesType.Verified;
         File.WriteAllText(sidecarPath, stored.ToJsonString());
         string renamed = Path.Combine(_directory, "name.MKV");
-        File.Move(mediaFile, renamed);
+        string tempName = Path.ChangeExtension(mediaFile, ".tmp7");
+        File.Move(mediaFile, tempName);
+        File.Move(tempName, renamed);
 
         SidecarFile sidecarFile = new(renamed) { State = Seeded };
         _ = sidecarFile.Open().Should().BeTrue();
 
         SidecarFile.StatesType expected = Seeded | SidecarFile.StatesType.Verified;
         _ = sidecarFile.State.Should().Be(expected);
-        _ = ReadState(sidecarPath, out int written);
-        _ = written.Should().Be((int)expected);
+        _ = ReadState(sidecarPath).Should().Be((int)expected);
     }
 
     [Fact]
     public void Open_SeededStateOverStaleSidecar_KeepsSeededAndMarksModified()
     {
-        // name.avi remuxed to name.mkv meets a stale name.PlexCleaner
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        // A remuxed file meets the stale sidecar of the file it replaced
         string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         string sidecarPath = Path.Combine(_directory, "name.PlexCleaner");
         JsonNode stored = JsonNode.Parse(File.ReadAllText(sidecarPath))!;
@@ -101,7 +99,6 @@ public sealed class SidecarRenameStateTests : IDisposable
         // The stale Verified flag is cleared, the seeded flags are kept
         SidecarFile.StatesType expected = Seeded | SidecarFile.StatesType.FileModified;
         _ = sidecarFile.State.Should().Be(expected);
-        _ = ReadState(sidecarPath, out int written);
-        _ = written.Should().Be((int)expected);
+        _ = ReadState(sidecarPath).Should().Be((int)expected);
     }
 }
