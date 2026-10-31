@@ -5,73 +5,25 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 ## Release History
 
 - Version 3.23:
-  - Fixed a verify false positive that reported healthy video as `non monotonically increasing dts to muxer` and sent it down the full repair ladder.
-    - Verify decodes to the ffmpeg `null` muxer, which passes frames through with no timestamp fixup.
-    - The verify video encoder used the default `1/framerate` time base, so frames closer together than one nominal frame interval rounded onto the same tick.
-    - Video with a cadence denser than its nominal frame rate (VFR, telecine remnants, odd nominal rates, or millisecond jitter) reported an equal `N >= N` DTS.
-    - The decoder output was never at fault, the repeated values only existed after rounding into the encoder time base.
-    - Verify now encodes video in the input stream time base, which keeps the decoded timestamps at their native precision.
-    - The option is `-enc_time_base:v demux`.
-    - Audio keeps its default `1/sample_rate` encoder time base, which is already sample accurate.
-    - A genuinely repeated or backward timestamp is still reported, as are demux-visible audio DTS breaks and decode corruption.
-    - Files that previously failed with this false positive verify clean with no repair.
-    - They no longer waste a re-encode on a file that was never broken.
-  - A non-monotonic DTS that only appears after decode no longer falls through to the re-encode repair tiers.
-    - When the demux packet analysis finds no non-monotonic audio or video DTS, the repair tries only the remux tier.
-    - A re-encode of such a file passed verify only because the Matroska output dropped the frames whose timestamps collided.
-    - The file is marked `RepairFailed` instead of being re-encoded for hours or silently losing frames.
-    - Such a file is also marked `PostDecodeTimestamps`.
-    - A file can also carry both a demux-visible audio DTS break and a post-decode video DTS break.
-    - The lossless `setts` tier repairs the audio, but the rewrite still fails verify on the video and is discarded.
-    - When that rewrite leaves no demux-visible audio or video DTS, the remaining failure is post-decode, and the repair stops after the remux tier.
-    - Before, such a file fell through to the re-encode, which dropped the colliding video frame and padded the end of the stream.
-  - Added a minimum supported tool version, checked once at startup when the tools are verified.
-    - PlexCleaner exits with an error before processing any media when an installed tool is older than its minimum.
-    - The minimum FFmpeg version is 8.0, which applies to FFmpeg and FFprobe alike.
-    - The Docker image and the Windows automatic tool download provide a newer FFmpeg.
-    - A winget, manually downloaded, Linux, or macOS FFmpeg older than 8.0 must be updated.
-    - Version-dependent tool behavior raises the minimum rather than adding per-version command line branches.
-  - Files an earlier version marked `VerifyFailed` are not re-verified automatically.
-    - The [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin re-verifies files marked `RepairFailed` and clears those that now verify clean.
-    - The `createsidecar` command resets the processing state of all files, so the next run verifies them again.
-  - Added the `dts-timebase` and `dts-duplicate-pts` synthetic regression fixtures, a healthy VFR file that must verify clean and a repeated frame timestamp that must still fail.
-  - Added the `dts-mixed` synthetic regression fixture, a demux-visible audio DTS break plus a post-decode video DTS break that must stop after the remux tier.
-  - Renamed the shell scripts to lowercase-hyphenated names, which changes the script paths inside the Docker image.
-    - The image test script is `/Test/test.sh`, it was `/Test/Test.sh`.
-    - The image version script is `/PlexCleaner/version.sh`, it was `/PlexCleaner/Version.sh`.
-    - Each renamed script answers `--help` and refuses an argument it does not recognize.
-  - The image test script runs as a non-root user, such as the `nonroot:users` user that owns the media.
-    - It writes its output and any downloaded test media under `/tmp/PlexCleaner-Test`, since the image's `/Test` is owned by root.
-    - It still reads `/Test/Media` and `/Test/PlexCleaner.json` when they are mounted.
-  - `DeleteInvalidFiles` deletes only a file that failed processing.
-    - A cancel, a read-only media file, and a read-only sidecar file leave the media file and its sidecar in place.
-    - A failed non-MKV file keeps the sidecar of a sibling MKV file with the same name.
-    - A tool run that does not finish leaves the media file and its sidecar in place, in any processing step.
-      - Such a run fails to launch, throws, or is killed by a signal outside Windows.
-    - A file marked `PostDecodeTimestamps` keeps the media file and its sidecar in place, on every run.
-    - An FfMpeg verify run killed by a signal still runs the repair.
-      - Outside Windows, the media file and its sidecar stay in place when that repair fails.
-        - A failed or skipped repair leaves the file's state unchanged, so the next run verifies it again.
-  - An exception while processing one file fails that file, and the run continues with the next file.
-    - Before, it ended the run for every remaining file with exit code 1.
-    - The media file and its sidecar stay in place, whatever `DeleteInvalidFiles` says.
-  - The error summary names the failed step beside the state of each file that failed processing, such as `VerifyFailed, VerifyAndRepair`.
-  - A failed repair whose tool run does not finish leaves the file's state unchanged, rather than marking it `VerifyFailed` and `RepairFailed`.
-    - The next run retries the repair.
-  - A re-encode or deinterlace replaces the media file only after every rewriting step succeeds, the track language restore included.
-    - Before, a failure in a later step left the rewritten file with its state unchanged and reported it as not modified.
-  - With the `Verify` option off, processing leaves a file's state unchanged rather than marking it `Verified`.
-    - Enabling `Verify` later verifies such a file, and a file marked `VerifyFailed` keeps that state.
-    - The `ScannedInterlace` and `ScannedCaptions` state flags record a clean interlace or closed caption scan of the whole file.
-    - So each scan runs once per file without a verify, and a `--quickscan` sample sets neither flag.
-    - A file an earlier version marked `Verified` with the `Verify` option off is not re-verified automatically, and the `createsidecar` command resets its state.
-  - With `UseSidecarFiles` off, a step that only changes a file's state does not run the media info tools again.
-  - When a cleanup step or a later step modifies a file, processing repeats the cleanup steps after the verify and repair step.
-    - The repeated steps are cover art, tags, metadata, Matroska structure, closed captions, track language, duplicate tracks and default flags.
-    - A rewrite by FfMpeg or HandBrake, such as a deinterlace, re-encode or repair, can undo their work.
-    - Before, it repeated only the metadata, unknown language, tag and default flag steps.
-  - Deleting a sidecar file with no matching MKV file counts as a successful cleanup, as deleting a non-MKV file does.
-    - Before, it counted as an error and reported the deletion step as the failed step.
+  - Added a minimum version for every media tool, and PlexCleaner exits with an error at startup when an installed tool is older.
+    - The minimums are FFmpeg 8.0, HandBrake 1.10.0, MediaInfo 25.07, MKVToolNix 94.0, and 7-Zip 25.01.
+    - The Docker image and the Windows tool download meet them, and a winget, manual, Linux, or macOS install may need an update.
+  - Renamed the Docker image scripts, so update anything that calls `/Test/Test.sh` or `/PlexCleaner/Version.sh` to use `/Test/test.sh` or `/PlexCleaner/version.sh`.
+    - The test script runs as a non-root user and writes its output under `/tmp/PlexCleaner-Test`.
+  - Files an earlier version marked `VerifyFailed`, or marked `Verified` with the `Verify` option off, are not verified again automatically.
+    - Run the `createsidecar` command on the affected folders, which also clears the state that prevents a repeat conversion. The [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin re-verifies files marked `RepairFailed`.
+  - A non-monotonic DTS seen only after decode is repaired by remux only, and a file the remux cannot fix is marked `RepairFailed` and `PostDecodeTimestamps`.
+  - An exception in one file fails only that file instead of ending the run, and the error summary names the failed step.
+  - `DeleteInvalidFiles` keeps a file after an exception, a cancel, a rename collision, or an unfinished tool run, and keeps a read-only or `PostDecodeTimestamps` file.
+  - With the `Verify` option off, a file is no longer marked `Verified`, and the sidecar records a clean full-file interlace or caption scan.
+  - Automatic processing skips re-encoding a file it already re-encoded, or deinterlacing one it already deinterlaced, while the `reencode` and `deinterlace` commands still force it.
+  - When a step rewrites a file, processing repeats every cleanup step, and cleanup it cannot finish is logged rather than retried every run.
+  - `RegisterInvalidFiles` skips deleted files and prunes missing ones, and a failed settings or results file write is logged without ending the run.
+  - Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS and sent it to repair.
+  - A conversion or rename replaces the original only after it fully succeeds, and never replaces a different existing file.
+  - `BitrateExceeded` clears when a measurement is under the limit, and is measured again after a re-encode repair.
+  - A renamed file keeps its state, an interrupted repair is retried on the next run, and deleting an orphan sidecar counts as a success.
+  - The media info tools no longer rerun after a tool upgrade with `SidecarUpdateOnToolChange` off, or after a state-only change with `UseSidecarFiles` off.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.

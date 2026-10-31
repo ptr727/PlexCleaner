@@ -28,10 +28,11 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 **Summary:**
 
-- Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
-- Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, the re-encode passed verify only by dropping frames.
-- Added a minimum supported tool version checked at startup, the minimum FFmpeg version is 8.0.
+- Added a minimum version for every media tool, checked at startup, such as FFmpeg 8.0 and HandBrake 1.10.0.
 - Renamed the Docker image test script to `/Test/test.sh` and the version script to `/PlexCleaner/version.sh`.
+- Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
+- Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, since the re-encode drops frames.
+- An exception in one file fails only that file instead of ending the run.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
