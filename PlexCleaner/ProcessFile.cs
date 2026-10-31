@@ -25,6 +25,9 @@ public class ProcessFile
     // Classification of the file's own stream verify, it chooses the repair
     private VerifyResult _lastVerifyResult;
 
+    // A bitrate analysis a tool error ended was not measured, so Verified stays unset for a retry
+    private bool _bitrateToolError;
+
     // A rename blocked by an existing file says nothing about the media
     private bool _renameCollision;
 
@@ -1365,6 +1368,16 @@ public class ProcessFile
         // Already deinterlaced?
         if (State.HasFlag(SidecarFile.StatesType.DeInterlaced))
         {
+            // A metadata interlace flag can survive deinterlacing, so only an explicit deinterlace repeats it
+            if (conditional)
+            {
+                Log.Warning(
+                    "Skipping deinterlace of already deinterlaced media : Track: {Track} : {FileName}",
+                    $"{videoProps.Id}:{videoProps.Format}:{videoProps.Codec}",
+                    FileInfo.FullName
+                );
+                return true;
+            }
             Log.Warning("Deinterlacing already deinterlaced media : {FileName}", FileInfo.FullName);
         }
 
@@ -1660,6 +1673,18 @@ public class ProcessFile
         // Already reencoded?
         if (State.HasFlag(SidecarFile.StatesType.ReEncoded))
         {
+            // The encoder output can still match the selection, so only an explicit reencode repeats it
+            if (conditional)
+            {
+                Log.Warning(
+                    "Skipping reencode of already reencoded media : Tracks: {Tracks} : {FileName}",
+                    selectMediaProps
+                        .Selected.GetTrackList()
+                        .Select(item => $"{item.Id}:{item.Format}:{item.Codec}"),
+                    FileInfo.FullName
+                );
+                return true;
+            }
             Log.Warning("Reencoding already reencoded media : {FileName}", FileInfo.FullName);
         }
 
@@ -1753,6 +1778,7 @@ public class ProcessFile
         // Init
         canRepair = false;
         _lastVerifyResult = VerifyResult.Clean;
+        _bitrateToolError = false;
 
         // Skip if Verified
         if (conditional && _sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
@@ -1783,8 +1809,8 @@ public class ProcessFile
 
         // Verify bitrate
         // Warning only
-        // Will update sidecar state if bitrate exceeded
-        _ = VerifyBitrate();
+        // Sets or clears the BitrateExceeded state
+        _bitrateToolError = !VerifyBitrate();
 
         // Verify media streams, VerifyAndRepair() stops on a tool error before it reads canRepair
         canRepair = true;
@@ -1874,8 +1900,8 @@ public class ProcessFile
         // Verify (verify does not set any state, it just tests state)
         if (Verify(true, out bool canRepair))
         {
-            // Set Verified state if not already set
-            if (!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
+            // Set Verified state if not already set, and not when the bitrate analysis hit a tool error
+            if (!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified) && !_bitrateToolError)
             {
                 _sidecarFile.State |= SidecarFile.StatesType.Verified;
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
@@ -1938,7 +1964,7 @@ public class ProcessFile
 
         // Attempt repair, if repair fails the original file will not be modified
         int toolErrors = ToolErrorScope.Count;
-        bool repaired = RepairAndReVerify();
+        bool repaired = RepairAndReVerify(false, out bool reEncoded);
 
         // Cancel requested
         if (Program.IsCancelled())
@@ -1969,15 +1995,32 @@ public class ProcessFile
         }
 
         // Verified and repaired state
+        return SetRepairedState(reEncoded, ref modified);
+    }
+
+    private bool SetRepairedState(bool reEncoded, ref bool modified)
+    {
         _sidecarFile.State |= SidecarFile.StatesType.Verified;
         _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State |= SidecarFile.StatesType.Repaired;
         _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
-
-        // Repaired
         modified = true;
-        return Refresh(true);
+        if (!Refresh(true))
+        {
+            return false;
+        }
+
+        // A re-encode changes the bitrate, measure the refreshed media again
+        if (reEncoded)
+        {
+            _bitrateToolError = !VerifyBitrate();
+        }
+        if (_bitrateToolError)
+        {
+            _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
+        }
+        return SaveState();
     }
 
     private bool VerifyBitrate()
@@ -1998,12 +2041,14 @@ public class ProcessFile
         // https://4kmedia.org/real-or-fake-4k/
         // https://en.wikipedia.org/wiki/YIFY
 
-        // Calculate bitrate
+        // Calculate bitrate, a failure is a warning and keeps the last measured state
+        // Return false only when a tool error ended the analysis
+        int toolErrors = ToolErrorScope.Count;
+        int signals = ToolErrorScope.SignalCount;
         if (!GetBitrateInfo(out BitrateInfo? bitrateInfo) || bitrateInfo == null)
         {
-            // Error
-            Log.Error("Failed to calculate bitrate info : {FileName}", FileInfo.FullName);
-            return false;
+            Log.Warning("Failed to calculate bitrate info : {FileName}", FileInfo.FullName);
+            return ToolErrorScope.Count == toolErrors && ToolErrorScope.SignalCount == signals;
         }
 
         // Print bitrate
@@ -2023,6 +2068,10 @@ public class ProcessFile
             _sidecarFile.State |= SidecarFile.StatesType.BitrateExceeded;
 
             // Warning only
+        }
+        else
+        {
+            _sidecarFile.State &= ~SidecarFile.StatesType.BitrateExceeded;
         }
 
         // Audio bitrate exceeds video bitrate, may indicate an error with the video track
@@ -2116,8 +2165,10 @@ public class ProcessFile
         return true;
     }
 
-    private bool RepairAndReVerify(bool remuxOnly = false)
+    private bool RepairAndReVerify(bool remuxOnly, out bool reEncoded)
     {
+        reEncoded = false;
+
         // Sanity check
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
@@ -2241,6 +2292,7 @@ public class ProcessFile
 
         // Verify succeeded, rename the temp file to the original file
         File.Move(tempName, FileInfo.FullName, true);
+        reEncoded = true;
 
         // Repair succeeded
         Log.Information("Repair succeeded : {FileName}", FileInfo.FullName);
@@ -2319,30 +2371,33 @@ public class ProcessFile
 
     private bool RepairTimestampsAndSetState(ref bool modified)
     {
+        // Do not touch state on cancellation, a tool that did not run, or a signal-ended verify
         int toolErrors = ToolErrorScope.Count;
-        _ = GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo);
+        bool ToolFailed() =>
+            Program.IsCancelled()
+            || ToolErrorScope.Count != toolErrors
+            || ToolErrorScope.SignalCount > 0;
+
+        // A failed packet analysis falls back to the remux and re-encode tiers
+        if (!GetPacketAnalysis(false, out _, out DtsInfo? dtsInfo))
+        {
+            if (ToolFailed())
+            {
+                return false;
+            }
+            Log.Warning("Failed to analyze packet timestamps : {FileName}", FileInfo.FullName);
+        }
 
         // Escalate from setts to remux to re-encode, and the first clean re-verify wins
         // A post-decode only DTS stops after the remux
+        bool reEncoded = false;
         bool repaired = TryLosslessTimestampRepair(dtsInfo, out bool residualPostDecode);
         bool postDecodeOnly = residualPostDecode || DtsInfo.IsPostDecodeOnly(dtsInfo);
-        if (repaired || RepairAndReVerify(postDecodeOnly))
+        if (repaired || RepairAndReVerify(postDecodeOnly, out reEncoded))
         {
-            _sidecarFile.State |= SidecarFile.StatesType.Verified;
-            _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
-            _sidecarFile.State |= SidecarFile.StatesType.Repaired;
-            _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
-            _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
-            modified = true;
-            return Refresh(true);
+            return SetRepairedState(reEncoded, ref modified);
         }
-
-        // Do not touch state on cancellation, a tool that did not run, or a signal-ended verify
-        if (
-            Program.IsCancelled()
-            || ToolErrorScope.Count != toolErrors
-            || ToolErrorScope.SignalCount > 0
-        )
+        if (ToolFailed())
         {
             return false;
         }
