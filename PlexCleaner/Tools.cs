@@ -55,10 +55,14 @@ public static class Tools
     private static bool VerifyToolVersions()
     {
         List<MediaTool> unsupportedTools = GetToolList()
-            .FindAll(tool => !MediaTool.IsSupportedVersion(tool.Info.Version, tool.MinimumVersion));
+            .FindAll(tool =>
+                MediaTool.CheckVersion(tool.Info.Version, tool.MinimumVersion, tool.MinimumDate)
+                == MediaTool.VersionGate.Unsupported
+            );
         GetToolList()
             .FindAll(tool =>
-                tool.MinimumVersion != null && !Version.TryParse(tool.Info.Version, out _)
+                MediaTool.CheckVersion(tool.Info.Version, tool.MinimumVersion, tool.MinimumDate)
+                == MediaTool.VersionGate.Unknown
             )
             .ForEach(tool =>
                 Log.Warning(

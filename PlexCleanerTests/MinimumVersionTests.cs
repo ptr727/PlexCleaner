@@ -60,19 +60,62 @@ public class MinimumVersionTests
             .BeFalse();
 
     [Theory]
-    [InlineData("20230223192356-5c2b5d2d0-1.6.x")]
-    [InlineData("N-121234-g0123456789")]
-    [InlineData("")]
-    public void IsSupportedVersion_Unparsable_PassesGate(string version) =>
+    [InlineData("20230223192356-5c2b5d2d0-1.6.x", MediaTool.VersionGate.Unsupported)]
+    [InlineData("20250901123456-5c2b5d2d0-1.10.x", MediaTool.VersionGate.Supported)]
+    [InlineData("20250901123456-5c2b5d2d0-master", MediaTool.VersionGate.Supported)]
+    [InlineData("20250101000000-5c2b5d2d0-master", MediaTool.VersionGate.Unsupported)]
+    [InlineData("1.11.2", MediaTool.VersionGate.Supported)]
+    [InlineData("", MediaTool.VersionGate.Unknown)]
+    [InlineData("custom-build", MediaTool.VersionGate.Unknown)]
+    public void CheckVersion_HandBrake_DevelopmentBuilds(
+        string version,
+        MediaTool.VersionGate expected
+    )
+    {
+        HandBrake.Tool tool = new();
         _ = MediaTool
-            .IsSupportedVersion(version, new HandBrake.Tool().MinimumVersion)
+            .CheckVersion(version, tool.MinimumVersion, tool.MinimumDate)
             .Should()
-            .BeTrue();
+            .Be(expected);
+    }
+
+    [Theory]
+    [InlineData("2025-08-25-git-abc123-full_build-www.gyan.dev", MediaTool.VersionGate.Supported)]
+    [InlineData("2025-08-01-git-abc123-full_build-www.gyan.dev", MediaTool.VersionGate.Unsupported)]
+    [InlineData("N-121061-g0123456789", MediaTool.VersionGate.Unknown)]
+    public void CheckVersion_FfMpeg_DevelopmentBuilds(
+        string version,
+        MediaTool.VersionGate expected
+    )
+    {
+        FfMpeg.Tool tool = new();
+        _ = MediaTool
+            .CheckVersion(version, tool.MinimumVersion, tool.MinimumDate)
+            .Should()
+            .Be(expected);
+    }
+
+    [Theory]
+    [InlineData(
+        "ffmpeg version N-121061-g0123456789 Copyright (c) 2000-2025",
+        "N-121061-g0123456789"
+    )]
+    [InlineData(
+        "ffmpeg version 2025-08-25-git-abc123-full_build-www.gyan.dev Copyright (c) 2000-2025",
+        "2025-08-25-git-abc123-full_build-www.gyan.dev"
+    )]
+    public void GetVersion_FfMpeg_DevelopmentBuild_KeepsBuildString(string line, string version)
+    {
+        MediaToolInfo mediaToolInfo = new();
+        _ = FfMpeg.Tool.GetVersion(line, mediaToolInfo).Should().BeTrue();
+        _ = mediaToolInfo.Version.Should().Be(version);
+    }
 
     [Theory]
     [InlineData("HandBrake 1.9.2", false)]
     [InlineData("HandBrake 1.10.0", true)]
-    [InlineData("HandBrake 20230223192356-5c2b5d2d0-1.6.x", true)]
+    [InlineData("HandBrake 20230223192356-5c2b5d2d0-1.6.x", false)]
+    [InlineData("HandBrake 20250901123456-5c2b5d2d0-master", true)]
     public void GetVersion_HandBrake_GatesOnMinimum(string line, bool expected)
     {
         MediaToolInfo mediaToolInfo = new();

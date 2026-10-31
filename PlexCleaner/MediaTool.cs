@@ -1,13 +1,15 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using CliWrap;
 using CliWrap.Buffered;
 
 namespace PlexCleaner;
 
-public abstract class MediaTool
+public abstract partial class MediaTool
 {
     public enum ToolFamily
     {
@@ -53,23 +55,89 @@ public abstract class MediaTool
     // Latest downloadable version
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
 
-    public Version? MinimumVersion =>
+    public Version? MinimumVersion => GetMinimum()?.Version;
+
+    // Release date of the minimum version, compared with dated development builds
+    public DateOnly? MinimumDate => GetMinimum()?.Date;
+
+    private (Version Version, DateOnly Date)? GetMinimum() =>
         GetToolFamily() switch
         {
-            ToolFamily.FfMpeg => new Version(8, 0),
-            ToolFamily.HandBrake => new Version(1, 10, 0),
-            ToolFamily.MediaInfo => new Version(25, 7),
-            ToolFamily.MkvToolNix => new Version(94, 0),
-            ToolFamily.SevenZip => new Version(25, 1),
+            ToolFamily.FfMpeg => (new Version(8, 0), new DateOnly(2025, 8, 22)),
+            ToolFamily.HandBrake => (new Version(1, 10, 0), new DateOnly(2025, 8, 9)),
+            ToolFamily.MediaInfo => (new Version(25, 7), new DateOnly(2025, 7, 29)),
+            ToolFamily.MkvToolNix => (new Version(94, 0), new DateOnly(2025, 7, 27)),
+            ToolFamily.SevenZip => (new Version(25, 1), new DateOnly(2025, 8, 3)),
             ToolFamily.None => null,
             _ => null,
         };
 
-    // An unparsed version is taken to be a current git build, so it passes the gate
-    public static bool IsSupportedVersion(string version, Version? minimumVersion) =>
-        minimumVersion == null
-        || !Version.TryParse(version, out Version? parsed)
-        || parsed >= minimumVersion;
+    public enum VersionGate
+    {
+        Supported,
+        Unsupported,
+        Unknown,
+    }
+
+    // Release versions compare directly, development builds compare by branch or build date
+    public static VersionGate CheckVersion(
+        string version,
+        Version? minimumVersion,
+        DateOnly? minimumDate
+    )
+    {
+        if (minimumVersion == null)
+        {
+            return VersionGate.Supported;
+        }
+
+        if (Version.TryParse(version, out Version? parsed))
+        {
+            return parsed >= minimumVersion ? VersionGate.Supported : VersionGate.Unsupported;
+        }
+
+        // HandBrake nightly "20230223192356-5c2b5d2d0-1.6.x" is a build of the 1.6 branch
+        Match branch = HandBrakeBranchRegex().Match(version);
+        if (
+            branch.Success
+            && Version.TryParse($"{branch.Groups["branch"].Value}.0", out Version? branchVersion)
+        )
+        {
+            return branchVersion >= minimumVersion
+                ? VersionGate.Supported
+                : VersionGate.Unsupported;
+        }
+
+        // A build timestamp "20230223192356" or a build date "2025-08-25-git" is compared with the release date
+        Match date = BuildDateRegex().Match(version);
+        return
+            minimumDate != null
+            && date.Success
+            && DateOnly.TryParseExact(
+                date.Groups["date"].Value,
+                ["yyyyMMdd", "yyyy-MM-dd"],
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out DateOnly buildDate
+            )
+            ? buildDate >= minimumDate
+                ? VersionGate.Supported
+                : VersionGate.Unsupported
+            : VersionGate.Unknown;
+    }
+
+    // An unknown version is taken to be a current git build, so it passes the gate
+    public static bool IsSupportedVersion(
+        string version,
+        Version? minimumVersion,
+        DateOnly? minimumDate = null
+    ) => CheckVersion(version, minimumVersion, minimumDate) != VersionGate.Unsupported;
+
+    [GeneratedRegex(@"^\d{14}-[0-9a-f]+-(?<branch>\d+\.\d+)\.x$", RegexOptions.IgnoreCase)]
+    private static partial Regex HandBrakeBranchRegex();
+
+    [GeneratedRegex(@"^(?<date>\d{8}(?=\d{6}-)|\d{4}-\d{2}-\d{2}(?=-))")]
+    private static partial Regex BuildDateRegex();
 
     // Tool subfolder, e.g. /x64, /bin
     protected virtual string GetSubFolder() => string.Empty;
