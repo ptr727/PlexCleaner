@@ -53,7 +53,6 @@ public abstract class MediaTool
     // Latest downloadable version
     protected abstract bool GetLatestVersionWindows(out MediaToolInfo mediaToolInfo);
 
-    // Oldest version of the tool family that the wrappers support, the README states these minimums
     public Version? MinimumVersion =>
         GetToolFamily() switch
         {
@@ -66,7 +65,7 @@ public abstract class MediaTool
             _ => null,
         };
 
-    // A version that does not parse is a git or nightly build, so it passes the gate with a warning
+    // An unparsed version is taken to be a current git build, so it passes the gate
     public static bool IsSupportedVersion(string version, Version? minimumVersion) =>
         minimumVersion == null
         || !Version.TryParse(version, out Version? parsed)
