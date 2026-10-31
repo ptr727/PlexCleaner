@@ -30,7 +30,7 @@ def shapes_of(errors: Iterable[str]) -> list[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--run", help="ground-truth run dir (default: newest develop run)")
+    ap.add_argument("--run", help="ground-truth run dir (default: newest full-corpus develop run)")
     ap.add_argument(
         "--reduced",
         default="/data/media/troublesome/reduced",

@@ -78,7 +78,7 @@ def build(run):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--run", help="version dir (default newest develop run)")
+    ap.add_argument("--run", help="version dir (default newest full-corpus develop run)")
     ap.add_argument("--out", default=str(SRC_DIR / "catalog.json"))
     args = ap.parse_args()
 

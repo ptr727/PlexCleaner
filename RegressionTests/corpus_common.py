@@ -359,7 +359,12 @@ def buckets_for(state, detections, sig_subtypes, in_errors):
     return b
 
 
-def find_run(explicit, channel="develop"):
+def run_corpus(run_dir, info):
+    """Return a run's corpus, read from its directory suffix when buildinfo.json predates Corpus."""
+    return info.get("Corpus") or ("reduced" if run_dir.name.endswith("-reduced") else "full")
+
+
+def find_run(explicit, channel="develop", corpus="full"):
     if explicit:
         p = Path(explicit)
         return p if p.is_absolute() else REG_DIR / p
@@ -369,12 +374,13 @@ def find_run(explicit, channel="develop"):
         if not (log.exists() and bi.exists()):
             continue
         try:
-            if json.loads(bi.read_text()).get("Channel") != channel:
+            info = json.loads(bi.read_text())
+            if info.get("Channel") != channel or run_corpus(d, info) != corpus:
                 continue
         except (OSError, ValueError, AttributeError):
             continue
         if log.stat().st_mtime > best_mt:
             best, best_mt = d, log.stat().st_mtime
     if not best:
-        sys.exit(f"ERROR: no {channel} run under {REG_DIR}")
+        sys.exit(f"ERROR: no {channel} {corpus}-corpus run under {REG_DIR}")
     return best
