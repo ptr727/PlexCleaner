@@ -223,11 +223,15 @@ public class SidecarFile
             if (_sidecarFileInfo.Exists)
             {
                 // Sidecar file exists, read and verify it matches media file
+                // Keep the state seeded by the caller, the sidecar load replaces it
+                StatesType seeded = State;
                 if (!Read(out bool current))
                 {
                     // Failed to read, create it
                     return Create();
                 }
+                State |= seeded;
+
                 // Media file changed, force an update
                 if (!current)
                 {
