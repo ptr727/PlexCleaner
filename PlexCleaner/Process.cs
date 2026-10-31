@@ -518,7 +518,7 @@ public static class Process
         }
     }
 
-    public static bool ProcessFiles(List<string> fileList)
+    public static bool ProcessFiles(List<string> fileList, out bool writeFailed)
     {
         // Log active options
         Log.Logger.LogOverrideContext()
@@ -593,6 +593,14 @@ public static class Process
             }
         );
 
+        writeFailed = !FinishProcessing(resultsJson);
+        return ret;
+    }
+
+    internal static bool FinishProcessing(ProcessResultJsonSchema resultsJson)
+    {
+        bool writesSucceeded = true;
+
         // Errors
         List<ProcessResultJsonSchema.ProcessResult> errorResults =
         [
@@ -637,29 +645,12 @@ public static class Process
         );
 
         // Updated ignore file list
-        if (Program.Config.VerifyOptions.RegisterInvalidFiles)
+        if (
+            Program.Config.VerifyOptions.RegisterInvalidFiles
+            && !RegisterInvalidFiles(failedResults, Program.Options.SettingsFile)
+        )
         {
-            // Add all failed items to the ignore list
-            bool newItems = false;
-            foreach (ProcessResultJsonSchema.ProcessResult item in failedResults)
-            {
-                if (Program.Config.ProcessOptions.FileIgnoreList.Add(item.NewFileName))
-                {
-                    // New item added
-                    newItems = true;
-                }
-            }
-
-            // Update JSON settings if modified
-            if (newItems)
-            {
-                Log.Information(
-                    "Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}",
-                    Program.Config.ProcessOptions.FileIgnoreList.Count,
-                    Program.Options.SettingsFile
-                );
-                ConfigFileJsonSchema.ToFile(Program.Options.SettingsFile, Program.Config);
-            }
+            writesSucceeded = false;
         }
 
         // Write the process results to file
@@ -690,13 +681,69 @@ public static class Process
             resultsJson.SetVersionInfo();
 
             // Write to results JSON file
-            Log.Information(
-                "Writing results file : {Program.Options.ResultFile}",
-                Program.Options.ResultsFile
-            );
-            ProcessResultJsonSchema.ToFile(Program.Options.ResultsFile, resultsJson);
+            Log.Information("Writing results file : {ResultsFile}", Program.Options.ResultsFile);
+            try
+            {
+                ProcessResultJsonSchema.ToFile(Program.Options.ResultsFile, resultsJson);
+            }
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
+            {
+                Log.Error(
+                    "Failed to write results file : {ResultsFile}",
+                    Program.Options.ResultsFile
+                );
+                writesSucceeded = false;
+            }
         }
 
-        return ret;
+        return writesSucceeded;
+    }
+
+    internal static bool RegisterInvalidFiles(
+        List<ProcessResultJsonSchema.ProcessResult> failedResults,
+        string settingsFile
+    )
+    {
+        // Add failed items to the ignore list, a deleted file no longer exists to be ignored
+        HashSet<string> ignoreList = Program.Config.ProcessOptions.FileIgnoreList;
+        bool modified = false;
+        foreach (
+            ProcessResultJsonSchema.ProcessResult item in failedResults.Where(item =>
+                !item.State.HasFlag(SidecarFile.StatesType.FileDeleted)
+            )
+        )
+        {
+            modified |= ignoreList.Add(item.NewFileName);
+        }
+
+        // Prune entries for missing files, but only where the parent folder exists, an unmounted share keeps its entries
+        modified |= ignoreList.RemoveWhere(IsMissingFile) > 0;
+
+        // Update JSON settings if modified
+        if (!modified)
+        {
+            return true;
+        }
+        Log.Information(
+            "Updating FileIgnoreList entries ({Count}) in settings file : {SettingsFile}",
+            ignoreList.Count,
+            settingsFile
+        );
+        try
+        {
+            ConfigFileJsonSchema.ToFile(settingsFile, Program.Config);
+            return true;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            Log.Error("Failed to write settings file : {SettingsFile}", settingsFile);
+            return false;
+        }
+    }
+
+    private static bool IsMissingFile(string fileName)
+    {
+        string? folder = Path.GetDirectoryName(fileName);
+        return !string.IsNullOrEmpty(folder) && Directory.Exists(folder) && !File.Exists(fileName);
     }
 }

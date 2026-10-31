@@ -243,19 +243,19 @@ public static class Program
         }
 
         // Process files
-        if (!Process.ProcessFiles(fileList))
+        if (!Process.ProcessFiles(fileList, out bool writeFailed))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Delete empty folders
+        // Delete empty folders, a settings or results write failure does not skip this
         if (!Process.DeleteEmptyFolders(directoryList))
         {
             return MakeExitCode(ExitCode.Error);
         }
 
-        // Done
-        return MakeExitCode(ExitCode.Success);
+        // Done, a write failure was logged and still fails the exit code
+        return MakeExitCode(writeFailed ? ExitCode.Error : ExitCode.Success);
     }
 
 #if PLUGINS

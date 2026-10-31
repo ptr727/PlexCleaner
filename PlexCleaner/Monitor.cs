@@ -190,8 +190,8 @@ public class Monitor
         }
         directoryList.ForEach(item => Log.Information("Processing changes in : {Folder}", item));
 
-        // Process files
-        if (!Process.ProcessFiles(fileList))
+        // Process files, a logged write failure does not end monitoring
+        if (!Process.ProcessFiles(fileList, out _))
         {
             return false;
         }
