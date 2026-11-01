@@ -40,6 +40,32 @@ internal static class FakeTools
         return mediaFile;
     }
 
+    public static string WritePackets(
+        string directory,
+        string name,
+        IEnumerable<(string CodecType, long StreamIndex, double Dts, long Size)> packets
+    )
+    {
+        JsonArray array = [];
+        foreach ((string codecType, long streamIndex, double dts, long size) in packets)
+        {
+            array.Add(
+                new JsonObject
+                {
+                    ["codec_type"] = codecType,
+                    ["stream_index"] = streamIndex,
+                    ["pts_time"] = dts,
+                    ["dts_time"] = dts,
+                    ["duration_time"] = 0.5,
+                    ["size"] = size,
+                }
+            );
+        }
+        string fileName = Path.Combine(directory, name + ".json");
+        File.WriteAllText(fileName, new JsonObject { ["packets"] = array }.ToJsonString());
+        return fileName;
+    }
+
     public static int ReadSidecarState(string sidecarPath) =>
         JsonNode.Parse(File.ReadAllText(sidecarPath))!["State"]!.GetValue<int>();
 

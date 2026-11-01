@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
@@ -171,6 +172,118 @@ public sealed class ReplaceOriginalTests : IDisposable
         {
             _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
             _ = processFile.State.Should().Be(VerifiedState);
+        }
+        _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
+    }
+
+    // The packets carry a non-monotonic DTS on the audio stream only, so the lossless tier runs
+    private string WriteTimestampProbeData(long audioId)
+    {
+        string packetsFile = FakeTools.WritePackets(
+            _directory,
+            "packets",
+            [("audio", audioId, 1.0, 100), ("audio", audioId, 0.5, 100)]
+        );
+
+        JsonArray streams = [];
+        foreach ((int index, string type) in new[] { (0, "video"), (1, "audio") })
+        {
+            streams.Add(
+                new JsonObject
+                {
+                    ["index"] = index,
+                    ["codec_type"] = type,
+                    ["start_time"] = "0.000000",
+                    ["duration"] = "4.000000",
+                }
+            );
+        }
+        string timingsFile = Path.Combine(_directory, "timings.json");
+        File.WriteAllText(timingsFile, new JsonObject { ["streams"] = streams }.ToJsonString());
+
+        string props = Path.Combine(_directory, "FfProbeInfoData.json");
+        return $$"""
+            case "$*" in
+            *-show_packets*) cat "{{packetsFile}}" ;;
+            *start_time*) cat "{{timingsFile}}" ;;
+            *) cat "{{props}}" ;;
+            esac
+
+            """;
+    }
+
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(2, false)]
+    public void RepairTimestamps_LosslessRepair_ReplacesOriginalOnlyAfterLanguageRestore(
+        int propEditExit,
+        bool success
+    )
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile();
+        string mediaFile = processFile.FileInfo.FullName;
+        byte[] original = File.ReadAllBytes(mediaFile);
+        FakeTools.WriteSampleToolData(_directory);
+        FakeTools.WriteScript(
+            Tools.FfProbe.GetToolPath(),
+            WriteTimestampProbeData(processFile.FfProbeProps.Audio[0].Id)
+        );
+        // The remux fails when the setts output is missing, so a skipped rewrite cannot pass
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            FakeTools.SampleIdentifyCase(_directory)
+                + "for a; do case $a in *.tmp14) [ -f \"$a\" ] || exit 2 ;; esac; done\n"
+                + "for a; do case $a in *.tmp4|*.tmp11) echo mkvmerge > \"$a\" ;; esac; done\n"
+        );
+        FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n");
+
+        // Only the setts output verifies clean, so a later tier cannot replace the original
+        FakeTools.WriteScript(
+            Tools.FfMpeg.GetToolPath(),
+            """
+            case "$*" in
+            *setts*) for a; do case $a in *.tmp14) echo ffmpeg > "$a" ;; esac; done ;;
+            *streamhash*) printf '0,video,MD5=00\n1,audio,MD5=11\n' ;;
+            *-xerror*name.tmp14*) ;;
+            *-xerror*) echo "non monotonically increasing dts to muxer" >&2 ;;
+            *) exit 1 ;;
+            esac
+
+            """
+        );
+
+        // The edit logs the file it edits with its content, which is gone once the move ran
+        string mkvPropEdit = Tools.MkvPropEdit.GetToolPath();
+        FakeTools.WriteScript(
+            mkvPropEdit,
+            "for a; do case $a in *.tmp14) echo \"$(basename \"$a\") $(cat \"$a\")\" >> \"$0.log\" ;; esac; done\n"
+                + $"exit {propEditExit}\n"
+        );
+
+        bool modified = false;
+        bool repaired = processFile.RepairTimestamps(ref modified);
+
+        _ = repaired.Should().Be(success);
+        _ = modified.Should().Be(success);
+        _ = ToolErrorScope.Count.Should().Be(0);
+        _ = File.ReadAllLines(mkvPropEdit + ".log").Should().Equal("name.tmp14 mkvmerge");
+        SidecarFile.StatesType expected = success
+            ? SidecarFile.StatesType.Verified | SidecarFile.StatesType.Repaired
+            : SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.RepairFailed;
+        _ = processFile.State.Should().Be(expected);
+        _ = FakeTools
+            .ReadSidecarState(SidecarFile.GetSidecarName(processFile.FileInfo))
+            .Should()
+            .Be((int)expected);
+        if (success)
+        {
+            _ = File.ReadAllText(mediaFile).Should().StartWith("mkvmerge");
+        }
+        else
+        {
+            _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
         }
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
