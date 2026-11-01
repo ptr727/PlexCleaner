@@ -924,6 +924,15 @@ Serilog log levels describe the **nature** of an event, applied uniformly across
 
 The elevation trigger (Warning) must be preserved: keep exactly one decision-Warning per media modification, with the action at Information and the underlying tool at Debug.
 
+### Delete and keep logging
+
+- Every delete of user content goes through `FileDelete`, which logs one line before it acts, shaped `Deleting {What} : {Reason} : {FileName}`.
+- Deleting a media file is a Warning, since it is the decision to modify the media.
+- Deleting a sidecar, an empty folder, or the input a conversion replaced is Information.
+- A failed delete logs Error `Failed to delete {What} : {FileName}`, and a failed delete of a non-MKV or orphan sidecar file then fails the file.
+- With `DeleteInvalidFiles` on, `DeleteFailedFile` logs Information `Keeping failed file : {Reason} : {FileName}` for each failed file it keeps.
+- A read-only file or an exception never reaches `DeleteFailedFile`, and its own Error line says why the file is kept.
+
 ### Tool execution and failure logging
 
 - **Always consume a tool's output.** A subprocess whose stdout/stderr is not read can deadlock once it fills the pipe buffer, so never run a tool without consuming its pipes: `MediaTool.Execute` buffers them (summarize when the output is huge), and `ExecuteStreamStdErr` streams stderr line by line for the unbounded `-f null` verify pass. `Execute`, its cancellation path, and `LogFailedResult` record the **operation** (the calling method, captured via `[CallerMemberName]`, rendered with `:l`) so a command line ties to its purpose in a parallel log without correlating separate lines.

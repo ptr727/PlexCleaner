@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -250,14 +251,25 @@ public sealed class RenameCollisionTests : IDisposable
         string stepFile = ProcessFile.GetRenameStepName(Path.Combine(_directory, "name.mkv"));
         File.WriteAllText(stepFile, "step");
 
-        _ = Process
-            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
-            .Should()
-            .BeFalse();
+        bool result = true;
+        string? failedOperation = null;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            result = Process.ProcessFile(mediaFile, out _, out _, out _, out _, out failedOperation)
+        );
 
+        _ = result.Should().BeFalse();
         _ = failedOperation.Should().Be(nameof(ProcessFile.MakeExtensionLowercase));
         _ = File.ReadAllText(mediaFile).Should().Be("name.MKV");
         _ = File.ReadAllText(stepFile).Should().Be("step");
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Information)
+            .Should()
+            .Contain(message =>
+                message.StartsWith(
+                    "Keeping failed file : Rename collision : ",
+                    StringComparison.Ordinal
+                )
+            );
     }
 
     [Fact]

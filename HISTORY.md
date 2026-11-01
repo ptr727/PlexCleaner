@@ -15,6 +15,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - A non-monotonic DTS seen only after decode is repaired by remux only, and a file the remux cannot fix is marked `RepairFailed` and `PostDecodeTimestamps`.
   - An exception in one file fails only that file instead of ending the run, and the error summary names the failed step.
   - `DeleteInvalidFiles` keeps a file after an exception, a cancel, a rename collision, or an unfinished tool run, and keeps a read-only or `PostDecodeTimestamps` file.
+  - Every delete of user content logs what it deletes and why, and a failed delete names the file.
+    - When `DeleteInvalidFiles` keeps a failed file after a tool error, a cancel, a rename collision, or `PostDecodeTimestamps`, the log says why.
   - With the `Verify` option off, a file is no longer marked `Verified`, and the sidecar records a clean full-file interlace or caption scan.
   - Automatic processing skips re-encoding a file it already re-encoded, or deinterlacing one it already deinterlaced, while the `reencode` and `deinterlace` commands still force it.
   - When a step rewrites a file, processing repeats every cleanup step, and cleanup it cannot finish is logged rather than retried every run.

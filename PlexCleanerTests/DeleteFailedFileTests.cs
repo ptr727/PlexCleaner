@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -9,6 +10,12 @@ public sealed class DeleteFailedFileTests : IDisposable
 {
     private readonly string _directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
     private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
+    private readonly bool _deleteEmptyFolders = Program.Config.ProcessOptions.DeleteEmptyFolders;
+    private readonly bool _deleteUnwantedExtensions = Program
+        .Config
+        .ProcessOptions
+        .DeleteUnwantedExtensions;
+    private readonly int _threadCount = Program.Options.ThreadCount;
 
     public DeleteFailedFileTests()
     {
@@ -19,6 +26,9 @@ public sealed class DeleteFailedFileTests : IDisposable
     public void Dispose()
     {
         Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
+        Program.Config.ProcessOptions.DeleteEmptyFolders = _deleteEmptyFolders;
+        Program.Config.ProcessOptions.DeleteUnwantedExtensions = _deleteUnwantedExtensions;
+        Program.Options.ThreadCount = _threadCount;
         foreach (string file in Directory.EnumerateFiles(_directory))
         {
             File.SetAttributes(file, FileAttributes.Normal);
@@ -75,7 +85,10 @@ public sealed class DeleteFailedFileTests : IDisposable
         string mediaFile = CreateFile("name.avi");
         string sidecarFile = CreateFile("name.PlexCleaner");
 
-        _ = new ProcessFile(mediaFile).DeleteFailedFile().Should().BeTrue();
+        _ = new ProcessFile(mediaFile)
+            .DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+            .Should()
+            .BeTrue();
 
         _ = File.Exists(mediaFile).Should().BeFalse();
         _ = File.Exists(sidecarFile).Should().BeTrue();
@@ -87,7 +100,10 @@ public sealed class DeleteFailedFileTests : IDisposable
         string mediaFile = CreateFile("name.mkv");
         string sidecarFile = CreateFile("name.PlexCleaner");
 
-        _ = new ProcessFile(mediaFile).DeleteFailedFile().Should().BeTrue();
+        _ = new ProcessFile(mediaFile)
+            .DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+            .Should()
+            .BeTrue();
 
         _ = File.Exists(mediaFile).Should().BeFalse();
         _ = File.Exists(sidecarFile).Should().BeFalse();
@@ -100,9 +116,155 @@ public sealed class DeleteFailedFileTests : IDisposable
         _ = Directory.CreateDirectory(Path.Combine(_directory, "name.PlexCleaner"));
 
         ProcessFile processFile = new(mediaFile);
-        _ = processFile.DeleteFailedFile().Should().BeTrue();
+        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeTrue();
 
         _ = File.Exists(mediaFile).Should().BeFalse();
         _ = processFile.State.Should().HaveFlag(SidecarFile.StatesType.FileDeleted);
+    }
+
+    [Fact]
+    public void MkvFile_LogsOperationAndSidecarDelete()
+    {
+        string mediaFile = CreateFile("name.mkv");
+        string sidecarFile = CreateFile("name.PlexCleaner");
+
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            new ProcessFile(mediaFile).DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+        );
+
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Warning)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Deleting media file : Failed VerifyAndRepair : ")
+            .And.Contain(mediaFile);
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Information)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Deleting sidecar file : Media file deleted : ")
+            .And.Contain(sidecarFile);
+    }
+
+    [Theory]
+    [InlineData(false, "Tool error")]
+    [InlineData(true, "Tool signal")]
+    public void ToolFailure_LogsKeepReason(bool signal, string reason)
+    {
+        string mediaFile = CreateFile("name.mkv");
+
+        bool deleted = true;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+        {
+            using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+            if (signal)
+            {
+                ToolErrorScope.RecordSignal();
+            }
+            else
+            {
+                ToolErrorScope.Record();
+            }
+            deleted = new ProcessFile(mediaFile).DeleteFailedFile(
+                nameof(ProcessFile.VerifyAndRepair)
+            );
+        });
+
+        _ = deleted.Should().BeFalse();
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Information)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith($"Keeping failed file : {reason} : ");
+    }
+
+    [Fact]
+    public void SidecarDeleteThrows_LogsFailedDelete()
+    {
+        string mediaFile = CreateFile("name.mkv");
+        string sidecarName = Path.Combine(_directory, "name.PlexCleaner");
+        _ = Directory.CreateDirectory(sidecarName);
+
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            new ProcessFile(mediaFile).DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+        );
+
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Error)
+            .Should()
+            .Contain(message =>
+                message.StartsWith("Failed to delete sidecar file : ", StringComparison.Ordinal)
+                && message.Contains(sidecarName, StringComparison.Ordinal)
+            );
+    }
+
+    [Fact]
+    public void NonMkvDeleteThrows_LogsFailedDeleteAndPropagates()
+    {
+        Program.Config.ProcessOptions.DeleteUnwantedExtensions = true;
+        string nonMkvName = Path.Combine(_directory, "name.avi");
+        _ = Directory.CreateDirectory(nonMkvName);
+
+        Exception? thrown = null;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+        {
+            bool modified = false;
+            try
+            {
+                _ = new ProcessFile(nonMkvName).DeleteNonMkvFile(ref modified);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                thrown = e;
+            }
+        });
+
+        _ = thrown.Should().NotBeNull();
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Warning)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Deleting non-MKV file : Unwanted extension : ");
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Error)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Failed to delete non-MKV file : ")
+            .And.Contain(nonMkvName);
+    }
+
+    [Fact]
+    public void DeleteEmptyFolders_LogsEachFolder()
+    {
+        Program.Config.ProcessOptions.DeleteEmptyFolders = true;
+        Program.Options.ThreadCount = 1;
+        string outer = Path.Combine(_directory, "outer");
+        string inner = Path.Combine(outer, "inner");
+        _ = Directory.CreateDirectory(inner);
+
+        bool result = false;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            result = Process.DeleteEmptyFolders([_directory])
+        );
+
+        _ = result.Should().BeTrue();
+        _ = Directory.Exists(outer).Should().BeFalse();
+        List<string> deletes =
+        [
+            .. LogCapture
+                .Messages(events, LogEventLevel.Information)
+                .Where(message =>
+                    message.StartsWith("Deleting folder : Empty : ", StringComparison.Ordinal)
+                ),
+        ];
+        _ = deletes.Should().HaveCount(2);
+        _ = deletes[0].Should().Contain(inner);
+        _ = deletes[1].Should().Contain(outer);
     }
 }

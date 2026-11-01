@@ -335,7 +335,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         _ = File.ReadAllLines(ffMpeg + ".step").Should().HaveCount(1);
         _ = File.Exists(mkvMerge + ".ran").Should().BeFalse();
         _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
-        _ = processFile.DeleteFailedFile().Should().BeFalse();
+        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
         _ = modified.Should().BeFalse();
     }
 }
