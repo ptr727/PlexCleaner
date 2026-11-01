@@ -646,7 +646,9 @@ flowchart TD
   FOUND -->|"yes, deinterlace command"| AGAIN["Warn, deinterlace again"]
   AGAIN --> D0
   FOUND -->|no| D0["Adds the DeInterlace action to the video track"]
-  D0 --> D1["ConvertUsingHandBrake(): HandBrake deinterlaces to .tmp8, subtitles excluded"]
+  D0 --> DC["ConvertUsingHandBrake(): ReportClosedCaptionsDropped() warns when the video carries closed captions"]
+  DC -->|cancelled| FAIL
+  DC --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
   D1 -->|fail| FAIL
   D1 --> D2{"Original has subtitles?"}
   D2 -->|no| D3["MkvMerge remux to .tmp9"]
@@ -663,7 +665,7 @@ flowchart TD
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
 
-Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes D1 to D5 for its caller. The repair by re-encode uses it for its HandBrake fallback. HandBrake converts subtitles to ASS, so it encodes without subtitles, and MkvMerge merges the original subtitle tracks back unchanged. Closed captions embedded in the video stream are not a track, so HandBrake drops them. `ReportClosedCaptionsDropped()` logs a warning when a scan finds them, as `Docs/ClosedCaptions.md` describes.
+Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes DC to D5 for its caller. The repair by re-encode uses it for its HandBrake fallback. HandBrake converts subtitles to ASS, so it encodes without subtitles, and MkvMerge merges the original subtitle tracks back unchanged. MkvMerge merges back only tracks, so closed captions embedded in the video stream are lost. `ReportClosedCaptionsDropped()` logs a warning first when the video carries them, as [Docs/ClosedCaptions.md](./Docs/ClosedCaptions.md) describes.
 
 ### Track Selection
 
@@ -808,7 +810,7 @@ flowchart TD
   R1 -->|fail| R2{"Cancelled, or remux only?"}
   R2 -->|yes| RF
   R2 -->|no| R3["FfMpeg re-encode to .tmp12"]
-  R3 -->|"fail, not cancelled"| R4["ConvertUsingHandBrake(): HandBrake re-encode to .tmp8 without subtitles, MkvMerge merges the original subtitles back to .tmp12, RestoreLanguageTags()"]
+  R3 -->|"fail, not cancelled"| R4["ConvertUsingHandBrake(): closed caption warning, HandBrake re-encode to .tmp8 without subtitles, MkvMerge merges the original subtitles back to .tmp12, RestoreLanguageTags()"]
   R3 -->|"fail, cancelled"| RF
   R4 -->|fail| RF
   R3 --> R5["Convert.ReMux(), then RestoreLanguageTags()"]
