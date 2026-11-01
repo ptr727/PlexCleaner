@@ -109,12 +109,7 @@ public partial class HandBrake
         [GeneratedRegex("\"Progress\":\\s*([0-9.]+)")]
         private static partial Regex ProgressRegex();
 
-        public bool ConvertToMkv(
-            string inputName,
-            string outputName,
-            bool includeSubtitles,
-            bool deInterlace
-        )
+        public bool ConvertToMkv(string inputName, string outputName, bool deInterlace)
         {
             // Delete output file
             File.Delete(outputName);
@@ -131,11 +126,7 @@ public partial class HandBrake
                         .Add(deInterlace, options => options.CombDetect().Decomb())
                         .AllAudio()
                         .AudioEncoder(Program.Config.ConvertOptions.HandBrakeOptions.Audio)
-                        .Add(
-                            includeSubtitles,
-                            options => options.AllSubtitles(),
-                            options => options.NoSubtitles()
-                        )
+                        .NoSubtitles()
                 )
                 .Build();
 

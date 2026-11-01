@@ -644,7 +644,7 @@ flowchart TD
   FOUND -->|"yes, deinterlace command"| AGAIN["Warn, deinterlace again"]
   AGAIN --> D0
   FOUND -->|no| D0["Adds the DeInterlace action to the video track"]
-  D0 --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
+  D0 --> D1["ConvertUsingHandBrake(): HandBrake deinterlaces to .tmp8, subtitles excluded"]
   D1 -->|fail| FAIL
   D1 --> D2{"Original has subtitles?"}
   D2 -->|no| D3["MkvMerge remux to .tmp9"]
@@ -660,6 +660,8 @@ flowchart TD
 ```
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
+
+Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes D1 to D5 for its caller. HandBrake converts subtitles to ASS, and adds embedded closed captions as one more subtitle track. So it encodes without subtitles, and MkvMerge merges the original subtitle tracks back unchanged. The repair by re-encode uses it for its HandBrake fallback.
 
 ### Track Selection
 
@@ -804,13 +806,15 @@ flowchart TD
   R1 -->|fail| R2{"Cancelled, or remux only?"}
   R2 -->|yes| RF
   R2 -->|no| R3["FfMpeg re-encode to .tmp12"]
-  R3 -->|"fail, not cancelled"| R4["HandBrake re-encode to .tmp12, subtitles included"]
+  R3 -->|"fail, not cancelled"| R4["ConvertUsingHandBrake(): HandBrake re-encode to .tmp8 without subtitles, MkvMerge merges the original subtitles back to .tmp12, RestoreLanguageTags()"]
   R3 -->|"fail, cancelled"| RF
   R4 -->|fail| RF
-  R3 --> R5["Convert.ReMux(), re-verify Clean, then RestoreLanguageTags()"]
-  R4 --> R5
+  R3 --> R5["Convert.ReMux(), then RestoreLanguageTags()"]
   R5 -->|fail| RF
-  R5 -->|pass| R6
+  R5 --> R7{"Re-verify Clean?"}
+  R4 --> R7
+  R7 -->|no| RF
+  R7 -->|yes| R6
   R6 -->|"TimestampOnly path"| RS
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the next run verifies the replaced media again"| FAIL
