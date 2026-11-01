@@ -41,9 +41,6 @@ public sealed class ReplaceOriginalTests : IDisposable
         Directory.Delete(_directory, true);
     }
 
-    private static string SidecarPath(ProcessFile processFile) =>
-        Path.ChangeExtension(processFile.FileInfo.FullName, ".PlexCleaner");
-
     private const SidecarFile.StatesType VerifiedState =
         SidecarFile.StatesType.Verified
         | SidecarFile.StatesType.Repaired
@@ -182,6 +179,9 @@ public sealed class ReplaceOriginalTests : IDisposable
             | (state & SidecarFile.StatesType.Repaired);
         _ = modified.Should().BeTrue();
         _ = processFile.State.Should().Be(expected);
-        _ = FakeTools.ReadSidecarState(SidecarPath(processFile)).Should().Be((int)expected);
+        _ = FakeTools
+            .ReadSidecarState(SidecarFile.GetSidecarName(processFile.FileInfo))
+            .Should()
+            .Be((int)expected);
     }
 }
