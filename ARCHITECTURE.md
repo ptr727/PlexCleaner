@@ -663,7 +663,7 @@ flowchart TD
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
 
-Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes D1 to D5 for its caller. HandBrake converts subtitles to ASS, and adds embedded closed captions as one more subtitle track. So it encodes without subtitles, and MkvMerge merges the original subtitle tracks back unchanged. The repair by re-encode uses it for its HandBrake fallback.
+Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes D1 to D5 for its caller. The repair by re-encode uses it for its HandBrake fallback. HandBrake converts subtitles to ASS, so it encodes without subtitles, and MkvMerge merges the original subtitle tracks back unchanged. Closed captions embedded in the video stream are not a track, so HandBrake drops them. `ReportClosedCaptionsDropped()` logs a warning when a scan finds them, as `Docs/ClosedCaptions.md` describes.
 
 ### Track Selection
 
