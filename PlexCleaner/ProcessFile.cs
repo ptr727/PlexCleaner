@@ -1420,7 +1420,11 @@ public class ProcessFile
         return true;
     }
 
-    private bool FindClosedCaptionTracks(bool conditional, out VideoProps? videoProps)
+    private bool FindClosedCaptionTracks(
+        bool conditional,
+        out VideoProps? videoProps,
+        bool recordScan = true
+    )
     {
         // Return false on error
         // Set videoProps if contains closed captions
@@ -1478,7 +1482,9 @@ public class ProcessFile
             return true;
         }
 
-        return Program.Options.QuickScan || SetScanned(SidecarFile.StatesType.ScannedCaptions);
+        return !recordScan
+            || Program.Options.QuickScan
+            || SetScanned(SidecarFile.StatesType.ScannedCaptions);
     }
 
     private bool SetScanned(SidecarFile.StatesType scanned)
@@ -2387,6 +2393,27 @@ public class ProcessFile
     // So it encodes without subtitles, MkvMerge merges the original subtitles back, and the tags are restored
     private bool ConvertUsingHandBrake(string outputName, bool deInterlace)
     {
+        // Unconditional, the state flags that skip the scan do not imply one ran with RemoveClosedCaptions off
+        if (!FindClosedCaptionTracks(false, out VideoProps? captionVideo, recordScan: false))
+        {
+            if (Program.IsCancelledError())
+            {
+                return false;
+            }
+            Log.Warning(
+                "Unknown if HandBrake drops Closed Captions in the video stream : {FileName}",
+                FileInfo.FullName
+            );
+        }
+        else if (captionVideo != null)
+        {
+            Log.Warning(
+                "HandBrake drops the Closed Captions in the video stream : Format: {Format} : {FileName}",
+                captionVideo.Format,
+                FileInfo.FullName
+            );
+        }
+
         string handBrakeName = Path.ChangeExtension(FileInfo.FullName, ".tmp8");
         Debug.Assert(FileInfo.FullName != handBrakeName);
         if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, handBrakeName, deInterlace))

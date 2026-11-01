@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -174,6 +175,54 @@ public sealed class ReplaceOriginalTests : IDisposable
             _ = processFile.State.Should().Be(VerifiedState);
         }
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("echo '{ \"streams\": [ { \"closed_captions\": 1 } ] }'", "HandBrake drops the")]
+    [InlineData("echo '{ \"streams\": [ { \"closed_captions\": 0 } ] }'", null)]
+    [InlineData("exit 1", "Unknown if HandBrake drops")]
+    public void DeInterlace_ClosedCaptions_WarnsWithoutRecordingScan(
+        string captionProbe,
+        string? warning
+    )
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile(VerifiedState);
+        _ = WriteFakeTools("*.tmp8|*.tmp9", 0);
+        FakeTools.WriteSampleToolData(_directory);
+        string props = Path.Combine(_directory, "FfProbeInfoData.json");
+        FakeTools.WriteScript(
+            Tools.FfProbe.GetToolPath(),
+            $"case \"$*\" in\n*closed_captions*) {captionProbe} ;;\n*) cat \"{props}\" ;;\nesac\n"
+        );
+        processFile.FfProbeProps.Video[0].Interlaced = true;
+
+        bool modified = false;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            processFile.DeInterlace(false, ref modified).Should().BeTrue()
+        );
+
+        List<LogEvent> captionWarnings =
+        [
+            .. events.Where(item =>
+                item.Level == LogEventLevel.Warning
+                && item.MessageTemplate.Text.Contains("Closed Captions in the video stream")
+            ),
+        ];
+        if (warning == null)
+        {
+            _ = captionWarnings.Should().BeEmpty();
+        }
+        else
+        {
+            _ = captionWarnings
+                .Should()
+                .ContainSingle()
+                .Which.MessageTemplate.Text.Should()
+                .StartWith(warning);
+        }
+        _ = processFile.State.Should().NotHaveFlag(SidecarFile.StatesType.ScannedCaptions);
     }
 
     // The packets carry a non-monotonic DTS on the audio stream only, so the lossless tier runs

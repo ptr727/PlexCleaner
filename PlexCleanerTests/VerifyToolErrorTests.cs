@@ -152,6 +152,11 @@ public sealed class VerifyToolErrorTests : IDisposable
 
         FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), "exit 2\n", true);
         FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n", true);
+        FakeTools.WriteScript(
+            Tools.FfProbe.GetToolPath(),
+            "echo '{ \"streams\": [ { \"closed_captions\": 0 } ] }'\n",
+            true
+        );
         string ffMpeg = Tools.FfMpeg.GetToolPath();
         FakeTools.WriteScript(
             ffMpeg,
@@ -198,6 +203,11 @@ public sealed class VerifyToolErrorTests : IDisposable
 
         FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), mkvMerge, true);
         FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), handBrake, true);
+        FakeTools.WriteScript(
+            Tools.FfProbe.GetToolPath(),
+            "echo '{ \"streams\": [ { \"closed_captions\": 0 } ] }'\n",
+            true
+        );
         string ffMpeg = Tools.FfMpeg.GetToolPath();
         FakeTools.WriteScript(
             ffMpeg,
