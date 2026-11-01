@@ -455,12 +455,18 @@ public partial class FfMpeg
             // Streamhash muxer hashes payload only, not timestamps, so an identical hash proves setts changed timestamps and nothing else
             streamHashes = [];
 
-            // Build command line, stream copy to the streamhash muxer written to stdout
+            // Stream copy the media streams to the streamhash muxer, the MkvMerge pass drops attachments
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().InputFile(fileName))
                 .OutputOptions(options =>
-                    options.MapAllCodecCopy().Format("streamhash").Add("-hash").Add("md5").Add("-")
+                    options
+                        .MapAllCodecCopy()
+                        .Map("-0:t")
+                        .Format("streamhash")
+                        .Add("-hash")
+                        .Add("md5")
+                        .Add("-")
                 )
                 .Build();
 

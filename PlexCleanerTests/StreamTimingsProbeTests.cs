@@ -38,4 +38,23 @@ public class StreamTimingsProbeTests
         _ = double.IsNaN(probe.Streams[0].StartTime).Should().BeTrue();
         _ = double.IsNaN(probe.Streams[0].Duration).Should().BeTrue();
     }
+
+    [Fact]
+    public void MediaStreamTimings_AttachmentStream_Skipped()
+    {
+        // lang=json
+        const string json = """
+            { "streams": [
+              { "index": 0, "codec_type": "video", "start_time": "0.000000" },
+              { "index": 1, "codec_type": "audio", "start_time": "0.010000" },
+              { "index": 2, "codec_type": "attachment", "start_time": "0.000000", "duration": "4.040000" }
+            ] }
+            """;
+        Dictionary<int, (double Start, double Duration)> timings = FfMpegToolJsonSchema
+            .StreamTimingsProbe.FromJson(json)
+            .MediaStreamTimings();
+
+        _ = timings.Keys.Should().Equal(0, 1);
+        _ = timings[1].Start.Should().Be(0.01);
+    }
 }

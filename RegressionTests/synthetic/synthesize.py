@@ -23,7 +23,7 @@ Targeting notes - the PlexCleaner behaviors these builders exploit (see the READ
 - DTS time base: a healthy cadence denser than the default duration, a false DTS only in a 1/framerate encoder time base.
 - DTS duplicate PTS: one repeated frame timestamp, a real repeat that verify reports at native precision.
 - DTS mixed: a demux-visible audio timestamp step back plus a B-frame video timestamp swap that only surfaces after decode.
-- DTS audio tagged: the audio step back alone under a global tag, which the lossless setts tier repairs.
+- DTS audio tagged: the audio step back alone under a global tag and an attachment, which the lossless setts tier repairs.
 """
 
 import argparse
@@ -249,19 +249,28 @@ def build_dts_mixed(out: Path) -> None:
 
 
 def build_dts_audio_tagged(out: Path) -> None:
-    """Healthy B-frame video plus AAC audio with one packet timestamp stepping back, under a global tag.
+    """Healthy B-frame video plus AAC audio with one packet timestamp stepping back, under a global tag and an attachment.
 
     The only DTS break is demux-visible audio, so the lossless setts tier repairs the whole file.
-    The global tag shows whether the repaired file drops tags like every other rewrite.
+    The tag and the attachment show whether the repaired file drops them like every other rewrite.
     """
     with tempfile.TemporaryDirectory() as td:
-        tags = Path(td) / "tags.xml"
+        tags, note = Path(td) / "tags.xml", Path(td) / "note.txt"
+        note.write_text("Synthetic attachment\n", encoding="utf-8")
         tags.write_text(
             '<?xml version="1.0"?>\n<Tags><Tag><Targets/><Simple><Name>COMMENT</Name>'
             "<String>Synthetic</String></Simple></Tag></Tags>\n",
             encoding="utf-8",
         )
-        _build_dts_av(out, swap_video=False, extra=["--global-tags", str(tags)])
+        extra = [
+            "--global-tags",
+            str(tags),
+            "--attachment-mime-type",
+            "text/plain",
+            "--attach-file",
+            str(note),
+        ]
+        _build_dts_av(out, swap_video=False, extra=extra)
 
 
 TARGETS: dict[str, Callable[[Path], None]] = {

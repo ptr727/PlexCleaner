@@ -50,12 +50,24 @@ public class FfMpegToolJsonSchema
         public static StreamTimingsProbe FromJson(string json) =>
             JsonSerializer.Deserialize(json, FfMpegToolJsonContext.Default.StreamTimingsProbe)
             ?? throw new JsonException("Failed to deserialize StreamTimingsProbe");
+
+        // The MkvMerge pass drops attachment streams, so only media streams are compared
+        public Dictionary<int, (double Start, double Duration)> MediaStreamTimings() =>
+            Streams
+                .Where(stream => stream.CodecType != "attachment")
+                .ToDictionary(
+                    stream => stream.Index,
+                    stream => (stream.StartTime, stream.Duration)
+                );
     }
 
     public class StreamTiming
     {
         [JsonPropertyName("index")]
         public int Index { get; set; }
+
+        [JsonPropertyName("codec_type")]
+        public string CodecType { get; set; } = string.Empty;
 
         [JsonPropertyName("start_time")]
         public double StartTime { get; set; } = double.NaN;
