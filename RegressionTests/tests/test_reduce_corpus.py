@@ -69,11 +69,16 @@ class ReduceCorpusTests(unittest.TestCase):
                 (workdir / "out" / "clip_results.json").write_text(json.dumps(results))
                 return subprocess.CompletedProcess(args, 0, "")
 
-            with mock.patch.object(reduce_corpus.subprocess, "run", side_effect=run) as fake:
+            with (
+                mock.patch.object(reduce_corpus.os, "getuid", return_value=1000, create=True),
+                mock.patch.object(reduce_corpus.os, "getgid", return_value=100, create=True),
+                mock.patch.object(reduce_corpus.subprocess, "run", side_effect=run) as fake,
+            ):
                 _, states = reduce_corpus.process_clip(workdir, settings_dir)
             args = fake.call_args.args[0]
             volumes = [args[i + 1] for i, arg in enumerate(args) if arg == "--volume"]
             self.assertIn(f"{workdir / 'config'}:/config:rw", volumes)
+            self.assertIn("1000:100", args)
             self.assertIn(f"--settingsfile=/config/{reduce_corpus.SETTINGS_NAME}", args)
             self.assertTrue((workdir / "config" / reduce_corpus.SETTINGS_NAME).is_file())
             self.assertEqual(states, {"a": set()})
