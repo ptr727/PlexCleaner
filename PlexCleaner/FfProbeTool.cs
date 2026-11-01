@@ -271,7 +271,9 @@ public partial class FfProbe
                 .FfProbeOptions(options =>
                     options
                         .ShowStreams()
-                        .ShowEntries("stream=index,start_time,duration")
+                        .ShowEntries(
+                            "stream=index,codec_type,start_time,duration:stream_disposition=attached_pic"
+                        )
                         .OutputFormatJson()
                         .InputFile(fileName)
                 )
@@ -290,12 +292,9 @@ public partial class FfProbe
             // FromJson throws on malformed output
             try
             {
-                FfMpegToolJsonSchema.StreamTimingsProbe probe =
-                    FfMpegToolJsonSchema.StreamTimingsProbe.FromJson(result.StandardOutput);
-                foreach (FfMpegToolJsonSchema.StreamTiming stream in probe.Streams)
-                {
-                    timings[stream.Index] = (stream.StartTime, stream.Duration);
-                }
+                timings = FfMpegToolJsonSchema
+                    .StreamTimingsProbe.FromJson(result.StandardOutput)
+                    .MediaStreamTimings();
             }
             catch (Exception e) when (Log.Logger.LogAndHandle(e))
             {
