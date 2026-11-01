@@ -338,6 +338,14 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         string merge = File.ReadAllLines(mkvMerge + ".log")
             .First(line => line.Contains("name.tmp8"));
         _ = merge.Contains("name.mkv", StringComparison.Ordinal).Should().Be(subtitle);
+        if (subtitle)
+        {
+            _ = merge
+                .Should()
+                .Contain("--no-video")
+                .And.Contain("--no-audio")
+                .And.Contain("--subtitle-tracks");
+        }
         _ = File.ReadAllText(processFile.FileInfo.FullName).Should().StartWith("mkvmerge");
         _ = processFile.State.Should().HaveFlag(SidecarFile.StatesType.Repaired);
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();

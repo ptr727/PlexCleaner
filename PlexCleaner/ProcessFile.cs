@@ -2395,17 +2395,27 @@ public class ProcessFile
             return false;
         }
 
-        MediaProps subtitleProps = new(MediaTool.ToolType.MkvMerge, FileInfo.FullName);
-        subtitleProps.Subtitle.AddRange(MkvMergeProps.Subtitle);
-        bool merged =
-            subtitleProps.Subtitle.Count == 0
-                ? Tools.MkvMerge.ReMuxToMkv(handBrakeName, outputName)
-                : Tools.MkvMerge.MergeToMkv(
-                    handBrakeName,
-                    FileInfo.FullName,
-                    subtitleProps,
-                    outputName
-                );
+        bool merged;
+        if (MkvMergeProps.Subtitle.Count == 0)
+        {
+            Log.Information("Remuxing the HandBrake output : {FileName}", FileInfo.FullName);
+            merged = Tools.MkvMerge.ReMuxToMkv(handBrakeName, outputName);
+        }
+        else
+        {
+            MediaProps subtitleProps = new(MediaTool.ToolType.MkvMerge, FileInfo.FullName);
+            subtitleProps.Subtitle.AddRange(MkvMergeProps.Subtitle);
+            Log.Information(
+                "Remuxing subtitles and the HandBrake output : {FileName}",
+                FileInfo.FullName
+            );
+            merged = Tools.MkvMerge.MergeToMkv(
+                handBrakeName,
+                FileInfo.FullName,
+                subtitleProps,
+                outputName
+            );
+        }
         File.Delete(handBrakeName);
         if (!merged)
         {
