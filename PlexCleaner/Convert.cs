@@ -239,7 +239,7 @@ public static class Convert
         _ = FileDelete.TryDelete(
             LogEventLevel.Information,
             "input file",
-            $"Converted to {outputName}",
+            $"Converted to \"{outputName}\"",
             inputName
         );
     }
