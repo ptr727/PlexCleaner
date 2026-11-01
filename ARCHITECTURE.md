@@ -443,6 +443,7 @@ flowchart TD
   X3 --> X4["ReMux(): MkvMerge pass over the FfMpeg output"]
   X4 -->|fail| XF
   X4 --> X10["The input's MkvMerge track list, read here when the caller passed none"]
+  X10 -->|"read cancelled"| XF
   X10 --> X9["RestoreLanguageTags() when the input is Matroska"]
   X9 -->|fail| XF
   X1 --> X5{"The .mkv name is the input file itself?"}
