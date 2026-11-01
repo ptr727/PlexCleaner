@@ -147,6 +147,7 @@ Critical performance feature - DO NOT break compatibility:
 
 - Only MkvMerge reports IETF tags, and a missing one is derived from the ISO 639-2B tag
 - MkvMerge normalizes to IETF tags when `SetIetfLanguageTags` enabled
+- FfMpeg and HandBrake drop the IETF tags when they write a file. Each of their rewrites restores the tags with MkvPropEdit before the output replaces the original, from the track list read before the rewrite. `Convert.RestoreLanguageTags()` first checks that the output keeps each track's number, type, and ISO 639-2B tag. Otherwise the rewrite fails, and the original stays. A HandBrake output holds the video, then the audio, then the subtitle tracks, so `GetHandBrakeTrackOrder()` numbers copies of the tags that way. The FfMpeg remux fallback restores them only for a Matroska input, since another container carries no IETF tags.
 - FFprobe uses tag metadata which may differ from track metadata
 - Track validation: Checks ISO/IETF consistency, sets error states for mismatches
 
@@ -441,8 +442,10 @@ flowchart TD
   X3 -->|fail| XF
   X3 --> X4["ReMux(): MkvMerge pass over the FfMpeg output"]
   X4 -->|fail| XF
+  X4 --> X9["RestoreLanguageTags() when the input is Matroska"]
+  X9 -->|fail| XF
   X1 --> X5{"The .mkv name is the input file itself?"}
-  X4 --> X5
+  X9 --> X5
   X5 -->|yes| X6["Move over the input"]
   X5 -->|no| X7["Move to the .mkv name"]
   X6 -->|"move fails"| XT(["Throw after deleting the temp file, the input stays"])
@@ -611,7 +614,7 @@ flowchart TD
   C2 -->|yes| FAIL
   C2 -->|no| C3["FfMpeg removes the NAL units to .tmp10"]
   C3 -->|fail| FAIL
-  C3 --> C4["Convert.ReMux()"]
+  C3 --> C4["Convert.ReMux(), then RestoreLanguageTags()"]
   C4 -->|fail| FAIL
   C4 --> C5["Move over the original, sets ClearedCaptions and ReMuxed, Refresh()"]
 ```
@@ -641,24 +644,24 @@ flowchart TD
   FOUND -->|"yes, deinterlace command"| AGAIN["Warn, deinterlace again"]
   AGAIN --> D0
   FOUND -->|no| D0["Adds the DeInterlace action to the video track"]
-  D0 --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
+  D0 --> D1["ConvertUsingHandBrake(): HandBrake deinterlaces to .tmp8, subtitles excluded"]
   D1 -->|fail| FAIL
   D1 --> D2{"Original has subtitles?"}
   D2 -->|no| D3["MkvMerge remux to .tmp9"]
   D2 -->|yes| D4["MkvMerge merges the original subtitles back to .tmp9"]
   D3 -->|fail| FAIL
   D4 -->|fail| FAIL
-  D3 --> D5["MkvPropEdit restores the track languages in .tmp9"]
+  D3 --> D5["RestoreLanguageTags(): tracks match, MkvPropEdit restores the track languages in .tmp9"]
   D4 --> D5
   D5 -->|fail| FAIL
   D5 --> D6["Move .tmp9 over the original"]
   D6 --> D7["Sets DeInterlaced and ReMuxed, Refresh()"]
-  D7 --> D8{"Track order matches?"}
-  D8 -->|no| FAIL
-  D8 -->|yes| AOK
+  D7 --> AOK
 ```
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
+
+Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes D1 to D5 for its caller. HandBrake converts subtitles to ASS, and adds embedded closed captions as one more subtitle track. So it encodes without subtitles, and MkvMerge merges the original subtitle tracks back unchanged. The repair by re-encode uses it for its HandBrake fallback.
 
 ### Track Selection
 
@@ -743,13 +746,11 @@ flowchart TD
   C1 -->|fail| FAIL(["Fail"])
   C1 --> C2["ConvertToMkv(): Convert.ReMux() of .tmp1"]
   C2 -->|fail| FAIL
-  C2 --> C3["ConvertToMkv(): MkvPropEdit restores the track languages in .tmp1"]
+  C2 --> C3["ConvertToMkv(): RestoreLanguageTags(), tracks match, MkvPropEdit restores the track languages in .tmp1"]
   C3 -->|fail| FAIL
   C3 --> C6["ConvertToMkv(): move .tmp1 over the original"]
   C6 --> C4["Sets ReEncoded and ReMuxed, Refresh()"]
-  C4 --> C5{"Track order matches?"}
-  C5 -->|no| FAIL
-  C5 -->|yes| AOK
+  C4 --> AOK
 ```
 
 The encoder output can still match the selection, so the `process` command does not re-encode a file already `ReEncoded` again. The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and they decide no branch.
@@ -794,7 +795,7 @@ flowchart TD
   T1 --> T2["FfMpeg rewrites timestamps to .tmp14, then Convert.ReMux()"]
   T2 --> T3["TimestampRepairRegressionGate(): stream hashes equal, start and duration within 40 ms"]
   T3 --> T4{"Re-verify Clean?"}
-  T4 -->|yes| T5["Move over the original"]
+  T4 -->|yes| T5["RestoreLanguageTags(), then move over the original"]
   T5 --> RS
   T1 -->|"not audio only, or any step fails"| T6["Remux only when the original or the rewritten file shows a DTS issue only after decode"]
   T4 -->|no| T6
@@ -805,13 +806,15 @@ flowchart TD
   R1 -->|fail| R2{"Cancelled, or remux only?"}
   R2 -->|yes| RF
   R2 -->|no| R3["FfMpeg re-encode to .tmp12"]
-  R3 -->|"fail, not cancelled"| R4["HandBrake re-encode to .tmp12, subtitles included"]
+  R3 -->|"fail, not cancelled"| R4["ConvertUsingHandBrake(): HandBrake re-encode to .tmp8 without subtitles, MkvMerge merges the original subtitles back to .tmp12, RestoreLanguageTags()"]
   R3 -->|"fail, cancelled"| RF
   R4 -->|fail| RF
-  R3 --> R5["Convert.ReMux(), then re-verify Clean"]
-  R4 --> R5
+  R3 --> R5["Convert.ReMux(), then RestoreLanguageTags()"]
   R5 -->|fail| RF
-  R5 -->|pass| R6
+  R5 --> R7{"Re-verify Clean?"}
+  R4 --> R7
+  R7 -->|no| RF
+  R7 -->|yes| R6
   R6 -->|"TimestampOnly path"| RS
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the next run verifies the replaced media again"| FAIL
