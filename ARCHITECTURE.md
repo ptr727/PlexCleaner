@@ -527,7 +527,7 @@ flowchart TD
   E2 -->|yes| E3["MkvPropEdit clears tags, sets ClearedTags, warns when it was already set"]
 ```
 
-`MakeExtensionLowercase()` renames through a `.rename.mkv` step name. It fails the file without a rename when another file holds the lowercase name or the step name. On a case-insensitive Linux mount such as SMB, a single case-only move does nothing or fails, so it renames in two moves. When the second move throws, it moves the file back, and the result names the step name when that move fails too. The step name is an MKV name, so a later run processes a stranded file as media rather than deleting it.
+`MakeExtensionLowercase()` renames through a `.rename.mkv` step name. It fails the file without a rename when another file holds the lowercase name or the step name. On a case-insensitive Linux mount such as SMB, a single case-only move does nothing or fails, so it renames in two moves. When the second move throws, it moves the file back, and the result names the step name when that move fails too. The step name is an MKV name, so a later run processes a stranded file as media rather than deleting it as a non-MKV file.
 
 ### Metadata and Structure Repair
 

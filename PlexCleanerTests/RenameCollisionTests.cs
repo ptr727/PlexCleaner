@@ -243,6 +243,24 @@ public sealed class RenameCollisionTests : IDisposable
     }
 
     [Fact]
+    public void ProcessFile_LowercaseOntoStepName_FailsAndKeepsBoth()
+    {
+        Program.Config.ProcessOptions.ReMux = false;
+        string mediaFile = CreateFile("name.MKV");
+        string stepFile = ProcessFile.GetRenameStepName(Path.Combine(_directory, "name.mkv"));
+        File.WriteAllText(stepFile, "step");
+
+        _ = Process
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+            .Should()
+            .BeFalse();
+
+        _ = failedOperation.Should().Be(nameof(ProcessFile.MakeExtensionLowercase));
+        _ = File.ReadAllText(mediaFile).Should().Be("name.MKV");
+        _ = File.ReadAllText(stepFile).Should().Be("step");
+    }
+
+    [Fact]
     public void ProcessFile_OutputCreatedDuringRemux_FailsAndKeepsBoth()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
