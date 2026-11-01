@@ -35,6 +35,14 @@ public class SidecarFile
         ScannedCaptions = 1 << 20,
     }
 
+    // Verify results describe one media file, a rewrite or a changed file needs them measured again
+    public const StatesType VerifyStates =
+        StatesType.Verified
+        | StatesType.VerifyFailed
+        | StatesType.RepairFailed
+        | StatesType.BitrateExceeded
+        | StatesType.PostDecodeTimestamps;
+
     private const string SidecarExtension = ".PlexCleaner";
     private const string MkvExtension = ".mkv";
     private const int HashWindowLength = 64 * 1024;
@@ -230,13 +238,13 @@ public class SidecarFile
                     // Failed to read, create it
                     return Create();
                 }
-                State |= seeded;
-
                 // Media file changed, force an update
                 if (!current)
                 {
+                    seeded &= ~VerifyStates;
                     modified = true;
                 }
+                State |= seeded;
             }
             else
             {

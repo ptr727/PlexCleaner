@@ -40,6 +40,9 @@ internal static class FakeTools
         return mediaFile;
     }
 
+    public static int ReadSidecarState(string sidecarPath) =>
+        JsonNode.Parse(File.ReadAllText(sidecarPath))!["State"]!.GetValue<int>();
+
     // The tools return the stored sample data, so a media refresh after a replace can run
     public static void WriteSampleToolData(string directory)
     {

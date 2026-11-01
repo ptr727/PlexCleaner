@@ -420,9 +420,9 @@ flowchart TD
   UP --> UX2(["Sidecar written"])
 ```
 
-`IsMediaAndToolsCurrent()` is false when the media changed, or when a tool changed with `SidecarUpdateOnToolChange` on. With the option off, a tool upgrade alone never reruns the tools, and the sidecar keeps the tool versions it recorded until they rerun. A rename onto a name that has a sidecar keeps `FileReNamed` and the flags the renaming step set. `SidecarFile.Open()` adds them to the stored state.
+`IsMediaAndToolsCurrent()` is false when the media changed, or when a tool changed with `SidecarUpdateOnToolChange` on. With the option off, a tool upgrade alone never reruns the tools, and the sidecar keeps the tool versions it recorded until they rerun. A rename onto a name that has a sidecar keeps `FileReNamed` and the flags the renaming step set. `SidecarFile.Open()` adds them to the stored state. When the media differs from that sidecar, `Open()` drops the verify results, `SidecarFile.VerifyStates`, from the flags it adds.
 
-`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes.
+`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
 
 ### Remux and Container Steps
 
@@ -852,7 +852,7 @@ A remux copies the streams into a new file, and a re-encode or deinterlace encod
 
 ### State Flags by Step
 
-The table lists the `StatesType` flags each step sets, and the flags it clears. A rename adds `FileReNamed` and keeps the flags set so far. When a sidecar already exists under the new name, its stored flags join them, or only `FileModified` when the media differs from it.
+The table lists the `StatesType` flags each step sets, and the flags it clears. A rename adds `FileReNamed` and keeps the flags set so far. When a sidecar already exists under the new name, its stored flags join them, or only `FileModified` when the media differs from it. In that case the kept flags lose `SidecarFile.VerifyStates`.
 
 | Step | Sets | Clears |
 | --- | --- | --- |
@@ -861,14 +861,14 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RemuxByExtension()`, `RemuxNonMkvContainer()`, `RemuxRemoveExtraVideoTracks()` | `ReMuxed` | |
 | `RemoveCoverArt()` | `ReMuxed`, `RemovedCoverArt`, `RemovedAttachments`, `ClearedTags` | |
 | `RemoveTags()` | `RemovedAttachments`, `ClearedTags` | |
-| `RepairMetadataErrors()` | `SetLanguage`, `ReMuxed`, `SetFlags`, `VerifyFailed` | `Verified` |
-| `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified` |
+| `RepairMetadataErrors()` | `SetLanguage`, `ReMuxed`, `SetFlags`, `VerifyFailed` | `Verified`, `Repaired` |
+| `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified`, `Repaired` |
 | `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | |
-| `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | |
+| `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
 | `SetUnknownLanguageTracks()` | `SetLanguage` | |
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |
-| `ReEncode()` | `ReEncoded`, `ReMuxed` | |
+| `ReEncode()` | `ReEncoded`, `ReMuxed` | `SidecarFile.VerifyStates` |
 | `VerifyAndRepair()` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` |
 | `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `Verified`, `ScannedInterlace` and `ScannedCaptions` on a tool change with `SidecarUpdateOnToolChange` on |
 
