@@ -215,8 +215,8 @@ public class ProcessFile
             return false;
         }
 
-        // ReMux the file, use the new filename
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out string outputName))
+        // ReMux the file, use the new filename, the media props are not read yet
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, languageProps: null, out string outputName))
         {
             // Error
             return false;

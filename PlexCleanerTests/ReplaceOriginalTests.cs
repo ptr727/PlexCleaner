@@ -14,6 +14,10 @@ public sealed class ReplaceOriginalTests : IDisposable
         .Config
         .ProcessOptions
         .ReEncodeAudioFormats;
+    private readonly HashSet<string> _reMuxExtensions = Program
+        .Config
+        .ProcessOptions
+        .ReMuxExtensions;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
     private readonly MediaToolInfo _mediaInfoInfo = Tools.MediaInfo.Info;
@@ -38,6 +42,7 @@ public sealed class ReplaceOriginalTests : IDisposable
         Tools.MediaInfo.Info = _mediaInfoInfo;
         Program.Config.ProcessOptions.UseSidecarFiles = _useSidecarFiles;
         Program.Config.ProcessOptions.ReEncodeAudioFormats = _reEncodeAudioFormats;
+        Program.Config.ProcessOptions.ReMuxExtensions = _reMuxExtensions;
         Directory.Delete(_directory, true);
     }
 
@@ -328,6 +333,42 @@ public sealed class ReplaceOriginalTests : IDisposable
             _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
             _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
         }
+        _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void RemuxByExtension_FfMpegFallbackBeforeMediaProps_RemuxesWithoutRestore()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mkvFile = FakeTools.CopyUnverifiedSample(_directory);
+        File.Delete(Path.ChangeExtension(mkvFile, ".PlexCleaner"));
+        string aviFile = Path.ChangeExtension(mkvFile, ".avi");
+        File.Move(mkvFile, aviFile);
+        Program.Config.ProcessOptions.ReMuxExtensions = new HashSet<string>(
+            [".avi"],
+            StringComparer.OrdinalIgnoreCase
+        );
+        string propEditLog = WriteFakeTools("*.tmp2|*.tmp4", 0);
+        FakeTools.WriteSampleToolData(_directory);
+
+        // MkvMerge fails to remux the input, then remuxes the FfMpeg output
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            FakeTools.SampleIdentifyCase(_directory)
+                + "case \"$*\" in *.tmp4*) ;; *) exit 2 ;; esac\n"
+                + "for a; do case $a in *.tmp4) echo mkvmerge > \"$a\" ;; esac; done\n"
+        );
+
+        ProcessFile processFile = new(aviFile);
+        bool modified = false;
+        _ = processFile.RemuxByExtension(false, ref modified).Should().BeTrue();
+
+        _ = modified.Should().BeTrue();
+        _ = processFile.FileInfo.FullName.Should().Be(mkvFile);
+        _ = File.ReadAllText(mkvFile).Should().StartWith("mkvmerge");
+        _ = File.Exists(aviFile).Should().BeFalse();
+        _ = File.Exists(propEditLog).Should().BeFalse();
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 

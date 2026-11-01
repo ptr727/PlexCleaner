@@ -47,7 +47,11 @@ public static class Convert
         return true;
     }
 
-    public static bool ReMuxToMkv(string inputName, MediaProps languageProps, out string outputName)
+    public static bool ReMuxToMkv(
+        string inputName,
+        MediaProps? languageProps,
+        out string outputName
+    )
     {
         // This function will try both MkvMerge and FfMpeg
 
@@ -105,7 +109,10 @@ public static class Convert
             }
 
             // Only a Matroska input carries IETF language tags to restore
-            if (languageProps.IsContainerMkv() && !RestoreLanguageTags(tempName, languageProps))
+            if (
+                languageProps?.IsContainerMkv() == true
+                && !RestoreLanguageTags(tempName, languageProps)
+            )
             {
                 File.Delete(tempName);
                 return false;
