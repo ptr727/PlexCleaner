@@ -10,7 +10,7 @@ The clean-compile is the `.NET Format` VS Code task, chaining `CSharpier Format`
 
 The part CI structurally cannot exercise is media processing. The unit tests need no media files and run everywhere, but the behavior of the tool depends on the media it processes and on the external tools (FFmpeg, HandBrake, MkvToolNix, MediaInfo, 7-Zip) it drives, and a pull request runner has neither a media collection nor a reason to trust one. So a change to processing, sidecar, media-tool, or language-tag code is verified locally against real media, by the Docker test script and by the regression harness described under Runbooks, before it is called done. Read [ARCHITECTURE.md](./ARCHITECTURE.md) before changing that code.
 
-Running PlexCleaner against real media tools needs none of them installed on the host. So a missing or outdated host tool is never a reason to skip a real-tool check. The published image carries every tool at a version that passes the startup version gate. So the check runs in the image, per the runbooks below. A host tool older than `MediaTool.MinimumVersion` stops PlexCleaner at that gate. An older tool can also behave differently from the one the image ships, so a host-tool result proves nothing about shipped behavior. A change needing a tool version that no published tag carries yet builds its own image.
+Running PlexCleaner against real media tools needs none of them installed on the host. So a missing or outdated host tool is never a reason to skip a real-tool check. The published image carries every tool at a version that passes the startup version gate. So the check runs in the image, per the runbooks below. A host tool older than `MediaTool.MinimumVersion` stops PlexCleaner at that gate. An older tool can also behave differently from the one the image ships, so a host-tool result proves nothing about shipped behavior. A change needing a tool version that no published tag carries yet still tests in a container, per the runbooks below.
 
 ## Runbooks
 
@@ -50,7 +50,7 @@ The published tags install their tools from the `ubuntu:rolling` archive, so a r
 
 To test a different FFmpeg version, mount a static FFmpeg build into the container and put its directory first on `PATH` with `--env PATH=...`. Startup logs the FFmpeg version in use, and the minimum tool version check applies to it. A distribution image with FFmpeg from apt is a quick way to check a single command line against an older FFmpeg release.
 
-For any other tool, or an image change, build a local image from [Docker/Dockerfile](./Docker/Dockerfile). Replace the tool's `apt install` entry with a source that carries the needed version. Such a source is the tool's own apt repository, a PPA, or a downloaded static build. The builder stage compiles PlexCleaner from the working tree, so the local image carries the branch build too. Build with `--pull` and `--no-cache` so the base image and its package lists are current rather than cached. Leaving out `--platform` builds for the host's own architecture:
+For any other tool, or an image change, build a local image from [Docker/Dockerfile](./Docker/Dockerfile). Replace the tool's `apt install` entry with a source that carries the needed version. Such a source is the tool's own apt repository, a PPA, or a downloaded static build. On Linux PlexCleaner runs each tool by name from `PATH`, so a static build goes in a `PATH` directory. The builder stage compiles PlexCleaner from the working tree, so the local image carries the branch build too. Build with `--pull` and `--no-cache` so the base image and its package lists are current rather than cached. Leaving out `--platform` builds for the host's own architecture:
 
 ```sh
 docker buildx build --load --pull --no-cache --tag plexcleaner:local --file ./Docker/Dockerfile .
@@ -59,7 +59,7 @@ docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/test" \
   --settingsfile /test/PlexCleaner.json --mediafiles /test/media
 ```
 
-`/PlexCleaner/version.sh` in the local image prints the tool versions it carries.
+`/PlexCleaner/PlexCleaner getversioninfo --settingsfile /test/PlexCleaner.json` in the local image prints the version of every tool it carries.
 
 ### Run the regression tests
 
