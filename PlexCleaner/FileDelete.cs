@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Serilog.Events;
 
 namespace PlexCleaner;
@@ -9,14 +10,15 @@ internal static class FileDelete
         string what,
         string reason,
         string fileName,
-        Action<string>? delete = null
+        Action<string>? delete = null,
+        [CallerMemberName] string function = "unknown"
     )
     {
         try
         {
             Delete(level, what, reason, fileName, delete);
         }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        catch (Exception e) when (Log.Logger.LogAndHandle(e, function))
         {
             return false;
         }
