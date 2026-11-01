@@ -147,7 +147,7 @@ Critical performance feature - DO NOT break compatibility:
 
 - Only MkvMerge reports IETF tags, and a missing one is derived from the ISO 639-2B tag
 - MkvMerge normalizes to IETF tags when `SetIetfLanguageTags` enabled
-- FfMpeg and HandBrake drop the IETF tags when they write a file. Each of their rewrites restores the tags with MkvPropEdit before the output replaces the original, from the track list read before the rewrite. `Convert.RestoreLanguageTags()` first checks that the output keeps each track's number, type, and ISO 639-2B tag. Otherwise the rewrite fails, and the original stays. A HandBrake output holds the video, then the audio, then the subtitle tracks, so `GetHandBrakeTrackOrder()` numbers copies of the tags that way. The FfMpeg remux fallback restores them only for a Matroska input, since another container carries no IETF tags.
+- FfMpeg and HandBrake drop the IETF tags when they write a file. Each of their rewrites restores the tags with MkvPropEdit before the output replaces the original, from the original input's track list. `Convert.RestoreLanguageTags()` first checks that the output keeps each track's number, type, and ISO 639-2B tag. Otherwise the rewrite fails, and the original stays. A HandBrake output holds the video, then the audio, then the subtitle tracks, so `GetHandBrakeTrackOrder()` numbers copies of the tags that way. The FfMpeg remux fallback restores them only for a Matroska input, since another container carries no IETF tags.
 - FFprobe uses tag metadata which may differ from track metadata
 - Track validation: Checks ISO/IETF consistency, sets error states for mismatches
 
@@ -442,7 +442,9 @@ flowchart TD
   X3 -->|fail| XF
   X3 --> X4["ReMux(): MkvMerge pass over the FfMpeg output"]
   X4 -->|fail| XF
-  X4 --> X9["RestoreLanguageTags() when the input is Matroska"]
+  X4 --> X10["The input's MkvMerge track list, read here when the caller passed none"]
+  X10 -->|"read cancelled"| XF
+  X10 --> X9["RestoreLanguageTags() when the input is Matroska"]
   X9 -->|fail| XF
   X1 --> X5{"The .mkv name is the input file itself?"}
   X9 --> X5

@@ -538,8 +538,15 @@ public sealed class ReplaceOriginalTests : IDisposable
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 
-    [Fact]
-    public void RemuxByExtension_FfMpegFallbackBeforeMediaProps_RemuxesWithoutRestore()
+    [Theory]
+    [InlineData("Matroska", 0, true)]
+    [InlineData("AVI", 0, false)]
+    [InlineData("Matroska", 2, false)]
+    public void RemuxByExtension_FfMpegFallback_RestoresLanguageOnlyForMatroska(
+        string container,
+        int identifyExit,
+        bool restored
+    )
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
@@ -554,10 +561,24 @@ public sealed class ReplaceOriginalTests : IDisposable
         string propEditLog = WriteFakeTools("*.tmp2|*.tmp4", 0);
         FakeTools.WriteSampleToolData(_directory);
 
+        // The input identifies as the given container, the FfMpeg output as the sample Matroska tracks
+        // Only the input's audio track carries en-GB, so the restored tag shows which list was read
+        string identify = FakeTools.SampleIdentifyCase(_directory);
+        string identifyJson = Path.Combine(_directory, "MkvMergeInfoData.json");
+        JsonNode inputInfo = JsonNode.Parse(File.ReadAllText(identifyJson))!;
+        inputInfo["container"]!["type"] = container;
+        JsonNode audio = inputInfo["tracks"]!
+            .AsArray()
+            .First(track => track!["type"]!.GetValue<string>() == "audio")!;
+        audio["properties"]!["language_ietf"] = "en-GB";
+        string inputJson = Path.Combine(_directory, "InputInfoData.json");
+        File.WriteAllText(inputJson, inputInfo.ToJsonString());
+
         // MkvMerge fails to remux the input, then remuxes the FfMpeg output
         FakeTools.WriteScript(
             Tools.MkvMerge.GetToolPath(),
-            FakeTools.SampleIdentifyCase(_directory)
+            $"case \"$*\" in *--identify*name.avi*) cat \"{inputJson}\"; exit {identifyExit} ;; esac\n"
+                + identify
                 + "case \"$*\" in *.tmp4*) ;; *) exit 2 ;; esac\n"
                 + "for a; do case $a in *.tmp4) echo mkvmerge > \"$a\" ;; esac; done\n"
         );
@@ -570,7 +591,16 @@ public sealed class ReplaceOriginalTests : IDisposable
         _ = processFile.FileInfo.FullName.Should().Be(mkvFile);
         _ = File.ReadAllText(mkvFile).Should().StartWith("mkvmerge");
         _ = File.Exists(aviFile).Should().BeFalse();
-        _ = File.Exists(propEditLog).Should().BeFalse();
+        _ = File.Exists(propEditLog).Should().Be(restored);
+        if (restored)
+        {
+            string propEditArgs = File.ReadAllText(propEditLog);
+            _ = propEditArgs.Should().Contain("name.tmp2");
+            long number = audio["properties"]!["number"]!.GetValue<long>();
+            _ = $" {propEditArgs.Trim()} "
+                .Should()
+                .Contain($" --edit track:@{number} --set language=en-GB ");
+        }
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 

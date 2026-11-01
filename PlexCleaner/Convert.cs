@@ -108,6 +108,21 @@ public static class Convert
                 return false;
             }
 
+            // A caller that has not read the props yet passes none, so read them only for this fallback
+            // An input MkvMerge cannot identify keeps the fallback, but a cancel must not skip the restore
+            if (languageProps == null)
+            {
+                if (Tools.MkvMerge.GetMediaProps(inputName, out MediaProps props))
+                {
+                    languageProps = props;
+                }
+                else if (Program.IsCancelledError())
+                {
+                    File.Delete(tempName);
+                    return false;
+                }
+            }
+
             // Only a Matroska input carries IETF language tags to restore
             if (
                 languageProps?.IsContainerMkv() == true
