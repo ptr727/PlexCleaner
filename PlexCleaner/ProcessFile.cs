@@ -2614,6 +2614,13 @@ public class ProcessFile
             return false;
         }
 
+        // The MkvMerge pass drops tags and attachments like every other rewrite, and the gate judges its output
+        if (!Convert.ReMux(tempName))
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
         // Reject unless the payload is byte-identical and the result verifies clean
         if (!TimestampRepairRegressionGate(FileInfo.FullName, tempName))
         {

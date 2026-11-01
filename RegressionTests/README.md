@@ -131,6 +131,7 @@ python3 synthetic/synthesize.py hdr10plus-cc -o hdr10plus-cc.mkv     # true HDR1
 python3 synthetic/synthesize.py dts-timebase -o dts-timebase.mkv     # healthy VFR cadence, verifies clean
 python3 synthetic/synthesize.py dts-duplicate-pts -o dts-dup.mkv     # one repeated frame timestamp, fails verify
 python3 synthetic/synthesize.py dts-mixed -o dts-mixed.mkv           # audio DTS break plus post-decode video break
+python3 synthetic/synthesize.py dts-audio-tagged -o dts-audio.mkv  # audio DTS break under a global tag, repaired losslessly
 ```
 
 ### Targeting methodology
@@ -148,6 +149,7 @@ Pick the detections a fixture must reproduce, build a candidate, then **validate
 - **Verify DTS time base** -- `dts-timebase` muxes a 23.976 cadence followed by a denser 29.97 cadence under a 23.976 default duration. Every timestamp increases at 1 ms precision, so verify passes it. A verify that encodes in the 1/framerate time base instead rounds the dense frames onto the same tick and reports a false non-monotonic DTS.
 - **Verify DTS duplicate PTS** -- `dts-duplicate-pts` repeats one frame timestamp. Verify reports the repeat at native precision. The demuxer derives a DTS from the repeated timestamp, so the repeat is demux-visible and takes the full repair ladder.
 - **Verify DTS mixed** -- `dts-mixed` swaps two B-frame video timestamps and steps one AAC packet timestamp back, using the unsorted mkvmerge v4 timestamps format. The demuxer derives video DTS from the sorted timestamps, so only the audio break is demux-visible, while the decoded video display order runs backward. The lossless `setts` tier repairs the audio but leaves the video failing verify, so the repair stops after the remux and marks the file `RepairFailed`. The v2 timestamps format cannot build this fixture, because mkvmerge sorts v2 timestamps and so removes both the swap and the step back.
+- **Verify DTS audio tagged** -- `dts-audio-tagged` steps one AAC packet timestamp back under a global tag, with healthy video. The lossless `setts` tier repairs the whole file, and its MkvMerge pass drops the global tag and the tags FfMpeg writes, like every other rewrite.
 
 ### Extending the library
 

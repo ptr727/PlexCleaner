@@ -13,6 +13,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Files an earlier version marked `VerifyFailed`, or marked `Verified` with the `Verify` option off, are not verified again automatically.
     - Run the `createsidecar` command on the affected folders, which also clears the state that prevents a repeat conversion. The [`DtsTimestampRepair`](./Plugins/DtsTimestampRepair/) plugin re-verifies files marked `RepairFailed`.
   - A non-monotonic DTS seen only after decode is repaired by remux only, and a file the remux cannot fix is marked `RepairFailed` and `PostDecodeTimestamps`.
+  - The lossless timestamp repair drops tags and attachments like every other rewrite, whatever `RemoveTags` says.
   - An exception in one file fails only that file instead of ending the run, and the error summary names the failed step.
   - `DeleteInvalidFiles` keeps a file after an exception, a cancel, a rename collision, or an unfinished tool run, and keeps a read-only or `PostDecodeTimestamps` file.
   - With the `Verify` option off, a file is no longer marked `Verified`, and the sidecar records a clean full-file interlace or caption scan.
