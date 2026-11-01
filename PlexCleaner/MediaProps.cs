@@ -42,25 +42,6 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
     // Combined track count
     public int Count => Video.Count + Audio.Count + Subtitle.Count;
 
-    public MediaProps Clone()
-    {
-        // Shallow copy
-        MediaProps clone = (MediaProps)MemberwiseClone();
-
-        // Create new collections containing the old items
-        List<VideoProps> newVideo = [];
-        newVideo.AddRange(Video);
-        clone.Video = newVideo;
-        List<AudioProps> newAudio = [];
-        newAudio.AddRange(Audio);
-        clone.Audio = newAudio;
-        List<SubtitleProps> newSubtitle = [];
-        newSubtitle.AddRange(Subtitle);
-        clone.Subtitle = newSubtitle;
-
-        return clone;
-    }
-
     // ffprobe reports "matroska,webm"
     // mkvmerge and mediainfo reports "matroska"
     public bool IsContainerMkv() =>

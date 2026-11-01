@@ -1610,23 +1610,7 @@ public class ProcessFile
 
         File.Delete(deintName);
 
-        // Clone the original MkvMergeInfo
-        MediaProps postMkvMerge = MkvMergeProps.Clone();
-
-        // The remuxed output will be [Video] [Audio] [Subtitles]
-        // Reset the track numbers to be in the expected order
-        int trackNumber = 1;
-        postMkvMerge.Video.Clear();
-        postMkvMerge.Video.AddRange(MkvMergeProps.Video);
-        postMkvMerge.Video.ForEach(item => item.Number = trackNumber++);
-        postMkvMerge.Audio.Clear();
-        postMkvMerge.Audio.AddRange(MkvMergeProps.Audio);
-        postMkvMerge.Audio.ForEach(item => item.Number = trackNumber++);
-        postMkvMerge.Subtitle.Clear();
-        postMkvMerge.Subtitle.AddRange(MkvMergeProps.Subtitle);
-        postMkvMerge.Subtitle.ForEach(item => item.Number = trackNumber++);
-
-        if (!Convert.RestoreLanguageTags(remuxName, postMkvMerge))
+        if (!Convert.RestoreLanguageTags(remuxName, Convert.GetHandBrakeTrackOrder(MkvMergeProps)))
         {
             File.Delete(remuxName);
             return false;
@@ -1843,16 +1827,12 @@ public class ProcessFile
         Log.Information("Reencoding required tracks : {FileName}", FileInfo.FullName);
         selectMediaProps.WriteLine("ReEncode", "Passthrough");
 
-        // The FfMpeg map is constructed using the same order as the original file
-        // No need to adjust the track numbers
-        MediaProps postMkvMerge = MkvMergeProps.Clone();
-
-        // ReEncode selected tracks
+        // ReEncode selected tracks, the FfMpeg map keeps the original track order
         if (
             !Convert.ConvertToMkv(
                 FileInfo.FullName,
                 selectMediaProps,
-                postMkvMerge,
+                MkvMergeProps,
                 out string outputName
             )
         )
@@ -2373,6 +2353,7 @@ public class ProcessFile
         Debug.Assert(FileInfo.FullName != tempName);
 
         // Convert using ffmpeg
+        MediaProps languageProps = MkvMergeProps;
         Log.Information(
             "Attempting media repair by reencoding using FfMpeg : {FileName}",
             FileInfo.FullName
@@ -2413,6 +2394,7 @@ public class ProcessFile
                 // Caller will update state
                 return false;
             }
+            languageProps = Convert.GetHandBrakeTrackOrder(MkvMergeProps);
         }
 
         // ReMux using MkvMerge after FfMpeg or HandBrake encoding
@@ -2427,7 +2409,7 @@ public class ProcessFile
         // still fails verification, and a future run would skip it as already verified
         if (
             VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean
-            || !Convert.RestoreLanguageTags(tempName, MkvMergeProps)
+            || !Convert.RestoreLanguageTags(tempName, languageProps)
         )
         {
             // Failed

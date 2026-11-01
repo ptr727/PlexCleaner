@@ -201,6 +201,34 @@ public static class Convert
         return Tools.MkvPropEdit.SetTrackLanguage(fileName, languageProps);
     }
 
+    // HandBrake writes the video, then the audio, then the subtitle tracks, so number copies of the tags that way
+    public static MediaProps GetHandBrakeTrackOrder(MediaProps mediaProps)
+    {
+        MediaProps ordered = new(mediaProps.Parser, mediaProps.FileName);
+        long number = 1;
+        ordered.Video.AddRange(
+            mediaProps.Video.Select(item => CopyLanguage(new VideoProps(ordered), item, number++))
+        );
+        ordered.Audio.AddRange(
+            mediaProps.Audio.Select(item => CopyLanguage(new AudioProps(ordered), item, number++))
+        );
+        ordered.Subtitle.AddRange(
+            mediaProps.Subtitle.Select(item =>
+                CopyLanguage(new SubtitleProps(ordered), item, number++)
+            )
+        );
+        return ordered;
+    }
+
+    private static T CopyLanguage<T>(T copy, TrackProps item, long number)
+        where T : TrackProps
+    {
+        copy.Number = number;
+        copy.Language = item.Language;
+        copy.LanguageIetf = item.LanguageIetf;
+        return copy;
+    }
+
     // Compare the JSON tracks, parsing them into MediaProps would log every missing IETF tag
     private static bool HasSameTracks(List<MkvToolJsonSchema.Track> tracks, MediaProps mediaProps)
     {

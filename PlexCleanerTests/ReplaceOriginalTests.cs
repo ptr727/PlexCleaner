@@ -239,6 +239,42 @@ public sealed class ReplaceOriginalTests : IDisposable
         }
     }
 
+    [Fact]
+    public void GetHandBrakeTrackOrder_NumbersCopiesByType_LeavesOriginal()
+    {
+        MediaProps original = new(MediaTool.ToolType.MkvMerge, "name.mkv");
+        original.Video.Add(new VideoProps(original) { Number = 1, Language = "eng" });
+        original.Subtitle.Add(
+            new SubtitleProps(original)
+            {
+                Number = 2,
+                Language = "fre",
+                LanguageIetf = "fr-CA",
+            }
+        );
+        original.Audio.Add(
+            new AudioProps(original)
+            {
+                Number = 3,
+                Language = "ger",
+                LanguageIetf = "de-CH",
+            }
+        );
+
+        MediaProps ordered = PlexCleaner.Convert.GetHandBrakeTrackOrder(original);
+
+        _ = ordered
+            .GetTrackList()
+            .Select(item => (item.Type, item.Number, item.LanguageAny))
+            .Should()
+            .Equal(
+                (TrackProps.TrackType.Video, 1L, "eng"),
+                (TrackProps.TrackType.Audio, 2L, "de-CH"),
+                (TrackProps.TrackType.Subtitle, 3L, "fr-CA")
+            );
+        _ = original.GetTrackList().Select(item => item.Number).Should().Equal(1L, 3L, 2L);
+    }
+
     [Theory]
     [InlineData("exit 2\n")]
     [InlineData("echo '{'\n")]
