@@ -271,7 +271,9 @@ public partial class FfProbe
                 .FfProbeOptions(options =>
                     options
                         .ShowStreams()
-                        .ShowEntries("stream=index,codec_type,start_time,duration")
+                        .ShowEntries(
+                            "stream=index,codec_type,start_time,duration:stream_disposition=attached_pic"
+                        )
                         .OutputFormatJson()
                         .InputFile(fileName)
                 )

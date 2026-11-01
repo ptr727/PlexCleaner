@@ -51,10 +51,12 @@ public class FfMpegToolJsonSchema
             JsonSerializer.Deserialize(json, FfMpegToolJsonContext.Default.StreamTimingsProbe)
             ?? throw new JsonException("Failed to deserialize StreamTimingsProbe");
 
-        // The MkvMerge pass drops attachment streams, so only media streams are compared
+        // The MkvMerge pass drops attachments, cover art included, so only media streams are compared
         public Dictionary<int, (double Start, double Duration)> MediaStreamTimings() =>
             Streams
-                .Where(stream => stream.CodecType != "attachment")
+                .Where(stream =>
+                    stream.CodecType != "attachment" && !stream.Disposition.IsAttachedPic
+                )
                 .ToDictionary(
                     stream => stream.Index,
                     stream => (stream.StartTime, stream.Duration)
@@ -68,6 +70,9 @@ public class FfMpegToolJsonSchema
 
         [JsonPropertyName("codec_type")]
         public string CodecType { get; set; } = string.Empty;
+
+        [JsonPropertyName("disposition")]
+        public Disposition Disposition { get; } = new();
 
         [JsonPropertyName("start_time")]
         public double StartTime { get; set; } = double.NaN;
@@ -167,6 +172,12 @@ public class FfMpegToolJsonSchema
 
         [JsonIgnore]
         public bool IsDescriptions => Descriptions != 0;
+
+        [JsonPropertyName("attached_pic")]
+        public int AttachedPic { get; set; }
+
+        [JsonIgnore]
+        public bool IsAttachedPic => AttachedPic != 0;
     }
 
     public class PacketInfo

@@ -455,7 +455,7 @@ public partial class FfMpeg
             // Streamhash muxer hashes payload only, not timestamps, so an identical hash proves the repair left the media payload unchanged
             streamHashes = [];
 
-            // Stream copy the media streams to the streamhash muxer, the MkvMerge pass drops attachments
+            // Stream copy the media streams to the streamhash muxer, the MkvMerge pass drops attachments and cover art
             Command command = GetBuilder()
                 .GlobalOptions(options => options.Default())
                 .InputOptions(options => options.Default().InputFile(fileName))
@@ -463,6 +463,7 @@ public partial class FfMpeg
                     options
                         .MapAllCodecCopy()
                         .Map("-0:t")
+                        .Map("-0:disp:attached_pic")
                         .Format("streamhash")
                         .Add("-hash")
                         .Add("md5")
