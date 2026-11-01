@@ -428,6 +428,8 @@ flowchart TD
 
 The remux steps rewrite the container and set `ReMuxed`. `RemoveTags()` and `RemoveAttachments()` edit the file in place with MkvPropEdit.
 
+Every step that rewrites the file ends in an MkvMerge pass built with `MkvMergeBuilder.InputOptions.Default()`, which drops global tags, track tags, attachments, and buttons. That covers the remux steps and the FfMpeg remux fallback, re-encode, deinterlace, closed caption removal, repair, and the cover art remux. The pass drops them whatever `RemoveTags` says, so an FfMpeg or HandBrake rewrite never adds tags to the output. `RemoveTags` is the explicit removal, and it clears tags and attachments in place on a file no step rewrites. With it off, a file keeps its tags and attachments only while no step rewrites it. The FfProbe cover art path forces `RemoveTags()` whatever the option says, as the cover art flow below shows.
+
 `Convert.ReMuxToMkv()` remuxes the whole file to the `.mkv` name, and a node that names it without a track selection runs this flow. With a track selection, it remuxes once with MkvMerge to `.tmp3`, with no FfMpeg fallback, then moves the output the same way.
 
 ```mermaid
