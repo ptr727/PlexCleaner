@@ -112,8 +112,29 @@ class ParseLogTests(unittest.TestCase):
 
 class FindRunTests(unittest.TestCase):
     def test_explicit_absolute_and_relative(self) -> None:
-        self.assertEqual(cc.find_run("/some/abs"), Path("/some/abs"))
-        self.assertEqual(cc.find_run("rel"), cc.REG_DIR / "rel")
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self._run(root, "1.0.0-ga", 1000, {"Channel": "develop"})
+            self.assertEqual(cc.find_run(str(root / "1.0.0-ga")), root / "1.0.0-ga")
+            with mock.patch.object(cc, "REG_DIR", root):
+                self.assertEqual(cc.find_run("1.0.0-ga"), root / "1.0.0-ga")
+
+    def test_explicit_missing_dir_exits(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            with mock.patch.object(cc, "REG_DIR", root), self.assertRaises(SystemExit) as cm:
+                cc.find_run("0.0.0-gmissing")
+        self.assertIn(
+            str(root / "0.0.0-gmissing" / "PlexCleaner_process.log"), str(cm.exception.code)
+        )
+
+    def test_explicit_dir_without_log_exits(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d) / "1.0.0-ga"
+            run.mkdir()
+            with self.assertRaises(SystemExit) as cm:
+                cc.find_run(str(run))
+        self.assertIn("no process log", str(cm.exception.code))
 
     @staticmethod
     def _run(root: Path, name: str, mtime: int, info: dict[str, str]) -> None:
