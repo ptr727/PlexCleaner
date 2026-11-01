@@ -1,5 +1,7 @@
+using System.Globalization;
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -9,6 +11,8 @@ public sealed class DeleteFailedFileTests : IDisposable
 {
     private readonly string _directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
     private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
+    private readonly bool _deleteEmptyFolders = Program.Config.ProcessOptions.DeleteEmptyFolders;
+    private readonly int _threadCount = Program.Options.ThreadCount;
 
     public DeleteFailedFileTests()
     {
@@ -19,6 +23,8 @@ public sealed class DeleteFailedFileTests : IDisposable
     public void Dispose()
     {
         Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
+        Program.Config.ProcessOptions.DeleteEmptyFolders = _deleteEmptyFolders;
+        Program.Options.ThreadCount = _threadCount;
         foreach (string file in Directory.EnumerateFiles(_directory))
         {
             File.SetAttributes(file, FileAttributes.Normal);
@@ -75,7 +81,10 @@ public sealed class DeleteFailedFileTests : IDisposable
         string mediaFile = CreateFile("name.avi");
         string sidecarFile = CreateFile("name.PlexCleaner");
 
-        _ = new ProcessFile(mediaFile).DeleteFailedFile().Should().BeTrue();
+        _ = new ProcessFile(mediaFile)
+            .DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+            .Should()
+            .BeTrue();
 
         _ = File.Exists(mediaFile).Should().BeFalse();
         _ = File.Exists(sidecarFile).Should().BeTrue();
@@ -87,7 +96,10 @@ public sealed class DeleteFailedFileTests : IDisposable
         string mediaFile = CreateFile("name.mkv");
         string sidecarFile = CreateFile("name.PlexCleaner");
 
-        _ = new ProcessFile(mediaFile).DeleteFailedFile().Should().BeTrue();
+        _ = new ProcessFile(mediaFile)
+            .DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+            .Should()
+            .BeTrue();
 
         _ = File.Exists(mediaFile).Should().BeFalse();
         _ = File.Exists(sidecarFile).Should().BeFalse();
@@ -100,9 +112,111 @@ public sealed class DeleteFailedFileTests : IDisposable
         _ = Directory.CreateDirectory(Path.Combine(_directory, "name.PlexCleaner"));
 
         ProcessFile processFile = new(mediaFile);
-        _ = processFile.DeleteFailedFile().Should().BeTrue();
+        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeTrue();
 
         _ = File.Exists(mediaFile).Should().BeFalse();
         _ = processFile.State.Should().HaveFlag(SidecarFile.StatesType.FileDeleted);
+    }
+
+    private static List<string> Messages(IReadOnlyList<LogEvent> events, LogEventLevel level) =>
+        [
+            .. events
+                .Where(e => e.Level == level)
+                .Select(e => e.RenderMessage(CultureInfo.InvariantCulture)),
+        ];
+
+    [Fact]
+    public void MkvFile_LogsOperationAndSidecarDelete()
+    {
+        string mediaFile = CreateFile("name.mkv");
+        string sidecarFile = CreateFile("name.PlexCleaner");
+
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            new ProcessFile(mediaFile).DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+        );
+
+        _ = Messages(events, LogEventLevel.Warning)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Deleting media file : Failed VerifyAndRepair : ")
+            .And.Contain(mediaFile);
+        _ = Messages(events, LogEventLevel.Information)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Deleting sidecar file : Media file deleted : ")
+            .And.Contain(sidecarFile);
+    }
+
+    [Fact]
+    public void ToolError_LogsKeepReason()
+    {
+        string mediaFile = CreateFile("name.mkv");
+
+        bool deleted = true;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+        {
+            using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+            ToolErrorScope.Record();
+            deleted = new ProcessFile(mediaFile).DeleteFailedFile(
+                nameof(ProcessFile.VerifyAndRepair)
+            );
+        });
+
+        _ = deleted.Should().BeFalse();
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = Messages(events, LogEventLevel.Information)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Keeping failed file : Tool error : ");
+    }
+
+    [Fact]
+    public void SidecarDeleteThrows_LogsFailedDelete()
+    {
+        string mediaFile = CreateFile("name.mkv");
+        string sidecarName = Path.Combine(_directory, "name.PlexCleaner");
+        _ = Directory.CreateDirectory(sidecarName);
+
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            new ProcessFile(mediaFile).DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+        );
+
+        _ = Messages(events, LogEventLevel.Error)
+            .Should()
+            .Contain(message =>
+                message.StartsWith("Failed to delete sidecar file : ", StringComparison.Ordinal)
+                && message.Contains(sidecarName, StringComparison.Ordinal)
+            );
+    }
+
+    [Fact]
+    public void DeleteEmptyFolders_LogsEachFolder()
+    {
+        Program.Config.ProcessOptions.DeleteEmptyFolders = true;
+        Program.Options.ThreadCount = 1;
+        string outer = Path.Combine(_directory, "outer");
+        string inner = Path.Combine(outer, "inner");
+        _ = Directory.CreateDirectory(inner);
+
+        bool result = false;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            result = Process.DeleteEmptyFolders([_directory])
+        );
+
+        _ = result.Should().BeTrue();
+        _ = Directory.Exists(outer).Should().BeFalse();
+        List<string> deletes =
+        [
+            .. Messages(events, LogEventLevel.Information)
+                .Where(message =>
+                    message.StartsWith("Deleting folder : Empty : ", StringComparison.Ordinal)
+                ),
+        ];
+        _ = deletes.Should().HaveCount(2);
+        _ = deletes[0].Should().Contain(inner);
+        _ = deletes[1].Should().Contain(outer);
     }
 }

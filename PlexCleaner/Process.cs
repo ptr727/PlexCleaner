@@ -436,7 +436,7 @@ public static class Process
             // Conditional on DeleteInvalidFiles
             if (!result && !skipped)
             {
-                _ = processFile.DeleteFailedFile();
+                _ = processFile.DeleteFailedFile(operation ?? nameof(ProcessFile));
             }
 
             // Return current state and file info
@@ -459,6 +459,7 @@ public static class Process
         // Delete all empty folders
         bool fatalError = false;
         int totalDeleted = 0;
+        int totalFailed = 0;
         try
         {
             folderList
@@ -472,9 +473,11 @@ public static class Process
 
                     // Delete empty folders
                     int deleted = 0;
+                    int failed = 0;
                     Log.Debug("Looking for empty folders in {Folder}", folder);
-                    DeleteEmptyDirectories(folder, ref deleted);
+                    DeleteEmptyDirectories(folder, ref deleted, ref failed);
                     _ = Interlocked.Add(ref totalDeleted, deleted);
+                    _ = Interlocked.Add(ref totalFailed, failed);
                 });
         }
         catch (OperationCanceledException)
@@ -490,10 +493,10 @@ public static class Process
 
         Log.Logger.LogOverrideContext().Information("Deleted folders : {Deleted}", totalDeleted);
 
-        return !fatalError;
+        return !fatalError && totalFailed == 0;
     }
 
-    private static void DeleteEmptyDirectories(string directory, ref int deleted)
+    private static void DeleteEmptyDirectories(string directory, ref int deleted, ref int failed)
     {
         // Find all directories in this directory, not all subdirectories, we will call recursively
         DirectoryInfo parentInfo = new(directory);
@@ -505,15 +508,25 @@ public static class Process
         )
         {
             // Call recursively for this directory
-            DeleteEmptyDirectories(dirInfo.FullName, ref deleted);
+            DeleteEmptyDirectories(dirInfo.FullName, ref deleted, ref failed);
 
             // Test for files and directories, if none, delete this directory
             if (dirInfo.GetFiles().Length != 0 || dirInfo.GetDirectories().Length != 0)
             {
                 continue;
             }
-            Directory.Delete(dirInfo.FullName);
 
+            Log.Information("Deleting folder : Empty : {Folder}", dirInfo.FullName);
+            try
+            {
+                Directory.Delete(dirInfo.FullName);
+            }
+            catch (Exception e) when (Log.Logger.LogAndHandle(e))
+            {
+                Log.Error("Failed to delete folder : {Folder}", dirInfo.FullName);
+                failed++;
+                continue;
+            }
             deleted++;
         }
     }

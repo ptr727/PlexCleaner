@@ -235,16 +235,18 @@ public static class Convert
         }
 
         // The media is at the output name, so a failed delete still reports the output and the modification
+        Log.Information(
+            "Deleting input file : Converted to {OutputName} : {FileName}",
+            outputName,
+            inputName
+        );
         try
         {
             File.Delete(inputName);
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
-            Log.Error(
-                "Failed to delete the input after moving to the output : {FileName}",
-                inputName
-            );
+            Log.Error("Failed to delete input file : {FileName}", inputName);
         }
     }
 
