@@ -56,12 +56,15 @@ public sealed class ReplaceOriginalTests : IDisposable
     }
 
     // Each fake writes its tool name into every argument matching the patterns, MkvPropEdit logs the file it edits
-    private static string WriteFakeTools(string tempOutputs, int propEditExit, int mkvMergeExit = 0)
+    private string WriteFakeTools(string tempOutputs, int propEditExit, int mkvMergeExit = 0)
     {
         string write =
             $"for a; do a=${{a#*=}}; case $a in {tempOutputs}) echo $(basename \"$0\") > \"$a\" ;; esac; done\n";
         FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), write);
-        FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), write + $"exit {mkvMergeExit}\n");
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            FakeTools.SampleIdentifyCase(_directory) + write + $"exit {mkvMergeExit}\n"
+        );
         FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), write);
         string mkvPropEdit = Tools.MkvPropEdit.GetToolPath();
         FakeTools.WriteScript(mkvPropEdit, $"echo \"$@\" > \"$0.log\"\nexit {propEditExit}\n");
@@ -185,5 +188,86 @@ public sealed class ReplaceOriginalTests : IDisposable
             .ReadSidecarState(SidecarFile.GetSidecarName(processFile.FileInfo))
             .Should()
             .Be((int)expected);
+    }
+
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void RestoreLanguageTags_EditsOnlyWhenTracksMatch(bool changeTracks, bool edited)
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        ProcessFile processFile = CreateProcessFile();
+        string propEditLog = WriteFakeTools("*.tmp1", 0);
+        string tempName = Path.ChangeExtension(processFile.FileInfo.FullName, ".tmp1");
+        File.WriteAllText(tempName, "ffmpeg");
+        if (changeTracks)
+        {
+            processFile.MkvMergeProps.GetTrackList()[0].Number += 100;
+        }
+
+        _ = PlexCleaner
+            .Convert.RestoreLanguageTags(tempName, processFile.MkvMergeProps)
+            .Should()
+            .BeTrue();
+
+        _ = File.Exists(propEditLog).Should().Be(edited);
+        if (edited)
+        {
+            _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp1");
+        }
+    }
+
+    [Fact]
+    public void RestoreLanguageTags_IdentifyFails_ReturnsFalse()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        ProcessFile processFile = CreateProcessFile();
+        string propEditLog = WriteFakeTools("*.tmp1", 0);
+        FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), "exit 2\n");
+        string tempName = Path.ChangeExtension(processFile.FileInfo.FullName, ".tmp1");
+        File.WriteAllText(tempName, "ffmpeg");
+
+        _ = PlexCleaner
+            .Convert.RestoreLanguageTags(tempName, processFile.MkvMergeProps)
+            .Should()
+            .BeFalse();
+        _ = File.Exists(propEditLog).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("Matroska", true)]
+    [InlineData("AVI", false)]
+    public void ReMuxToMkv_FfMpegFallback_RestoresLanguageOnlyForMatroska(
+        string container,
+        bool restored
+    )
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        ProcessFile processFile = CreateProcessFile();
+        string mediaFile = processFile.FileInfo.FullName;
+        string propEditLog = WriteFakeTools("*.tmp2|*.tmp4", 0);
+        processFile.MkvMergeProps.Container = container;
+
+        // MkvMerge fails to remux the input, then remuxes the FfMpeg output
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            FakeTools.SampleIdentifyCase(_directory)
+                + "case \"$*\" in *.tmp4*) ;; *) exit 2 ;; esac\n"
+                + "for a; do case $a in *.tmp4) echo mkvmerge > \"$a\" ;; esac; done\n"
+        );
+
+        _ = PlexCleaner
+            .Convert.ReMuxToMkv(mediaFile, processFile.MkvMergeProps, out string outputName)
+            .Should()
+            .BeTrue();
+
+        _ = outputName.Should().Be(mediaFile);
+        _ = File.ReadAllText(mediaFile).Should().StartWith("mkvmerge");
+        _ = File.Exists(propEditLog).Should().Be(restored);
+        if (restored)
+        {
+            _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp2");
+        }
+        _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 }

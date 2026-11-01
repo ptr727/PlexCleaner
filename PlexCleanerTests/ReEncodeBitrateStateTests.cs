@@ -243,6 +243,8 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None);
         FakeTools.WriteSampleToolData(_directory);
+        string mkvPropEdit = Tools.MkvPropEdit.GetToolPath();
+        FakeTools.WriteScript(mkvPropEdit, "echo \"$@\" > \"$0.log\"\n");
         WriteFakeFfProbe(
             CatPackets("first", processFile.FfProbeProps.Video[0].Id, true),
             reMeasureToolError ? "kill -9 $$" : CatPackets("later", 0, false)
@@ -269,6 +271,7 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
 
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("4");
         _ = File.ReadAllText(Tools.FfProbe.GetToolPath() + ".step").Trim().Should().Be("2");
+        _ = File.ReadAllText(mkvPropEdit + ".log").Should().Contain("name.tmp12");
         _ = ToolErrorScope.Count.Should().Be(reMeasureToolError ? 1 : 0);
         _ = processFile.State.Should().Be(expected);
         _ = NextRun(processFile).State.Should().Be(expected);

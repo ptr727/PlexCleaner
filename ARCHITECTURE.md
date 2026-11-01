@@ -147,6 +147,7 @@ Critical performance feature - DO NOT break compatibility:
 
 - Only MkvMerge reports IETF tags, and a missing one is derived from the ISO 639-2B tag
 - MkvMerge normalizes to IETF tags when `SetIetfLanguageTags` enabled
+- FfMpeg and HandBrake drop the IETF tags when they write a file. Each of their rewrites restores the tags with MkvPropEdit before the output replaces the original, from the track list read before the rewrite. `Convert.RestoreLanguageTags()` edits only when the output keeps each track's number, type, and ISO 639-2B tag. Otherwise it warns and leaves the derived tags to `SetIetfLanguageTags`. The FfMpeg remux fallback restores them only for a Matroska input, since another container carries no IETF tags.
 - FFprobe uses tag metadata which may differ from track metadata
 - Track validation: Checks ISO/IETF consistency, sets error states for mismatches
 
@@ -441,8 +442,10 @@ flowchart TD
   X3 -->|fail| XF
   X3 --> X4["ReMux(): MkvMerge pass over the FfMpeg output"]
   X4 -->|fail| XF
+  X4 --> X9["RestoreLanguageTags() when the input is Matroska"]
+  X9 -->|fail| XF
   X1 --> X5{"The .mkv name is the input file itself?"}
-  X4 --> X5
+  X9 --> X5
   X5 -->|yes| X6["Move over the input"]
   X5 -->|no| X7["Move to the .mkv name"]
   X6 -->|"move fails"| XT(["Throw after deleting the temp file, the input stays"])
@@ -611,7 +614,7 @@ flowchart TD
   C2 -->|yes| FAIL
   C2 -->|no| C3["FfMpeg removes the NAL units to .tmp10"]
   C3 -->|fail| FAIL
-  C3 --> C4["Convert.ReMux()"]
+  C3 --> C4["Convert.ReMux(), then RestoreLanguageTags()"]
   C4 -->|fail| FAIL
   C4 --> C5["Move over the original, sets ClearedCaptions and ReMuxed, Refresh()"]
 ```
@@ -794,7 +797,7 @@ flowchart TD
   T1 --> T2["FfMpeg rewrites timestamps to .tmp14"]
   T2 --> T3["TimestampRepairRegressionGate(): stream hashes equal, start and duration within 40 ms"]
   T3 --> T4{"Re-verify Clean?"}
-  T4 -->|yes| T5["Move over the original"]
+  T4 -->|yes| T5["RestoreLanguageTags(), then move over the original"]
   T5 --> RS
   T1 -->|"not audio only, or any step fails"| T6["Remux only when the original or the rewritten file shows a DTS issue only after decode"]
   T4 -->|no| T6
@@ -808,7 +811,7 @@ flowchart TD
   R3 -->|"fail, not cancelled"| R4["HandBrake re-encode to .tmp12, subtitles included"]
   R3 -->|"fail, cancelled"| RF
   R4 -->|fail| RF
-  R3 --> R5["Convert.ReMux(), then re-verify Clean"]
+  R3 --> R5["Convert.ReMux(), re-verify Clean, then RestoreLanguageTags()"]
   R4 --> R5
   R5 -->|fail| RF
   R5 -->|pass| R6

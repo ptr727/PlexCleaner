@@ -580,7 +580,12 @@ public sealed class VerifyToolErrorTests : IDisposable
 
         // The remux tier's MkvMerge fails to launch, then the re-encode tier makes it executable
         string mkvMerge = Tools.MkvMerge.GetToolPath();
-        FakeTools.WriteScript(mkvMerge, "for a; do out=$a; done\n: > \"$out\"\n", false);
+        FakeTools.WriteScript(
+            mkvMerge,
+            FakeTools.SampleIdentifyCase(_directory) + "for a; do out=$a; done\n: > \"$out\"\n",
+            false
+        );
+        FakeTools.WriteScript(Tools.MkvPropEdit.GetToolPath(), "exit 0\n");
         string ffMpeg = Tools.FfMpeg.GetToolPath();
         FakeTools.WriteScript(
             ffMpeg,

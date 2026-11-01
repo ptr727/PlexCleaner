@@ -43,10 +43,21 @@ internal static class FakeTools
     public static int ReadSidecarState(string sidecarPath) =>
         JsonNode.Parse(File.ReadAllText(sidecarPath))!["State"]!.GetValue<int>();
 
-    // The tools return the stored sample data, so a media refresh after a replace can run
-    public static void WriteSampleToolData(string directory)
+    // A shell case answering an identify with the sample tracks, so a rewrite can restore the language tags
+    public static string SampleIdentifyCase(string directory)
     {
-        JsonNode stored = JsonNode.Parse(
+        string json = Path.Combine(directory, "MkvMergeInfoData.json");
+        File.WriteAllText(
+            json,
+            StringCompression.Decompress(
+                ReadSampleSidecar()["MkvMergeInfoData"]!.GetValue<string>()
+            )
+        );
+        return $"case \"$*\" in *--identify*) cat \"{json}\"; exit 0 ;; esac\n";
+    }
+
+    private static JsonNode ReadSampleSidecar() =>
+        JsonNode.Parse(
             File.ReadAllText(
                 Path.Combine(
                     PlexCleanerFixture.GetSamplesAbsoluteDirectory(),
@@ -54,6 +65,11 @@ internal static class FakeTools
                 )
             )
         )!;
+
+    // The tools return the stored sample data, so a media refresh after a replace can run
+    public static void WriteSampleToolData(string directory)
+    {
+        JsonNode stored = ReadSampleSidecar();
         foreach (string key in new[] { "MediaInfoData", "MkvMergeInfoData", "FfProbeInfoData" })
         {
             File.WriteAllText(

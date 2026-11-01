@@ -215,7 +215,7 @@ public class ProcessFile
         }
 
         // ReMux the file, use the new filename
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out string outputName))
         {
             // Error
             return false;
@@ -264,7 +264,7 @@ public class ProcessFile
         );
 
         // ReMux the file, use the new filename
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out string outputName))
         {
             // Error
             return false;
@@ -581,10 +581,10 @@ public class ProcessFile
 
         // Conditional with tracks or all tracks
         if (
-            !Convert.ReMuxToMkv(
-                FileInfo.FullName,
-                selectMediaProps.NotSelected.Count > 0 ? selectMediaProps : null,
-                out string outputName
+            !(
+                selectMediaProps.NotSelected.Count > 0
+                    ? Convert.ReMuxToMkv(FileInfo.FullName, selectMediaProps, out string outputName)
+                    : Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out outputName)
             )
         )
         {
@@ -876,7 +876,7 @@ public class ProcessFile
 
         // Remux to rewrite the container structure
         Log.Information("Remux to repair Matroska structure : {FileName}", FileInfo.FullName);
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out string outputName))
         {
             // Error
             return false;
@@ -1626,9 +1626,7 @@ public class ProcessFile
         postMkvMerge.Subtitle.AddRange(MkvMergeProps.Subtitle);
         postMkvMerge.Subtitle.ForEach(item => item.Number = trackNumber++);
 
-        // FfMpeg and HandBrake discards IETF language tags, restore them after encoding and deinterlacing
-        // https://github.com/ptr727/PlexCleaner/issues/148
-        if (!Tools.MkvPropEdit.SetTrackLanguage(remuxName, postMkvMerge))
+        if (!Convert.RestoreLanguageTags(remuxName, postMkvMerge))
         {
             File.Delete(remuxName);
             return false;
@@ -1754,7 +1752,7 @@ public class ProcessFile
         }
 
         // ReMux using MkvMerge after FfMpeg encoding
-        if (!Convert.ReMux(tempName))
+        if (!Convert.ReMux(tempName) || !Convert.RestoreLanguageTags(tempName, MkvMergeProps))
         {
             // Error
             File.Delete(tempName);
@@ -2459,7 +2457,10 @@ public class ProcessFile
 
         // Require a clean re-verify, accepting a timestamp-only result would mark a file Verified that
         // still fails verification, and a future run would skip it as already verified
-        if (VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean)
+        if (
+            VerifyMediaStreams(new FileInfo(tempName)) != VerifyResult.Clean
+            || !Convert.RestoreLanguageTags(tempName, MkvMergeProps)
+        )
         {
             // Failed
             File.Delete(tempName);
@@ -2628,6 +2629,11 @@ public class ProcessFile
                 verifyResult == VerifyResult.TimestampOnly
                 && GetPacketAnalysis(tempName, false, out _, out DtsInfo? residualDtsInfo)
                 && DtsInfo.IsPostDecodeOnly(residualDtsInfo);
+            File.Delete(tempName);
+            return false;
+        }
+        if (!Convert.RestoreLanguageTags(tempName, MkvMergeProps))
+        {
             File.Delete(tempName);
             return false;
         }
