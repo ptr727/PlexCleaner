@@ -422,7 +422,7 @@ flowchart TD
 
 `IsMediaAndToolsCurrent()` is false when the media changed, or when a tool changed with `SidecarUpdateOnToolChange` on. With the option off, a tool upgrade alone never reruns the tools, and the sidecar keeps the tool versions it recorded until they rerun. A rename onto a name that has a sidecar keeps `FileReNamed` and the flags the renaming step set. `SidecarFile.Open()` adds them to the stored state. When the media differs from that sidecar, `Open()` drops the verify results, `SidecarFile.VerifyStates`, from the flags it adds.
 
-`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes.
+`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
 
 ### Remux and Container Steps
 
@@ -863,7 +863,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RemoveTags()` | `RemovedAttachments`, `ClearedTags` | |
 | `RepairMetadataErrors()` | `SetLanguage`, `ReMuxed`, `SetFlags`, `VerifyFailed` | `Verified`, `Repaired` |
 | `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified`, `Repaired` |
-| `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
+| `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | |
 | `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
 | `SetUnknownLanguageTracks()` | `SetLanguage` | |
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |

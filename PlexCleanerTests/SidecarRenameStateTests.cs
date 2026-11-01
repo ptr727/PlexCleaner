@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
@@ -37,9 +36,6 @@ public sealed class SidecarRenameStateTests : IDisposable
         Directory.Delete(_directory, true);
     }
 
-    private static int ReadState(string sidecarPath) =>
-        JsonNode.Parse(File.ReadAllText(sidecarPath))!["State"]!.GetValue<int>();
-
     [Fact]
     public void Open_SeededStateOverMatchingSidecar_KeepsBothStates()
     {
@@ -59,7 +55,7 @@ public sealed class SidecarRenameStateTests : IDisposable
 
         SidecarFile.StatesType expected = Seeded | SidecarFile.StatesType.Verified;
         _ = sidecarFile.State.Should().Be(expected);
-        _ = ReadState(sidecarPath).Should().Be((int)expected);
+        _ = FakeTools.ReadSidecarState(sidecarPath).Should().Be((int)expected);
     }
 
     [Fact]
@@ -82,7 +78,7 @@ public sealed class SidecarRenameStateTests : IDisposable
         // The stale Verified flag is cleared, the seeded flags are kept
         SidecarFile.StatesType expected = Seeded | SidecarFile.StatesType.FileModified;
         _ = sidecarFile.State.Should().Be(expected);
-        _ = ReadState(sidecarPath).Should().Be((int)expected);
+        _ = FakeTools.ReadSidecarState(sidecarPath).Should().Be((int)expected);
     }
 
     [Fact]
@@ -114,6 +110,6 @@ public sealed class SidecarRenameStateTests : IDisposable
         SidecarFile.StatesType expected =
             Seeded | SidecarFile.StatesType.Repaired | SidecarFile.StatesType.FileModified;
         _ = sidecarFile.State.Should().Be(expected);
-        _ = ReadState(sidecarPath).Should().Be((int)expected);
+        _ = FakeTools.ReadSidecarState(sidecarPath).Should().Be((int)expected);
     }
 }
