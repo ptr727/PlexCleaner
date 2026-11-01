@@ -108,6 +108,15 @@ public static class Convert
                 return false;
             }
 
+            // A caller that has not read the props yet passes none, so read them only for this fallback
+            if (
+                languageProps == null
+                && Tools.MkvMerge.GetMediaProps(inputName, out MediaProps props)
+            )
+            {
+                languageProps = props;
+            }
+
             // Only a Matroska input carries IETF language tags to restore
             if (
                 languageProps?.IsContainerMkv() == true

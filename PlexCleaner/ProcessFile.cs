@@ -216,13 +216,7 @@ public class ProcessFile
         }
 
         // ReMux the file, use the new filename, the media props are not read yet
-        if (
-            !Convert.ReMuxToMkv(
-                FileInfo.FullName,
-                GetMatroskaLanguageProps(),
-                out string outputName
-            )
-        )
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, languageProps: null, out string outputName))
         {
             // Error
             return false;
@@ -233,34 +227,6 @@ public class ProcessFile
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         return Refresh(outputName);
-    }
-
-    // A Matroska file under another extension has IETF tags the FfMpeg fallback must restore
-    // The container is checked before parsing, so another container logs nothing about its tracks
-    private MediaProps? GetMatroskaLanguageProps()
-    {
-        if (!Tools.MkvMerge.GetMediaPropsJson(FileInfo.FullName, out string json))
-        {
-            return null;
-        }
-        try
-        {
-            if (
-                !MkvToolJsonSchema
-                    .MkvMerge.FromJson(json)
-                    .Container.Type.Contains("matroska", StringComparison.OrdinalIgnoreCase)
-            )
-            {
-                return null;
-            }
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e))
-        {
-            return null;
-        }
-        return MkvMerge.Tool.GetMediaPropsFromJson(json, FileInfo.FullName, out MediaProps props)
-            ? props
-            : null;
     }
 
     public bool RemuxNonMkvContainer(ref bool modified)

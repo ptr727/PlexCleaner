@@ -442,7 +442,8 @@ flowchart TD
   X3 -->|fail| XF
   X3 --> X4["ReMux(): MkvMerge pass over the FfMpeg output"]
   X4 -->|fail| XF
-  X4 --> X9["RestoreLanguageTags() when the input is Matroska"]
+  X4 --> X10["The input's MkvMerge track list, read here when the caller passed none"]
+  X10 --> X9["RestoreLanguageTags() when the input is Matroska"]
   X9 -->|fail| XF
   X1 --> X5{"The .mkv name is the input file itself?"}
   X9 --> X5
@@ -457,16 +458,13 @@ flowchart TD
 
 `RemuxByExtension()` remuxes a file whose extension is in `ReMuxExtensions`, and the result continues under the `.mkv` name.
 
-It reads the MkvMerge track list first, so the FfMpeg fallback restores the IETF tags of a Matroska file under another extension. A container other than Matroska is not parsed, and its tracks get no restore.
-
 ```mermaid
 flowchart TD
   A0["RemuxByExtension()"] --> A1{"ReMux option on or the remux command, and the extension is in ReMuxExtensions?"}
   A1 -->|no| AOK(["Continue"])
   A1 -->|yes| A2{"IsRenameCollision(): another file holds the .mkv name?"}
   A2 -->|yes| AF(["Fail, the file is not deleted"])
-  A2 -->|no| A3["GetMatroskaLanguageProps(): the MkvMerge track list when the input is Matroska"]
-  A3 --> AR(["Convert.ReMuxToMkv()"])
+  A2 -->|no| AR(["Convert.ReMuxToMkv()"])
 ```
 
 `RemuxNonMkvContainer()` remuxes an `.mkv` file whose container is not Matroska, in place under the same name.
