@@ -155,6 +155,15 @@ class FindRunTests(unittest.TestCase):
                 self.assertEqual(cc.find_run(None), root / "1.0.0-ga")
                 self.assertEqual(cc.find_run(None, corpus="reduced"), root / "1.0.1-gb-reduced")
 
+    def test_newer_run_on_another_channel_is_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self._run(root, "1.0.0-ga", 1000, {"Channel": "develop", "Corpus": "full"})
+            self._run(root, "1.0.1-gb", 2000, {"Channel": "latest", "Corpus": "full"})
+            with mock.patch.object(cc, "REG_DIR", root):
+                self.assertEqual(cc.find_run(None), root / "1.0.0-ga")
+                self.assertEqual(cc.find_run(None, channel="latest"), root / "1.0.1-gb")
+
     def test_run_without_corpus_field_is_full(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)

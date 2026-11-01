@@ -4,8 +4,20 @@ using Xunit;
 
 namespace PlexCleanerTests;
 
-public class MinimumVersionTests
+[Collection("Sequential")]
+public sealed class MinimumVersionTests : IDisposable
 {
+    private readonly List<MediaToolInfo> _infos = Tools.GetToolList().ConvertAll(tool => tool.Info);
+
+    public void Dispose()
+    {
+        List<MediaTool> tools = Tools.GetToolList();
+        for (int i = 0; i < tools.Count; i++)
+        {
+            tools[i].Info = _infos[i];
+        }
+    }
+
     public static TheoryData<MediaTool.ToolType, string> Minimums =>
         new()
         {
@@ -32,6 +44,43 @@ public class MinimumVersionTests
 
     private static MediaTool GetTool(MediaTool.ToolType toolType) =>
         Tools.GetToolList().Single(tool => tool.GetToolType() == toolType);
+
+    private static void SetVersions(MediaTool.ToolType? toolType = null, string version = "")
+    {
+        foreach (MediaTool tool in Tools.GetToolList())
+        {
+            tool.Info = new MediaToolInfo(tool)
+            {
+                Version =
+                    tool.GetToolType() == toolType ? version : tool.MinimumVersion!.ToString(),
+            };
+        }
+    }
+
+    [Fact]
+    public void VerifyToolVersions_EveryToolAtMinimum_ReturnsTrue()
+    {
+        SetVersions();
+        _ = Tools.VerifyToolVersions().Should().BeTrue();
+    }
+
+    [Theory]
+    [MemberData(nameof(OlderVersions))]
+    public void VerifyToolVersions_OneToolOlder_ReturnsFalse(
+        MediaTool.ToolType toolType,
+        string version
+    )
+    {
+        SetVersions(toolType, version);
+        _ = Tools.VerifyToolVersions().Should().BeFalse();
+    }
+
+    [Fact]
+    public void VerifyToolVersions_UncomparableVersion_ReturnsTrue()
+    {
+        SetVersions(MediaTool.ToolType.HandBrake, "custom-build");
+        _ = Tools.VerifyToolVersions().Should().BeTrue();
+    }
 
     [Fact]
     public void MinimumVersion_EveryTool_HasMinimum()
