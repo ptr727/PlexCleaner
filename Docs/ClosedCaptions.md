@@ -184,3 +184,7 @@ ffmpeg -loglevel error -i [in-filename] -c copy -map 0 -bsf:v filter_units=remov
 Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.
 
 > **ℹ️ Note**: [Wiki](https://trac.ffmpeg.org/wiki/HowToExtractAndRemoveClosedCaptions) and [issue](https://trac.ffmpeg.org/ticket/5283); as of writing HDR10+ metadata may be lost when removing closed captions from H265 content. PlexCleaner therefore skips closed caption removal on H265/HEVC content carrying HDR10 (SMPTE ST 2086) or HDR10+ (SMPTE ST 2094) metadata, reporting it as an error rather than risk stripping the metadata.
+
+### HandBrake Rewrites
+
+HandBrake rewrites the video during a deinterlace, and during the HandBrake fallback of a re-encode repair. It does not keep closed captions embedded in the video stream. The original subtitle tracks are merged back, but embedded closed captions are not a track, so they are dropped even with `RemoveClosedCaptions` off. PlexCleaner scans for them before the HandBrake run and logs a warning when the video carries them. A failed scan logs a warning that their presence is unknown. The scan is skipped when an earlier scan found none or the captions were removed.

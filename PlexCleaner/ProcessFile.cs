@@ -1420,7 +1420,11 @@ public class ProcessFile
         return true;
     }
 
-    private bool FindClosedCaptionTracks(bool conditional, out VideoProps? videoProps)
+    private bool FindClosedCaptionTracks(
+        bool conditional,
+        out VideoProps? videoProps,
+        bool recordScan = true
+    )
     {
         // Return false on error
         // Set videoProps if contains closed captions
@@ -1478,7 +1482,9 @@ public class ProcessFile
             return true;
         }
 
-        return Program.Options.QuickScan || SetScanned(SidecarFile.StatesType.ScannedCaptions);
+        return !recordScan
+            || Program.Options.QuickScan
+            || SetScanned(SidecarFile.StatesType.ScannedCaptions);
     }
 
     private bool SetScanned(SidecarFile.StatesType scanned)
@@ -2383,10 +2389,57 @@ public class ProcessFile
         return true;
     }
 
+    // Returns false only on cancel, the scan reports and never blocks the HandBrake run
+    private bool ReportClosedCaptionsDropped()
+    {
+        // A Verified or VerifyFailed file may never have been scanned with RemoveClosedCaptions off
+        if (
+            State.HasFlag(SidecarFile.StatesType.ScannedCaptions)
+            || State.HasFlag(SidecarFile.StatesType.ClearedCaptions)
+        )
+        {
+            return true;
+        }
+
+        // Its own scope, so a scan tool error does not decide the repair outcome
+        bool scanned;
+        VideoProps? captionVideo;
+        using (ToolErrorScope.BeginScope())
+        {
+            scanned = FindClosedCaptionTracks(false, out captionVideo, recordScan: false);
+        }
+
+        if (!scanned)
+        {
+            if (Program.IsCancelledError())
+            {
+                return false;
+            }
+            Log.Warning(
+                "Unknown if HandBrake drops Closed Captions in the video stream : {FileName}",
+                FileInfo.FullName
+            );
+        }
+        else if (captionVideo != null)
+        {
+            Log.Warning(
+                "HandBrake drops the Closed Captions in the video stream : Format: {Format} : {FileName}",
+                captionVideo.Format,
+                FileInfo.FullName
+            );
+        }
+        return true;
+    }
+
     // HandBrake converts subtitles and closed captions to ASS and drops the IETF tags
     // So it encodes without subtitles, MkvMerge merges the original subtitles back, and the tags are restored
     private bool ConvertUsingHandBrake(string outputName, bool deInterlace)
     {
+        if (!ReportClosedCaptionsDropped())
+        {
+            return false;
+        }
+
         string handBrakeName = Path.ChangeExtension(FileInfo.FullName, ".tmp8");
         Debug.Assert(FileInfo.FullName != handBrakeName);
         if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, handBrakeName, deInterlace))
