@@ -2,8 +2,6 @@ using System.Globalization;
 using AwesomeAssertions;
 using CliWrap.Buffered;
 using PlexCleaner;
-using Serilog;
-using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Display;
 using Xunit;
@@ -17,13 +15,6 @@ namespace PlexCleanerTests;
 [Collection("Sequential")]
 public class ToolFailureLogFormatTests
 {
-    private sealed class CapturingSink : ILogEventSink
-    {
-        public List<LogEvent> Events { get; } = [];
-
-        public void Emit(LogEvent logEvent) => Events.Add(logEvent);
-    }
-
     // Minimal concrete tool exposing the protected LogFailedResult for testing
     private sealed class TestTool : MediaTool
     {
@@ -65,29 +56,19 @@ public class ToolFailureLogFormatTests
         string operation = "Verify"
     )
     {
-        CapturingSink sink = new();
-        ILogger original = Log.Logger;
-        Logger capture = new LoggerConfiguration().WriteTo.Sink(sink).CreateLogger();
-        Log.Logger = capture;
-        try
-        {
-            TestTool tool = new();
-            BufferedCommandResult result = new(
-                exitCode,
-                DateTimeOffset.MinValue,
-                DateTimeOffset.MinValue,
-                stdout,
-                stderr
-            );
-            _ = tool.InvokeLogFailedResult(result, fileName, operation).Should().BeFalse();
-        }
-        finally
-        {
-            Log.Logger = original;
-            capture.Dispose();
-        }
+        TestTool tool = new();
+        BufferedCommandResult result = new(
+            exitCode,
+            DateTimeOffset.MinValue,
+            DateTimeOffset.MinValue,
+            stdout,
+            stderr
+        );
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            tool.InvokeLogFailedResult(result, fileName, operation).Should().BeFalse()
+        );
 
-        LogEvent logEvent = sink.Events.First(item =>
+        LogEvent logEvent = events.First(item =>
             item.MessageTemplate.Text.StartsWith("Failed execution of", StringComparison.Ordinal)
         );
         MessageTemplateTextFormatter formatter = new("{Message}", CultureInfo.InvariantCulture);

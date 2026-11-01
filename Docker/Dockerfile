@@ -95,7 +95,7 @@ RUN apt install -y --no-install-recommends \
         ca-certificates \
         locales \
         locales-all \
-        p7zip-full \
+        7zip \
         tzdata \
         wget \
     && locale-gen --no-purge en_US en_US.UTF-8
@@ -111,10 +111,10 @@ ENV TZ=Etc/UTC \
 RUN apt install -y --install-suggests dotnet-runtime-10.0
 
 # Install media tools
-# https://packages.ubuntu.com/questing/ffmpeg
-# https://packages.ubuntu.com/questing/handbrake-cli
-# https://packages.ubuntu.com/questing/mediainfo
-# https://packages.ubuntu.com/questing/mkvtoolnix
+# https://packages.ubuntu.com/stonking/ffmpeg
+# https://packages.ubuntu.com/stonking/handbrake-cli
+# https://packages.ubuntu.com/stonking/mediainfo
+# https://packages.ubuntu.com/stonking/mkvtoolnix
 RUN apt install -y --no-install-recommends \
         ffmpeg \
         handbrake-cli \

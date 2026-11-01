@@ -196,6 +196,23 @@ def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
     return proc.returncode == 0 and out.exists() and out.stat().st_size > 0
 
 
+SETTINGS_NAME = "PlexCleaner.json"
+
+
+def stage_settings(settings_dir: Path, workdir: Path) -> Path:
+    """Copy the settings file into ``workdir/config`` and return that directory.
+
+    PlexCleaner writes the settings file back when it upgrades an older ``SchemaVersion``.
+    A read-only mount fails that write, so the run aborts for every clip.
+    A per-clip copy takes the write and leaves the source intact.
+    The copy takes default permissions, so a read-only source still stages a writable file.
+    """
+    config = workdir / "config"
+    config.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(settings_dir / SETTINGS_NAME, config / SETTINGS_NAME)
+    return config
+
+
 def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set[str]] | None]:
     """Process ``workdir/media`` through the image; return (parsed log map, {stem: state set}).
 
@@ -207,6 +224,7 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
     completed run always writes ``clip_results.json``, even when a file's State is empty.
     """
     media, out = workdir / "media", workdir / "out"
+    config = stage_settings(settings_dir, workdir)
     out.mkdir(parents=True, exist_ok=True)
     uid, gid = os.getuid(), os.getgid()
     # Capture the container output so a failed run (crash or container that never starts) can be
@@ -225,11 +243,11 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
             "--volume",
             f"{out}:/out:rw",
             "--volume",
-            f"{settings_dir}:/config:ro",
+            f"{config}:/config:rw",
             IMAGE,
             APP,
             "process",
-            "--settingsfile=/config/PlexCleaner.json",
+            f"--settingsfile=/config/{SETTINGS_NAME}",
             "--logfile=/out/clip_process.log",
             "--mediafiles=/media",
             "--resultsfile=/out/clip_results.json",

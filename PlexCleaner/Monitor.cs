@@ -175,7 +175,7 @@ public class Monitor
         return true;
     }
 
-    private static bool ProcessChanges(List<string> folderList)
+    internal static bool ProcessChanges(List<string> folderList)
     {
         // Get file and directory list
         if (
@@ -190,8 +190,8 @@ public class Monitor
         }
         directoryList.ForEach(item => Log.Information("Processing changes in : {Folder}", item));
 
-        // Process files
-        if (!Process.ProcessFiles(fileList))
+        // Process files, a logged write failure does not end monitoring
+        if (!Process.ProcessFiles(fileList, out _))
         {
             return false;
         }

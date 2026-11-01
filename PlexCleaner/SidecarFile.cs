@@ -31,7 +31,17 @@ public class SidecarFile
         RemovedCoverArt = 1 << 16,
         ClearedDefaultFlags = 1 << 17,
         PostDecodeTimestamps = 1 << 18,
+        ScannedInterlace = 1 << 19,
+        ScannedCaptions = 1 << 20,
     }
+
+    // Verify results describe one media file, a rewrite or a changed file needs them measured again
+    public const StatesType VerifyStates =
+        StatesType.Verified
+        | StatesType.VerifyFailed
+        | StatesType.RepairFailed
+        | StatesType.BitrateExceeded
+        | StatesType.PostDecodeTimestamps;
 
     private const string SidecarExtension = ".PlexCleaner";
     private const string MkvExtension = ".mkv";
@@ -85,7 +95,7 @@ public class SidecarFile
         }
 
         // Set the JSON info
-        if (!SetJsonInfo())
+        if (!SetJsonInfo(true))
         {
             return false;
         }
@@ -151,15 +161,16 @@ public class SidecarFile
             && Program.Config.ProcessOptions.SidecarUpdateOnToolChange
         )
         {
-            // Remove the verified state flag if set
             current = false;
-            if (State.HasFlag(StatesType.Verified))
+            const StatesType toolStates =
+                StatesType.Verified | StatesType.ScannedInterlace | StatesType.ScannedCaptions;
+            if ((State & toolStates) != 0)
             {
                 Log.Warning(
-                    "Sidecar out of sync with tools, clearing Verified flag : {FileName}",
+                    "Sidecar out of sync with tools, clearing Verified and Scanned flags : {FileName}",
                     _sidecarFileInfo.FullName
                 );
-                State &= ~StatesType.Verified;
+                State &= ~toolStates;
             }
         }
 
@@ -175,7 +186,8 @@ public class SidecarFile
 
         // Did the media file or tools change
         // Do not log if not current, updates are intentional
-        if (modified || !IsMediaAndToolsCurrent(false))
+        bool refreshTools = modified || !IsMediaAndToolsCurrent(false);
+        if (refreshTools)
         {
             // Get updated tool info
             if (!GetToolInfo())
@@ -185,7 +197,7 @@ public class SidecarFile
         }
 
         // Set the JSON info from tool info
-        if (!SetJsonInfo())
+        if (!SetJsonInfo(refreshTools))
         {
             return false;
         }
@@ -219,6 +231,8 @@ public class SidecarFile
             if (_sidecarFileInfo.Exists)
             {
                 // Sidecar file exists, read and verify it matches media file
+                // Keep the state seeded by the caller, the sidecar load replaces it
+                StatesType seeded = State;
                 if (!Read(out bool current))
                 {
                     // Failed to read, create it
@@ -227,8 +241,10 @@ public class SidecarFile
                 // Media file changed, force an update
                 if (!current)
                 {
+                    seeded &= ~VerifyStates;
                     modified = true;
                 }
+                State |= seeded;
             }
             else
             {
@@ -249,9 +265,9 @@ public class SidecarFile
         return true;
     }
 
-    private bool IsMediaAndToolsCurrent(bool log) =>
+    internal bool IsMediaAndToolsCurrent(bool log) =>
         IsMediaCurrent(log)
-        && (IsToolsCurrent(log) || Program.Config.ProcessOptions.SidecarUpdateOnToolChange);
+        && (IsToolsCurrent(log) || !Program.Config.ProcessOptions.SidecarUpdateOnToolChange);
 
     private bool IsStateCurrent() => State == _sidecarJson?.State;
 
@@ -479,7 +495,7 @@ public class SidecarFile
         return true;
     }
 
-    private bool SetJsonInfo()
+    private bool SetJsonInfo(bool stampToolVersions)
     {
         // Create or update the sidecar JSON object
         _sidecarJson ??= new SidecarFileJsonSchema();
@@ -491,9 +507,12 @@ public class SidecarFile
         _sidecarJson.MediaHash = ComputeHash();
 
         // Tool version info
-        _sidecarJson.FfProbeToolVersion = Tools.FfProbe.Info.Version;
-        _sidecarJson.MkvMergeToolVersion = Tools.MkvMerge.Info.Version;
-        _sidecarJson.MediaInfoToolVersion = Tools.MediaInfo.Info.Version;
+        if (stampToolVersions)
+        {
+            _sidecarJson.FfProbeToolVersion = Tools.FfProbe.Info.Version;
+            _sidecarJson.MkvMergeToolVersion = Tools.MkvMerge.Info.Version;
+            _sidecarJson.MediaInfoToolVersion = Tools.MediaInfo.Info.Version;
+        }
 
         // Compressed tool info
         _sidecarJson.FfProbeData = StringCompression.Compress(_ffProbeJson);

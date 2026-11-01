@@ -124,6 +124,18 @@ public class SelectMediaProps
         NotSelected.Subtitle.ForEach(item => item.State = notSelectState);
     }
 
+    // Clearing NotSelected stops a repeated selection from leaving a stale action
+    public void SetActions(TrackProps.ActionsType actions)
+    {
+        Selected.Video.ForEach(item => item.Actions |= actions);
+        Selected.Audio.ForEach(item => item.Actions |= actions);
+        Selected.Subtitle.ForEach(item => item.Actions |= actions);
+
+        NotSelected.Video.ForEach(item => item.Actions &= ~actions);
+        NotSelected.Audio.ForEach(item => item.Actions &= ~actions);
+        NotSelected.Subtitle.ForEach(item => item.Actions &= ~actions);
+    }
+
     public List<TrackProps> GetTrackList()
     {
         // Add all tracks to list

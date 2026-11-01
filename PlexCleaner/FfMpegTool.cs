@@ -77,11 +77,16 @@ public partial class FfMpeg
             // "ffmpeg version 4.3.1-1ubuntu0~20.04.sav1 Copyright (c) 2000-2020 the FFmpeg developers"
             // "ffprobe version 7.1.1-full_build-www.gyan.dev Copyright (c) 2007-2025 the FFmpeg developers"
             // "ffprobe version 5.1.6-0+deb12u1 Copyright (c) 2007-2024 the FFmpeg developers"
+            // "ffmpeg version N-121061-g0123456789 Copyright (c) 2000-2025 the FFmpeg developers"
 
             // Parse version
             string[] lines = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
             Match match = InstalledVersionRegex().Match(lines[0]);
-            Debug.Assert(match.Success && Version.TryParse(match.Groups["version"].Value, out _));
+            if (!match.Success)
+            {
+                match = BuildVersionRegex().Match(lines[0]);
+            }
+            Debug.Assert(match.Success);
             mediaToolInfo.Version = match.Groups["version"].Value;
             return true;
         }
@@ -164,11 +169,11 @@ public partial class FfMpeg
                 )
                 .Build();
 
-        // Signals 1 to 31 exit 129 to 159, and FFmpeg exits 255 once it handles a signal
+        // FFmpeg exits 255 once it handles a signal
         // FFmpeg exits an error as its negative code cut to a byte, such as 183 for invalid data
-        // A rare error that also exits 255 only keeps the file
-        internal static bool IsSignalExit(int exitCode) =>
-            !OperatingSystem.IsWindows() && exitCode is (>= 129 and <= 159) or 255;
+        // A rare error that also exits 255 reads as a signal
+        protected internal override bool EndedBySignal(int exitCode) =>
+            base.EndedBySignal(exitCode) || (!OperatingSystem.IsWindows() && exitCode == 255);
 
         public VerifyResult VerifyMedia(string fileName)
         {
@@ -193,7 +198,7 @@ public partial class FfMpeg
             {
                 verifyResult = VerifyResult.DecodeError;
             }
-            if (IsSignalExit(exitCode))
+            if (EndedBySignal(exitCode))
             {
                 ToolErrorScope.RecordSignal();
             }
@@ -251,7 +256,7 @@ public partial class FfMpeg
                 && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
-        private static void CreateTrackArgs(
+        internal static void CreateTrackArgs(
             SelectMediaProps selectMediaProps,
             out string inputMap,
             out string outputMap
@@ -264,8 +269,6 @@ public partial class FfMpeg
             Debug.Assert(selectMediaProps.NotSelected.Parser == ToolType.FfProbe);
 
             // Create a list of all the tracks ordered by Id
-            // Selected is ReEncode, state is expected to be ReEncode
-            // NotSelected is Keep, state is expected to be Keep
             List<TrackProps> trackList = selectMediaProps.GetTrackList();
 
             // Create the input map using all tracks referenced by id
@@ -290,14 +293,14 @@ public partial class FfMpeg
                 _ = trackProps switch
                 {
                     VideoProps videoProps => sb.Append(
-                        videoProps.State == TrackProps.StateType.Keep
-                            ? $"-c:v:{videoIndex++} copy "
-                            : $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} "
+                        videoProps.Actions.HasFlag(TrackProps.ActionsType.ReEncode)
+                            ? $"-c:v:{videoIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Video} "
+                            : $"-c:v:{videoIndex++} copy "
                     ),
                     AudioProps audioProps => sb.Append(
-                        audioProps.State == TrackProps.StateType.Keep
-                            ? $"-c:a:{audioIndex++} copy "
-                            : $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} "
+                        audioProps.Actions.HasFlag(TrackProps.ActionsType.ReEncode)
+                            ? $"-c:a:{audioIndex++} {Program.Config.ConvertOptions.FfMpegOptions.Audio} "
+                            : $"-c:a:{audioIndex++} copy "
                     ),
                     SubtitleProps => sb.Append(
                         CultureInfo.InvariantCulture,
@@ -347,8 +350,8 @@ public partial class FfMpeg
             File.Delete(outputName);
 
             // Create an input and output ignore or copy or convert track map
-            // Selected is ReEncode
-            // NotSelected is Keep
+            // Selected has the ReEncode action
+            // NotSelected is copied
             CreateTrackArgs(selectMediaProps, out string inputMap, out string outputMap);
 
             // Build command line
@@ -555,5 +558,9 @@ public partial class FfMpeg
             RegexOptions.IgnoreCase | RegexOptions.Multiline
         )]
         public static partial Regex InstalledVersionRegex();
+
+        // Development builds "N-121061-g0123456789" and "2025-08-25-git-abc-full_build-www.gyan.dev"
+        [GeneratedRegex(@"version\s+(?<version>\S+)", RegexOptions.IgnoreCase)]
+        public static partial Regex BuildVersionRegex();
     }
 }

@@ -25,12 +25,18 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         None,
         Keep,
         Remove,
-        ReMux,
-        ReEncode,
-        DeInterlace,
-        SetFlags,
-        SetLanguage,
         Unsupported,
+    }
+
+    [Flags]
+    public enum ActionsType
+    {
+        None = 0,
+        SetLanguage = 1,
+        SetFlags = 1 << 1,
+        ReMux = 1 << 2,
+        ReEncode = 1 << 3,
+        DeInterlace = 1 << 4,
     }
 
     public enum TrackType
@@ -40,6 +46,11 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Subtitle,
         Video,
     }
+
+    public const ActionsType AttributeActions = ActionsType.SetLanguage | ActionsType.SetFlags;
+
+    public const ActionsType StreamActions =
+        ActionsType.ReMux | ActionsType.ReEncode | ActionsType.DeInterlace;
 
     // Track title to flag mapping
     private static readonly List<(string Name, FlagsType Flag)> s_titleFlags =
@@ -62,6 +73,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
     public long Id { get; set; }
     public long Number { get; set; }
     public StateType State { get; set; } = StateType.None;
+    public ActionsType Actions { get; set; } = ActionsType.None;
     public string Title { get; set; } = string.Empty;
     public bool HasTags { get; set; }
     public bool HasErrors { get; set; }
@@ -203,16 +215,16 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             {
                 // Set track error and recommend ReMux
                 HasErrors = true;
-                State = StateType.ReMux;
+                Actions |= ActionsType.ReMux;
 
                 // Failed to lookup ISO tag from IETF tag
                 Log.Error(
-                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
                     Parent.Parser,
                     Type,
                     Language,
                     LanguageIetf,
-                    State,
+                    Actions,
                     Parent.FileName
                 );
             }
@@ -220,17 +232,17 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             {
                 // Set track error and recommend ReMux
                 HasErrors = true;
-                State = StateType.ReMux;
+                Actions |= ActionsType.ReMux;
 
                 // Lookup ISO from IETF is good, but ISO lookup does not match set ISO language
                 Log.Error(
-                    "{Parser} : {Type} : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Failed to match ISO639 tag with ISO639 from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, ISO639 from IETF: {Lookup}, Actions: {Actions} : {FileName}",
                     Parent.Parser,
                     Type,
                     Language,
                     LanguageIetf,
                     isoLookup,
-                    State,
+                    Actions,
                     Parent.FileName
                 );
             }
@@ -247,15 +259,15 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             {
                 // Set track error and recommend remux
                 HasErrors = true;
-                State = StateType.ReMux;
+                Actions |= ActionsType.ReMux;
 
                 // Failed to lookup IETF tag from ISO tag
                 Log.Error(
-                    "{Parser} : {Type} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, Actions: {Actions} : {FileName}",
                     Parent.Parser,
                     Type,
                     Language,
-                    State,
+                    Actions,
                     Parent.FileName
                 );
             }
@@ -264,17 +276,17 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 // Set track error and recommend SetLanguage
                 // ReMux will conditionally check for SetIetfLanguageTags
                 HasErrors = true;
-                State = StateType.SetLanguage;
+                Actions |= ActionsType.SetLanguage;
 
                 // Set IETF tag from lookup tag
                 LanguageIetf = ietfLookup;
                 Log.Warning(
-                    "{Parser} : {Type} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
                     Parent.Parser,
                     Type,
                     Language,
                     LanguageIetf,
-                    State,
+                    Actions,
                     Parent.FileName
                 );
             }
@@ -287,7 +299,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
 
             // Set track error and recommend remux
             HasErrors = true;
-            State = StateType.ReMux;
+            Actions |= ActionsType.ReMux;
 
             // Get the ISO tag from the IETF tag
             string isoLookup = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
@@ -296,11 +308,11 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             {
                 // Failed to lookup ISO from IETF
                 Log.Error(
-                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
                     Parent.Parser,
                     Type,
                     LanguageIetf,
-                    State,
+                    Actions,
                     Parent.FileName
                 );
             }
@@ -309,12 +321,12 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 // Set ISO from lookup
                 Language = isoLookup;
                 Log.Warning(
-                    "{Parser} : {Type} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
                     Parent.Parser,
                     Type,
                     Language,
                     LanguageIetf,
-                    State,
+                    Actions,
                     Parent.FileName
                 );
             }
@@ -333,14 +345,14 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         {
             // Set track error and recommend remux
             HasErrors = true;
-            State = StateType.ReMux;
+            Actions |= ActionsType.ReMux;
             Log.Warning(
-                "{Parser} : {Type} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, State: {State} : {FileName}",
+                "{Parser} : {Type} : TagLanguage does not match Language : TagLanguage: {TagLanguage}, Language: {Language}, Actions: {Actions} : {FileName}",
                 Parent.Parser,
                 Type,
                 track.Properties.TagLanguage,
                 track.Properties.Language,
-                State,
+                Actions,
                 Parent.FileName
             );
         }
@@ -501,13 +513,13 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         {
             // Set track error and recommend remux
             HasErrors = true;
-            State = StateType.ReMux;
+            Actions |= ActionsType.ReMux;
             Log.Warning(
-                "{Parser} : {Type} : Invalid language : Language: {Language}, State: {State} : {FileName}",
+                "{Parser} : {Type} : Invalid language : Language: {Language}, Actions: {Actions} : {FileName}",
                 Parent.Parser,
                 Type,
                 Language,
-                State,
+                Actions,
                 Parent.FileName
             );
         }
@@ -708,7 +720,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Log.Write(
             level,
             "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
-                + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
+                + "Title: {Title}, Flags: {Flags}, State: {State}, Actions: {Actions}, Errors: {Errors}, Tags: {Tags}, "
                 + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
             Parent.Parser,
             Type,
@@ -719,6 +731,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             Title,
             Flags,
             State,
+            Actions,
             HasErrors,
             HasTags,
             Id,
@@ -732,7 +745,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Log.Information(
             "{Prefix} : "
                 + "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
-                + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
+                + "Title: {Title}, Flags: {Flags}, State: {State}, Actions: {Actions}, Errors: {Errors}, Tags: {Tags}, "
                 + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
             prefix,
             Parent.Parser,
@@ -744,6 +757,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             Title,
             Flags,
             State,
+            Actions,
             HasErrors,
             HasTags,
             Id,
@@ -782,15 +796,15 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             {
                 // Set track error state and recommend setting the track flags
                 HasErrors = true;
-                State = StateType.SetFlags;
+                Actions |= ActionsType.SetFlags;
                 Flags |= item.Flag;
                 Log.Debug(
-                    "{Parser} : {Type} : Setting track Flag from Title : Title: {Title}, Flag: {Flag}, State: {State} : {FileName}",
+                    "{Parser} : {Type} : Setting track Flag from Title : Title: {Title}, Flag: {Flag}, Actions: {Actions} : {FileName}",
                     Parent.Parser,
                     Type,
                     Title,
                     item.Flag,
-                    State,
+                    Actions,
                     Parent.FileName
                 );
             }

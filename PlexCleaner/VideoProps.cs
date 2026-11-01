@@ -184,7 +184,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
         Log.Write(
             level,
             "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
-                + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
+                + "Title: {Title}, Flags: {Flags}, State: {State}, Actions: {Actions}, Errors: {Errors}, Tags: {Tags}, "
                 + "Profile: {Profile}, Interlaced: {Interlaced}, HDR: {HDR}, CC: {CC}, CoverArt: {CoverArt}, "
                 + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
             Parent.Parser,
@@ -196,6 +196,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
             Title,
             Flags,
             State,
+            Actions,
             HasErrors,
             HasTags,
             Profile,
@@ -215,7 +216,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
         Log.Information(
             "{Prefix} : "
                 + "{Parser} : {Type} : Format: {Format}, Codec: {Codec}, Language: {Language}, Ietf: {Ietf}, "
-                + "Title: {Title}, Flags: {Flags}, State: {State}, Errors: {Errors}, Tags: {Tags}, "
+                + "Title: {Title}, Flags: {Flags}, State: {State}, Actions: {Actions}, Errors: {Errors}, Tags: {Tags}, "
                 + "Profile: {Profile}, Interlaced: {Interlaced}, HDR: {HDR}, CC: {CC}, CoverArt: {CoverArt}, "
                 + "Id: {Id}, Number: {Number}, Uid: {Uid}, Container: {Container} : {FileName}",
             prefix,
@@ -228,6 +229,7 @@ public class VideoProps(MediaProps mediaProps) : TrackProps(TrackType.Video, med
             Title,
             Flags,
             State,
+            Actions,
             HasErrors,
             HasTags,
             Profile,

@@ -91,7 +91,7 @@ Critical performance feature - DO NOT break compatibility:
 - Contains: processing state, tool versions, media properties, file hash
 - Hash: First 64KB + last 64KB of file (not timestamp-based)
 - Schema versioned (`SchemaVersion: 5` in `SidecarFileJsonSchema5`, global alias in `GlobalUsings.cs`)
-- A `Verified` or `VerifyFailed` state skips only the checks that read it, see [Sidecar Refresh](#sidecar-refresh)
+- A `Verified`, `VerifyFailed` or scanned state skips only the checks that read it, see [Sidecar Refresh](#sidecar-refresh)
 - State flags are bitwise: `StatesType` enum with `[Flags]` attribute
 - Sidecar operations: `Open()`, `Create()`, `Read()`, `Update()`, see [Sidecar Refresh](#sidecar-refresh)
 
@@ -121,7 +121,8 @@ Critical performance feature - DO NOT break compatibility:
 
 - Language tags: ISO 639-2B (`Language`) and RFC 5646/BCP 47 (`LanguageIetf`)
 - Flags: Default, Forced, HearingImpaired, VisualImpaired, Descriptions, Original, Commentary
-- State: Keep, Remove, ReMux, ReEncode, DeInterlace, SetFlags, SetLanguage, Unsupported
+- State: one of None, Keep, Remove, Unsupported, what happens to the track as a whole
+- Actions: any combination of SetLanguage, SetFlags, ReMux, ReEncode, DeInterlace, what the track needs done, see [Track State and Actions](#track-state-and-actions)
 - Title, Format, Codec, Id, Number, Uid
 
 **Track selection (`SelectMediaProps.cs`):**
@@ -130,6 +131,7 @@ Critical performance feature - DO NOT break compatibility:
 - Used for language filtering, duplicate removal, codec selection
 - Move operations: `Move(track, toSelected)`, `Move(trackList, toSelected)`
 - State assignment: `SetState(selectedState, notSelectedState)`
+- Action assignment: `SetActions(actions)` adds the actions to the selected tracks and clears them from the not selected tracks
 
 ### Language Tag Management
 
@@ -216,6 +218,7 @@ Conventions used in every diagram:
 - A label that starts with `Name()` or `Type.Name()` names the method that runs that node. `ArchitectureDiagramTests` checks that each named method exists, so a rename breaks the test until the diagram follows. An unqualified name resolves against the core process classes the test lists. A name more than one of them defines must carry its `Type.` prefix. Pipeline `P` nodes name `ProcessFile` steps, which the step order check holds to `Process.cs` instead.
 - Any other label is prose, and an option name in it refers to the settings file or a command-line flag.
 - A rounded node is an exit.
+- "State has" names the sidecar `StatesType` flags. A track's own state and actions are always named as the track state or a track action.
 - A tool step drawn without a fail edge still fails the file when its tool fails.
 - A node styled with a dashed red border is a suspect branch. Its `S` number points into [Suspect Branches](#suspect-branches).
 - Change a diagram in the same change that moves a branch it draws.
@@ -241,21 +244,22 @@ flowchart TD
   MON["Monitor.ProcessChanges(): one batch of settled folders"] --> D
   D -->|error or cancel| R1
   D --> F["Process.ProcessFiles(): see Dispatch and Results"]
-  F -->|"cancel, or an exception while processing"| R1
-  F -.->|"exception writing the settings or results file, S13"| CRASH["The command-line default handler prints it to stderr, skips DeleteEmptyFolders()"]:::suspect
-  CRASH --> R1
+  F -->|cancel| R1
   F --> G["Process.DeleteEmptyFolders(): DeleteEmptyFolders option, input folders only"]
   G -->|error or cancel| R1
   G -->|"monitor batch done"| MON2(["Back to the monitor loop"])
-  G --> R0["Return 0, also when single files failed"]
+  G -->|"process command"| W{"A settings or results file write failed?"}
+  W -->|yes| R1
+  W -->|no| R0["Return 0, also when single files failed"]
   R0 --> S{"Signal received?"}
   R1 --> S
   S -->|yes| ES(["Exit 130 for SIGINT, 131 for SIGQUIT, 143 for SIGTERM"])
   S -->|no| EN(["Exit with the returned code"])
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-`Monitor.ProcessChanges()` runs the same `GetFiles()`, `ProcessFiles()` and `DeleteEmptyFolders()` sequence for each batch of folders that have been quiet for the settle time. A successful batch returns to the monitor loop. A failure ends the loop, and the monitor command then exits with 1, or with the signal's code after a cancel.
+`Process.ProcessFiles()` logs a failed write of the settings file or the results file as an error and carries on. The `process` command still runs `DeleteEmptyFolders()`, then returns 1.
+
+`Monitor.ProcessChanges()` runs the same `GetFiles()`, `ProcessFiles()` and `DeleteEmptyFolders()` sequence for each batch of folders that have been quiet for the settle time. A successful batch returns to the monitor loop, also after a failed settings or results write. A failure ends the loop, and the monitor command then exits with 1, or with the signal's code after a cancel.
 
 ### Dispatch and Results
 
@@ -282,27 +286,34 @@ flowchart TD
   K2 --> N{"More files in the group?"}
   N -->|yes| D
   N -->|no| C
-  E -.->|exception| X2["An exception from any file ends the whole run, S2"]:::suspect
+  E -->|"exception escaping ProcessFile() while no cancel is requested"| E1["Log it and fail the file, no result row"]
+  E1 --> K
+  E -->|"exception after a cancel request"| X3["The exception leaves ForAll"]
   X1 --> RF["Run result false"]
-  X2 --> RF
+  X3 --> RF
   C -->|all groups done| RT["Run result true, whatever the error count"]
-  RF --> P["Log the error, modified and VerifyFailed files"]
+  RF --> P["FinishProcessing(): log the error, modified and VerifyFailed files"]
   RT --> P
   P --> Q{"RegisterInvalidFiles option on?"}
-  Q -->|yes| Q1["Add each VerifyFailed path to FileIgnoreList, save the settings file when new, S12"]:::suspect
+  Q -->|yes| Q1["RegisterInvalidFiles(): add each VerifyFailed path the run did not delete to FileIgnoreList"]
   Q -->|no| W
-  Q1 --> W{"--resultsfile set?"}
-  W -->|yes| W1["Write the results JSON"]
-  W -->|no| Z(["Return the run result"])
+  Q1 --> Q2["IsMissingFile(): prune the entries whose file is gone from a folder that exists"]
+  Q2 --> Q3{"FileIgnoreList changed, or an earlier settings write failed?"}
+  Q3 -->|yes| Q4["Write the settings file, a failure is logged and retried by the next monitor batch"]
+  Q3 -->|no| W
+  Q4 --> W{"--resultsfile set?"}
+  W -->|yes| W1["Write the results JSON, a failure is logged"]
+  W -->|no| Z(["Return the run result, and whether a write failed"])
   W1 --> Z
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
+
+`IsMissingFile()` keeps an entry whose folder is missing, so the entries of an unmounted share stay. It lists the folder and compares names ignoring case, and it keeps the entry when the listing fails.
 
 ### Per-File Pipeline
 
 `Process.ProcessFile()` runs one file through the steps below, in this order. The node ids `P01` onward follow the order of the step calls in `Process.ProcessFile()`, and `ArchitectureDiagramTests` fails when they differ.
 
-A step that returns false leaves the chain at the abort node, except `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them.
+A step that returns false leaves the chain at the abort node, except `DeleteMismatchedSidecarFile()` and `DeleteNonMkvFile()`, whose false return ends the file as a success. From `RemuxByExtension()` on, a cancel seen after a step does the same. `DeleteNonMkvFile()`, `IsSidecarWriteable()`, `MakeExtensionLowercase()` and `VerifyMediaInfo()` have no cancel check after them. A step that throws while no cancel is requested also leaves the chain at the abort node.
 
 ```mermaid
 flowchart TD
@@ -313,7 +324,7 @@ flowchart TD
   G3 --> P01["IsWriteable()"]
   P01 -->|"read-only, skipped"| AB
   P01 --> P02["DeleteMismatchedSidecarFile()"]
-  P02 -->|"orphan sidecar deleted, S3"| AB
+  P02 -->|"orphan sidecar deleted"| SKP
   P02 --> G4{"SidecarFile.IsSidecarFile()"}
   G4 -->|yes| IGN
   G4 -->|no| P03["RemuxByExtension(): ReMux, ReMuxExtensions"]
@@ -341,35 +352,45 @@ flowchart TD
     P21 --> P22["ReEncode(): ReEncode"]
     P22 --> P23["VerifyAndRepair(): Verify, AutoRepair"]
   end
-  P23 --> CLEAN
-  subgraph CLEAN["Cleanup re-run, S8"]
-    P24["RepairMetadataErrors(): AutoRepair"] --> P25["SetUnknownLanguageTracks(): SetUnknownLanguage"]
-    P25 --> P26["RemoveTags(): RemoveTags"]
-    P26 --> P27["RepairDefaultFlags(): SetTrackFlags"]
-    P27 --> P28["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
-    P28 --> P29["VerifyMediaInfo()"]
+  P23 --> G6{"A step from RemoveCoverArt() on modified the file?"}
+  G6 -->|yes| CLEAN
+  G6 -->|no| P33
+  subgraph CLEAN["Cleanup re-run"]
+    P24["RemoveCoverArt(): ReMux"] --> P25["RemoveTags(): RemoveTags"]
+    P25 --> P26["RepairMetadataErrors(): AutoRepair"]
+    P26 --> P27["RepairMatroskaStructure(): Verify"]
+    P27 --> P28["RemoveClosedCaptions(): RemoveClosedCaptions"]
+    P28 --> P29["SetUnknownLanguageTracks(): SetUnknownLanguage"]
+    P29 --> P30["RemoveUnwantedLanguageTracks(): RemoveUnwantedLanguageTracks"]
+    P30 --> P31["RemoveDuplicateTracks(): RemoveDuplicateTracks"]
+    P31 --> P32["RepairDefaultFlags(): SetTrackFlags"]
   end
-  P29 --> OK(["Result true"])
+  P32 --> P33["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
+  P33 --> P34["VerifyMediaInfo()"]
+  P34 --> OK(["Result true"])
   P03 -.->|"false or cancel"| AB
   P06 -.->|false| AB
   P07 -.->|"false or cancel"| AB
   MAIN -.->|"any step false or cancel"| AB
   CLEAN -.->|"any step false or cancel"| AB
-  AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only?"}
+  P33 -.->|"false or cancel"| AB
+  P34 -.->|false| AB
+  THR["Any step throws while no cancel is requested"] -.-> AB
+  AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
-  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, and the sidecar of an MKV file, unless cancelled, a tool run for the file failed to launch or threw, an FfMpeg verify run was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
+  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, then the sidecar of an MKV file, unless cancelled, a rename target held another file, a tool run for the file failed to launch, threw, or was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
   DF --> RET
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
-  class P02,CLEAN suspect
 ```
 
-`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it also counts each file's FfMpeg verify runs that a signal terminates. Such a run may be an external kill rather than corrupt media, since both exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`.
+`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`, and a file whose remux or rename target already held another file. A media delete that throws is logged, and the file counts as not deleted. When the sidecar delete that follows throws, it is logged, and the file still counts as deleted with `FileDeleted` set.
 
-`VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path.
+After `VerifyAndRepair()`, when a step from `RemoveCoverArt()` on modified the file, the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
+
+`VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path. `RemuxByExtension()` and `MakeExtensionLowercase()` fail the file before they write anything when another file holds the target name.
 
 ### Sidecar Refresh
 
-Every step that changes the file calls `Refresh()`. `Refresh(newName)` adds `FileReNamed` when the path changed, then reloads the media info. `GetMediaProps()` calls `Refresh(false)` and then fails a file that any tool reports as unsupported.
+Every step that changes the file calls `Refresh()`. `Refresh(newName)` adds `FileReNamed` when the path changed, then reloads the media info. `GetMediaProps()` calls `Refresh(false)` and then fails a file that any tool reports as unsupported. A step that only changes the state calls `SaveState()`, which calls `Refresh(false)` only with `UseSidecarFiles` on.
 
 ```mermaid
 flowchart TD
@@ -381,70 +402,122 @@ flowchart TD
   O1 -->|no| O2{"Sidecar file exists?"}
   O2 -->|no| CR["SidecarFile.Create(): run tools, write the JSON"]
   CR --> CRX(["Sidecar created"])
-  O2 -->|yes| RD["Read(): load the JSON, its state replaces the in-memory state, S14"]:::suspect
+  O2 -->|yes| RD["Read(): load the JSON, its state replaces the in-memory state"]
   RD -->|read fails| CR
   RD --> M1{"IsMediaCurrent(): size and hash match?"}
   M1 -->|no| M2["State becomes FileModified, all other flags reset"]
   M1 -->|yes| T1
   M2 --> T1{"SidecarUpdateOnToolChange on and IsToolsCurrent() false?"}
-  T1 -->|yes| T2["Clear Verified"]
-  T1 -->|no| T3
-  T2 --> T3{"Media changed, or the tool change above applied?"}
+  T1 -->|yes| T2["Clear Verified, ScannedInterlace and ScannedCaptions"]
+  T1 -->|no| SD
+  T2 --> SD["SidecarFile.Open(): add back the flags the state held before the read"]
+  SD --> T3{"Media changed, or the tool change above applied?"}
   T3 -->|yes| T4["Treat as modified"]
   T3 -->|no| U0
   T4 --> U0{"Modified, or state differs from the JSON?"}
   U0 -->|no| UX(["Sidecar up to date"])
-  U0 -->|yes| UP["Update(): rerun tools when modified or IsMediaAndToolsCurrent() is false, S11"]:::suspect
+  U0 -->|yes| UP["Update(): rerun the tools and record their versions when modified or IsMediaAndToolsCurrent() is false"]
   UP --> UX2(["Sidecar written"])
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions.
+`IsMediaAndToolsCurrent()` is false when the media changed, or when a tool changed with `SidecarUpdateOnToolChange` on. With the option off, a tool upgrade alone never reruns the tools, and the sidecar keeps the tool versions it recorded until they rerun. A rename onto a name that has a sidecar keeps `FileReNamed` and the flags the renaming step set. `SidecarFile.Open()` adds them to the stored state. When the media differs from that sidecar, `Open()` drops the verify results, `SidecarFile.VerifyStates`, from the flags it adds.
+
+`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
 
 ### Remux and Container Steps
 
 The remux steps rewrite the container and set `ReMuxed`. `RemoveTags()` and `RemoveAttachments()` edit the file in place with MkvPropEdit.
 
+`Convert.ReMuxToMkv()` remuxes the whole file to the `.mkv` name, and a node that names it without a track selection runs this flow. With a track selection, it remuxes once with MkvMerge to `.tmp3`, with no FfMpeg fallback, then moves the output the same way.
+
 ```mermaid
 flowchart TD
-  subgraph RTM["Convert.ReMuxToMkv(): whole-file remux"]
-    X1["MkvMerge remux to .tmp2"] -->|fail| X2{"Cancelled?"}
-    X2 -->|yes| XF(["Fail"])
-    X2 -->|no| X3["FfMpeg remux to .tmp2"]
-    X3 -->|fail| XF
-    X3 --> X4["ReMux(): MkvMerge pass over the FfMpeg output"]
-    X4 -->|fail| XF
-    X1 --> X5["Move to the .mkv name with overwrite, S6"]:::suspect
-    X4 --> X5
-    X5 --> X6["Delete the original when the name changed"]
-  end
-  A0["RemuxByExtension()"] --> A1{"ReMux option on and the extension is in ReMuxExtensions?"}
+  X0["Convert.ReMuxToMkv()"] --> X1["MkvMerge remux to .tmp2"]
+  X1 -->|fail| X2{"Cancelled?"}
+  X2 -->|yes| XF(["Fail"])
+  X2 -->|no| X3["FfMpeg remux to .tmp2"]
+  X3 -->|fail| XF
+  X3 --> X4["ReMux(): MkvMerge pass over the FfMpeg output"]
+  X4 -->|fail| XF
+  X1 --> X5{"The .mkv name is the input file itself?"}
+  X4 --> X5
+  X5 -->|yes| X6["Move over the input"]
+  X5 -->|no| X7["Move to the .mkv name"]
+  X6 -->|"move fails"| XT(["Throw after deleting the temp file, the input stays"])
+  X7 -->|"move fails, another file there included"| XT
+  X7 -->|moved| X8["Delete the input, a failed delete is logged"]
+  X6 -->|moved| XOK(["Done"])
+  X8 --> XOK
+```
+
+`RemuxByExtension()` remuxes a file whose extension is in `ReMuxExtensions`, and the result continues under the `.mkv` name.
+
+```mermaid
+flowchart TD
+  A0["RemuxByExtension()"] --> A1{"ReMux option on or the remux command, and the extension is in ReMuxExtensions?"}
   A1 -->|no| AOK(["Continue"])
-  A1 -->|yes| RTM
+  A1 -->|yes| A2{"IsRenameCollision(): another file holds the .mkv name?"}
+  A2 -->|yes| AF(["Fail, the file is not deleted"])
+  A2 -->|no| AR(["Convert.ReMuxToMkv()"])
+```
+
+`RemuxNonMkvContainer()` remuxes an `.mkv` file whose container is not Matroska, in place under the same name.
+
+```mermaid
+flowchart TD
   B0["RemuxNonMkvContainer()"] --> B1{"Container is Matroska?"}
   B1 -->|yes| BOK(["Continue"])
   B1 -->|no| B2{"ReMux option on?"}
   B2 -->|no| BF(["Fail, an MKV name must hold a Matroska container"])
-  B2 -->|yes| RTM
+  B2 -->|yes| BR(["Convert.ReMuxToMkv()"])
+```
+
+`RemuxRemoveExtraVideoTracks()` keeps only the first video track.
+
+```mermaid
+flowchart TD
   C0["RemuxRemoveExtraVideoTracks()"] --> C1{"More than one video track?"}
   C1 -->|no| COK(["Continue"])
   C1 -->|yes| C2{"ReMux option on?"}
-  C2 -->|no| BF2(["Fail"])
-  C2 -->|yes| C3["MkvMerge remux keeping the first video track"]
+  C2 -->|no| CF(["Fail"])
+  C2 -->|yes| C3["MkvMerge remux keeping the first video track, sets ReMuxed"]
+  C3 --> COK
+```
+
+`RemoveCoverArt()` removes the cover art each tool reports, and it does not repeat a removal that could not complete.
+
+```mermaid
+flowchart TD
   D0["RemoveCoverArt()"] --> D1{"Any tool reports cover art?"}
   D1 -->|no| DOK(["Continue"])
-  D1 -->|yes| D2{"ReMux option on?"}
-  D2 -->|no| BF3(["Fail"])
-  D2 -->|yes| D3{"MkvMerge reports cover art?"}
-  D3 -->|yes| D4["RemoveCoverArtMkvMerge(): remux without the first cover art track, sets RemovedCoverArt"]
-  D3 -->|no| D5
-  D4 --> D5{"FfProbe reports cover art?"}
-  D5 -->|yes| D6["RemoveCoverArtFfProbe(): RemoveAttachments()"]
-  D5 -->|no| D7["Continue, cover art seen only by MediaInfo stays, S10"]:::suspect
-  D6 --> D8{"FfProbe still reports cover art?"}
-  D8 -->|no| D7
-  D8 -->|yes| D9["RemoveTags() ignoring the option, no re-check after it, S10"]:::suspect
-  D9 --> D7
+  D1 -->|yes| D2{"Cover art remained after an earlier removal, and MkvMerge reports none?"}
+  D2 -->|yes| DOK
+  D2 -->|no| D3{"ReMux option on?"}
+  D3 -->|no| DF(["Fail"])
+  D3 -->|yes| D4{"MkvMerge reports cover art?"}
+  D4 -->|yes| D5["RemoveCoverArtMkvMerge(): remux without the first cover art track, sets ReMuxed and RemovedCoverArt"]
+  D4 -->|no| D6
+  D5 --> D6{"FfProbe reports cover art?"}
+  D6 -->|yes| D7["RemoveCoverArtFfProbe(): RemoveAttachments(), then RemoveTags() ignoring the option when FfProbe still reports it"]
+  D6 -->|no| D8
+  D7 --> D8{"MediaInfo reports cover art and MkvMerge does not?"}
+  D8 -->|yes| D9["RemoveCoverArtMediaInfo(): RemoveAttachments()"]
+  D8 -->|no| D12
+  D9 --> D10{"MediaInfo still reports cover art?"}
+  D10 -->|yes| D11["Convert.ReMux(), sets ReMuxed and RemovedCoverArt"]
+  D10 -->|no| D12
+  D11 --> D12{"Any tool still reports cover art?"}
+  D12 -->|no| DOK
+  D12 -->|yes| D13["Warn once, set RemovedCoverArt and save state"]
+  D13 --> DOK
+```
+
+A file that keeps cover art after a removal carries `RemovedCoverArt`. The cleanup re-run of the same run then skips the removal while only FfProbe or MediaInfo reports cover art. With `UseSidecarFiles` on, a later run skips it too.
+
+`RemoveTags()` clears the attachments and the tags in place.
+
+```mermaid
+flowchart TD
   E0["RemoveTags(): RemoveTags option, or forced by cover art removal"] --> E1["RemoveAttachments()"]
   E1 --> E4{"MkvMerge reports attachments?"}
   E4 -->|yes| E5["MkvPropEdit clears attachments, sets RemovedAttachments"]
@@ -452,14 +525,13 @@ flowchart TD
   E5 --> E2{"Any tool reports tags?"}
   E2 -->|no| EOK(["Continue"])
   E2 -->|yes| E3["MkvPropEdit clears tags, sets ClearedTags, warns when it was already set"]
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-`MakeExtensionLowercase()` renames through a `.tmp7` name with overwrite, so it can also replace a sibling file, S6. `Convert.ReMuxToMkv()` with a track selection uses MkvMerge alone, with no FfMpeg fallback.
+`MakeExtensionLowercase()` renames through a `.tmp7` name, and it fails the file without a rename when another file holds the lowercase name. When the second move throws, it moves the file back, and the result names the `.tmp7` path when that move fails too.
 
 ### Metadata and Structure Repair
 
-`RepairMetadataErrors()` repairs the errors the media tools flagged while parsing. `SetVerifyFailed()` sets `VerifyFailed`, clears `Verified` and fails the file, which stops later runs from retrying the repair. With the `Verify` option off, the next run clears `VerifyFailed` again, S4.
+`RepairMetadataErrors()` repairs the errors the media tools flagged while parsing. `SetVerifyFailed()` sets `VerifyFailed`, clears `Verified` and fails the file, which stops later runs from retrying the repair.
 
 ```mermaid
 flowchart TD
@@ -479,21 +551,27 @@ flowchart TD
   L4 -->|no| AOK
   L4 -->|yes| M0["RepairMetadataRemux()"]
   M0 --> M1{"ReMux option on?"}
-  M1 -->|no| M9["Continue with errors left, S7"]:::suspect
-  M1 -->|yes| M2{"Remove or ReMux errors, or SetLanguage errors with SetIetfLanguageTags on?"}
-  M2 -->|no| M9
-  M2 -->|yes| M3["Convert.ReMuxToMkv(): drop tracks MediaInfo marked Remove, else a full remux"]
+  M1 -->|no| M6
+  M1 -->|yes| M2{"A track in the Remove state, with the ReMux action, or with the SetLanguage action and SetIetfLanguageTags on?"}
+  M2 -->|no| M6
+  M2 -->|yes| M3["Convert.ReMuxToMkv(): drop tracks MediaInfo put in the Remove state, else a full remux"]
   M3 -->|fail| RXF(["Fail, no VerifyFailed"])
   M3 --> M4["Sets ReMuxed, Refresh()"]
   M4 --> M5{"Targeted errors still present?"}
   M5 -->|yes| VF
   M5 -->|no| M6{"Errors left?"}
-  M9 --> M6
   M6 -->|no| AOK
   M6 -->|yes| F0["RepairMetadataFlags()"]
-  F0 --> F1{"SetTrackFlags option on and tracks need flags?"}
-  F1 -->|no| F9["Continue with errors left, S7"]:::suspect
-  F1 -->|yes| F2["MkvPropEdit sets the flags, sets SetFlags, no re-check, S7"]:::suspect
+  F0 --> F1{"SetTrackFlags option on and a track with the SetFlags action?"}
+  F1 -->|no| RP
+  F1 -->|yes| F2{"An earlier set of the flags, in this run or a previous one, left them missing?"}
+  F2 -->|yes| RP
+  F2 -->|no| F3["MkvPropEdit sets the flags, sets SetFlags, Refresh()"]
+  F3 --> F4{"Flags still missing?"}
+  F4 -->|yes| F5["Warn once that the flags did not stick"]
+  F4 -->|no| RP
+  F5 --> RP["ReportUnrepairedMetadataErrors(): log the errors a disabled option left, continue"]
+  RP --> AOK
   S0["RepairMatroskaStructure()"] --> S1{"Verify option on, a video track, and no VerifyFailed?"}
   S1 -->|no| AOK
   S1 -->|yes| S2{"MatroskaStructureValid(): seek index usable?"}
@@ -505,23 +583,25 @@ flowchart TD
   S4 --> S5{"MatroskaStructureValid()"}
   S5 -->|no| VF
   S5 -->|yes| AOK
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
+
+`ReportUnrepairedMetadataErrors()` warns about errors left because `ReMux` or `SetTrackFlags` is off, naming the errors and the option, and the file passes. A track needing more than one repair is reported for each, since its actions combine. It logs IETF tags left unset because `SetIetfLanguageTags` is off at Information, since that opt-out is deliberate. A run that finds the sidecar `SetFlags` flag with the track flags still missing does not set them again. With `UseSidecarFiles` on, a file whose flags do not stick is edited once.
 
 ### Closed Captions
 
 ```mermaid
 flowchart TD
-  A0["RemoveClosedCaptions()"] --> A1{"RemoveClosedCaptions option on?"}
+  A0["RemoveClosedCaptions()"] --> A1{"RemoveClosedCaptions option on, or the removeclosedcaptions command?"}
   A1 -->|no| AOK(["Continue"])
   A1 -->|yes| F0["FindClosedCaptionTracks()"]
   F0 --> F1{"Any tool flags captions on a video track?"}
   F1 -->|yes| FOUND
-  F1 -->|no| F2{"State has Verified, VerifyFailed or ClearedCaptions?"}
-  F2 -->|"yes, S4"| AOK
+  F1 -->|no| F2{"Process command, and the state has ScannedCaptions, Verified, VerifyFailed or ClearedCaptions?"}
+  F2 -->|yes| AOK
   F2 -->|no| F3["FfProbe caption scan"]
   F3 -->|scan fails| FAIL(["Fail"])
-  F3 -->|none| AOK
+  F3 -->|none| F4["Without --quickscan, sets ScannedCaptions and saves state"]
+  F4 --> AOK
   F3 -->|found| FOUND["Captions found on the first video track"]
   FOUND --> C1{"FfMpeg has a NAL unit for this video format?"}
   C1 -->|no| FAIL
@@ -540,46 +620,61 @@ The HDR refusal is deliberate, so captions fail the file rather than pass unremo
 
 ```mermaid
 flowchart TD
-  A0["DeInterlace()"] --> A1{"DeInterlace option on?"}
+  A0["DeInterlace()"] --> A1{"DeInterlace option on, or the deinterlace command?"}
   A1 -->|no| AOK(["Continue"])
   A1 -->|yes| F0["FindInterlacedTracks()"]
   F0 --> F1{"Any tool flags a video track as interlaced?"}
   F1 -->|yes| FOUND
   F1 -->|no| F2{"--quickscan set?"}
   F2 -->|yes| AOK
-  F2 -->|no| F3{"State has Verified, VerifyFailed or DeInterlaced?"}
-  F3 -->|"yes, S4"| AOK
+  F2 -->|no| F3{"Process command, and the state has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
+  F3 -->|yes| AOK
   F3 -->|no| F4["FfMpeg idet scan"]
   F4 -->|"scan fails or no result"| FAIL(["Fail"])
-  F4 -->|progressive| AOK
-  F4 -->|interlaced| FOUND["Interlaced, warns when DeInterlaced is already set, S9"]:::suspect
-  FOUND --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
+  F4 -->|progressive| F5["Sets ScannedInterlace and saves state"]
+  F5 --> AOK
+  F4 -->|interlaced| FOUND{"State has DeInterlaced?"}
+  FOUND -->|"yes, process command"| SKIP["Warn naming the track, skip"]
+  SKIP --> AOK
+  FOUND -->|"yes, deinterlace command"| AGAIN["Warn, deinterlace again"]
+  AGAIN --> D0
+  FOUND -->|no| D0["Adds the DeInterlace action to the video track"]
+  D0 --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
   D1 -->|fail| FAIL
   D1 --> D2{"Original has subtitles?"}
   D2 -->|no| D3["MkvMerge remux to .tmp9"]
   D2 -->|yes| D4["MkvMerge merges the original subtitles back to .tmp9"]
   D3 -->|fail| FAIL
   D4 -->|fail| FAIL
-  D3 --> D5["Move .tmp9 over the original, S5"]:::suspect
+  D3 --> D5["MkvPropEdit restores the track languages in .tmp9"]
   D4 --> D5
-  D5 --> D6["MkvPropEdit restores the track languages"]
-  D6 -->|fail| FAIL
+  D5 -->|fail| FAIL
+  D5 --> D6["Move .tmp9 over the original"]
   D6 --> D7["Sets DeInterlaced and ReMuxed, Refresh()"]
   D7 --> D8{"Track order matches?"}
   D8 -->|no| FAIL
   D8 -->|yes| AOK
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
+
+A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
 
 ### Track Selection
 
 All of these steps read the MkvMerge track list, since only MkvMerge reports IETF language tags. `FindPreferredAudio()` picks the first track whose format comes earliest in `PreferredAudioFormats`, else the first track.
+
+`SetUnknownLanguageTracks()` tags the tracks that carry no language.
 
 ```mermaid
 flowchart TD
   U0["SetUnknownLanguageTracks(): SetUnknownLanguage option"] --> U1{"FindUnknownLanguageTracks(): any undefined IETF tag?"}
   U1 -->|no| OK(["Continue"])
   U1 -->|yes| U2["MkvPropEdit sets DefaultLanguage, sets SetLanguage, Refresh()"]
+```
+
+`RemoveUnwantedLanguageTracks()` removes the tracks in languages the settings do not keep.
+
+```mermaid
+flowchart TD
   L0["RemoveUnwantedLanguageTracks(): RemoveUnwantedLanguageTracks option"] --> L1["FindUnwantedLanguageTracks(): keep KeepLanguages matches, and Original tracks with KeepOriginalLanguage"]
   L1 --> L2{"No video kept?"}
   L2 -->|yes| L3["Keep the first video track"]
@@ -591,16 +686,30 @@ flowchart TD
   L6 -->|yes| L7["Warn, all subtitles go"]
   L6 -->|no| RM
   L7 --> RM{"Anything to remove?"}
-  RM -->|no| OK
+  RM -->|no| OK(["Continue"])
   RM -->|yes| RX["Convert.ReMuxToMkv() with the kept tracks, sets ReMuxed, Refresh()"]
+```
+
+`RemoveDuplicateTracks()` removes the duplicate tracks within each language.
+
+```mermaid
+flowchart TD
   D0["RemoveDuplicateTracks(): RemoveDuplicateTracks option"] --> D1["FindDuplicateTracks(): for each IETF language"]
   D1 --> D2["Keep the preferred audio track when there is more than one"]
   D2 --> D3["Keep every track with any flag set"]
   D3 --> D4["Keep the first unflagged video, audio and subtitle track"]
-  D4 --> RM
+  D4 --> RM{"Anything to remove?"}
+  RM -->|no| OK(["Continue"])
+  RM -->|yes| RX["Convert.ReMuxToMkv() with the kept tracks, sets ReMuxed, Refresh()"]
+```
+
+`RepairDefaultFlags()` clears the redundant `Default` flags.
+
+```mermaid
+flowchart TD
   F0["RepairDefaultFlags(): SetTrackFlags option"] --> F1["FindRedundantDefaultTracks(): per track type"]
   F1 --> F2{"Lone track with Default, or more than one Default?"}
-  F2 -->|neither| OK
+  F2 -->|neither| OK(["Continue"])
   F2 -->|lone| F3["Clear its Default flag"]
   F2 -->|several| F4["Keep the first video, the preferred audio, and no subtitle default"]
   F3 --> F5["MkvPropEdit clears the flags, sets ClearedDefaultFlags, Refresh()"]
@@ -613,54 +722,59 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A0["ReEncode()"] --> A1{"ReEncode option on?"}
+  A0["ReEncode()"] --> A1{"ReEncode option on, or the reencode command?"}
   A1 -->|no| AOK(["Continue"])
   A1 -->|yes| S0["FindNeedReEncode(): FfProbe tracks"]
   S0 --> S1["Select video matching ReEncodeVideo, and audio whose format is in ReEncodeAudioFormats"]
   S1 --> S2{"Audio selected and no video selected?"}
   S2 -->|yes| S3["Also select video that is not h264, hevc or av1"]
-  S2 -->|no| S4
-  S3 --> S4{"Anything selected?"}
+  S2 -->|no| SA
+  S3 --> SA["Every track is set to Keep, and SelectMediaProps.SetActions() gives the selected tracks the ReEncode action"]
+  SA --> S4{"Anything selected?"}
   S4 -->|no| AOK
-  S4 -->|yes| S5["Warn when ReEncoded is already set, S9"]:::suspect
-  S5 --> C1["Convert.ConvertToMkv(): FfMpeg to .tmp1, moved over the original, S5"]:::suspect
+  S4 -->|yes| S5{"State has ReEncoded?"}
+  S5 -->|"yes, process command"| SKIP["Warn naming the tracks that still match, skip"]
+  SKIP --> AOK
+  S5 -->|"yes, reencode command"| AGAIN["Warn, reencode again"]
+  AGAIN --> C1
+  S5 -->|no| C1["Convert.ConvertToMkv(): FfMpeg to .tmp1"]
   C1 -->|fail| FAIL(["Fail"])
-  C1 --> C2["Convert.ReMux()"]
+  C1 --> C2["ConvertToMkv(): Convert.ReMux() of .tmp1"]
   C2 -->|fail| FAIL
-  C2 --> C3["MkvPropEdit restores the track languages"]
+  C2 --> C3["ConvertToMkv(): MkvPropEdit restores the track languages in .tmp1"]
   C3 -->|fail| FAIL
-  C3 --> C4["Sets ReEncoded and ReMuxed, Refresh()"]
+  C3 --> C6["ConvertToMkv(): move .tmp1 over the original"]
+  C6 --> C4["Sets ReEncoded and ReMuxed, Refresh()"]
   C4 --> C5{"Track order matches?"}
   C5 -->|no| FAIL
   C5 -->|yes| AOK
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and they decide no branch.
+The encoder output can still match the selection, so the `process` command does not re-encode a file already `ReEncoded` again. The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and they decide no branch.
 
 ### Verify and Repair
 
-`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. A run a signal terminates also yields `DecodeError`, so the repair ladder still runs. Outside Windows, the file is never deleted on it. Outside Windows, a failed or skipped repair after such a run also leaves the state unchanged, so the next run verifies the file again. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged. A repair that fails while any of its tool runs failed to launch, was cancelled, or threw also leaves the state unchanged.
+`VerifyAndRepair()` verifies the media streams with FfMpeg and repairs what fails. `VerifyClassifier` reads the FfMpeg error output. A non-monotonic DTS line alone yields `TimestampOnly`, any other error line or a non-zero exit yields `DecodeError`, and no line yields `Clean`. A run a signal terminates also yields `DecodeError`, so the repair ladder still runs. Outside Windows, the file is never deleted on it. Outside Windows, a failed or skipped repair after such a run also leaves the state unchanged, so the next run verifies the file again. An FfMpeg run that fails to launch, is cancelled, or whose execution throws yields `ToolError`, which leaves the media unchecked. On the first verify the file then fails with its state unchanged. A repair also leaves the state unchanged when it fails while any of its tool runs did not run to a result. Such a run fails to launch, is cancelled, throws, or is terminated by a signal outside Windows. The next run then repairs again, so a repair tool that crashes on the same input repeats the repair on every run.
 
 ```mermaid
 flowchart TD
-  V0["Verify()"] --> V1{"Verify option on?"}
-  V1 -->|"no, S4"| PASS
-  V1 -->|yes| V2{"State has Verified?"}
+  V0["VerifyAndRepair()"] --> V1{"Verify option on?"}
+  V1 -->|"no, state unchanged"| OK
+  V1 -->|yes| V2{"Verify(): state has Verified?"}
   V2 -->|yes| PASS["Verify passes"]
   V2 -->|no| V3{"State has VerifyFailed?"}
   V3 -->|yes| NOREP["Verify fails, canRepair false"]
   V3 -->|no| V4["VerifyTrackCounts()"]
   V4 -->|fail| NOREP
   V4 --> V5["VerifyHdrProfile(): warns only"]
-  V5 --> V6["VerifyBitrate(): MaximumBitrate, skipped with --quickscan, sets BitrateExceeded, S11"]:::suspect
+  V5 --> V6["VerifyBitrate(): MaximumBitrate, skipped with --quickscan, sets or clears BitrateExceeded"]
   V6 --> V7["VerifyMediaStreams(): FfMpeg decode"]
   V7 -->|Clean| PASS
   V7 -->|"TimestampOnly, or DecodeError including any non-zero exit"| REP["Verify fails, repair possible"]
   V7 -->|"ToolError, FfMpeg did not launch, was cancelled, or threw"| TE["Verify fails, the media unchecked"]
-  PASS --> P1{"Verified already set?"}
+  PASS --> P1{"Verified already set, or a tool error ended the bitrate analysis?"}
   P1 -->|yes| OK(["Continue"])
-  P1 -->|no| P2["Set Verified, clear VerifyFailed, and PostDecodeTimestamps with the Verify option on, save state"]
+  P1 -->|no| P2["Set Verified, clear VerifyFailed and PostDecodeTimestamps, save state"]
   P2 --> OK
   REP --> C0{"Cancelled?"}
   C0 -->|yes| FAIL(["Fail, state unchanged"])
@@ -671,7 +785,9 @@ flowchart TD
   NS -->|yes| FAIL
   NS -->|no| NF["Set VerifyFailed, clear Verified, save state, fail"]
   C1 -->|yes| C2{"Result was TimestampOnly?"}
-  C2 -->|yes| T0["RepairTimestampsAndSetState(): GetPacketAnalysis() result ignored, S11"]:::suspect
+  C2 -->|yes| T0["RepairTimestampsAndSetState(): GetPacketAnalysis()"]
+  T0 -->|"fails on a cancel, a tool error, or a signal"| FAIL
+  T0 -->|"fails otherwise, warns, full ladder"| R0
   T0 --> T1["TryLosslessTimestampRepair(): only when every non-monotonic stream is audio"]
   T1 --> T2["FfMpeg rewrites timestamps to .tmp14"]
   T2 --> T3["TimestampRepairRegressionGate(): stream hashes equal, start and duration within 40 ms"]
@@ -696,18 +812,47 @@ flowchart TD
   R5 -->|pass| R6
   R6 -->|"TimestampOnly path"| RS
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
-  RC -->|"yes, the repaired file already replaced the original, S5"| FAIL
-  RC -->|no| RS["Set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh(), continue"]
-  RF{"Cancelled, a repair tool failed to launch or threw, or a signal ended a verify?"} -->|yes| FAIL
+  RC -->|"yes, the next run verifies the replaced media again"| FAIL
+  RC -->|no| RS["SetRepairedState(): set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh()"]
+  RS --> RB["VerifyBitrate() again after a re-encode, clear Verified when a tool error ended the bitrate analysis, save state"]
+  RB --> OK
+  RF{"Cancelled, a tool run during the repair failed to launch, threw, or was ended by a signal, or a signal ended a verify?"} -->|yes| FAIL
   RF -->|no| RFF["Set VerifyFailed and RepairFailed, clear Verified and Repaired, set PostDecodeTimestamps after a remux-only ladder, save state, fail"]
-  classDef suspect stroke:#c00,stroke-width:2px,stroke-dasharray:5 3
 ```
 
-Every repair failure sets `RepairFailed` and `VerifyFailed` together, so the `RepairFailed` check before a repair usually changes nothing. The exception is S4, where a pass with the `Verify` option off sets `Verified`, clears `VerifyFailed` and keeps `RepairFailed` and `PostDecodeTimestamps`. A later tool change with `SidecarUpdateOnToolChange` on clears `Verified`, and the next failed verify then skips its repair. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+`VerifyBitrate()` sets `BitrateExceeded` when a measured bitrate exceeds `MaximumBitrate`, and clears it when a measurement is within the limit. Where no measurement runs, the flag stays. That covers no limit, `--quickscan`, and every path the chart draws that skips `VerifyBitrate()`. A failed bitrate analysis warns and keeps the last measured state. When a tool error ended it, a file that passes or is repaired is not marked `Verified`, so the next run measures it again. A repair that re-encodes measures the repaired media again.
+
+A repair failure that records state sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote, which can hold `RepairFailed` without `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+
+### Track State and Actions
+
+Each track carries a state and a set of actions. Both live only in memory and are never stored in the sidecar. Parsing the tool output sets the states and actions the table below names for it. Processing steps set the rest. A `Refresh()` that reads the tool output again, as one after a step changes the media does, discards every value a step set. The state is what happens to the track as a whole, so it holds one value. The actions are what the track needs done, so any combination holds, and finding one never erases another.
+
+```mermaid
+flowchart TD
+  T["Track"] --> ST["State, one of: None, Keep, Remove, Unsupported"]
+  T --> AC["Actions, any combination"]
+  AC --> AA["AttributeActions change the track metadata: SetLanguage, SetFlags"]
+  AC --> SA["StreamActions rewrite the file: ReMux, ReEncode, DeInterlace"]
+```
+
+A remux copies the streams into a new file, and a re-encode or deinterlace encodes them again. An attribute action is applied in place by MkvPropEdit, or by the metadata remux, as `RepairMetadataErrors()` shows. Every action belongs to exactly one group, and `TrackActionsTests` checks that.
+
+| Value | Kind | Set by |
+| --- | --- | --- |
+| `Keep`, `Remove` | State | `SelectMediaProps.SetState()` and the remux steps that drop tracks, and MediaInfo parsing sets `Remove` for a VobSub subtitle with no muxing mode |
+| `Unsupported` | State | Parsing a track that has no format or codec |
+| `SetLanguage` | Attribute action | Parsing, in `TrackProps.SetLanguage()`, when the IETF tag is missing and maps from the ISO tag |
+| `SetFlags` | Attribute action | Parsing, in `TrackProps.SetFlagsFromTitle()`, when the title names a flag that is not set |
+| `ReMux` | Stream action | Parsing a language tag that conflicts with its IETF tag, cannot be mapped, or is invalid. Also a missing language tag beside an IETF tag, or a tag language that differs from the language tag |
+| `ReEncode` | Stream action | `FindNeedReEncode()` through `SelectMediaProps.SetActions()` |
+| `DeInterlace` | Stream action | `DeInterlace()` before HandBrake runs |
+
+`ClearMetadataErrors()` resets both the state and the actions of every track.
 
 ### State Flags by Step
 
-The table lists the `StatesType` flags each step sets, and the flags it clears. A rename adds `FileReNamed` and keeps the flags set so far, unless a sidecar already exists under the new name, S14.
+The table lists the `StatesType` flags each step sets, and the flags it clears. A rename adds `FileReNamed` and keeps the flags set so far. When a sidecar already exists under the new name, its stored flags join them, or only `FileModified` when the media differs from it. In that case the kept flags lose `SidecarFile.VerifyStates`.
 
 | Step | Sets | Clears |
 | --- | --- | --- |
@@ -716,34 +861,20 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RemuxByExtension()`, `RemuxNonMkvContainer()`, `RemuxRemoveExtraVideoTracks()` | `ReMuxed` | |
 | `RemoveCoverArt()` | `ReMuxed`, `RemovedCoverArt`, `RemovedAttachments`, `ClearedTags` | |
 | `RemoveTags()` | `RemovedAttachments`, `ClearedTags` | |
-| `RepairMetadataErrors()` | `SetLanguage`, `ReMuxed`, `SetFlags`, `VerifyFailed` | `Verified` |
-| `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified` |
-| `RemoveClosedCaptions()` | `ClearedCaptions`, `ReMuxed` | |
-| `DeInterlace()` | `DeInterlaced`, `ReMuxed` | |
+| `RepairMetadataErrors()` | `SetLanguage`, `ReMuxed`, `SetFlags`, `VerifyFailed` | `Verified`, `Repaired` |
+| `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified`, `Repaired` |
+| `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | |
+| `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
 | `SetUnknownLanguageTracks()` | `SetLanguage` | |
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |
-| `ReEncode()` | `ReEncoded`, `ReMuxed` | |
-| `VerifyAndRepair()` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps` |
-| `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `Verified` on a tool change with `SidecarUpdateOnToolChange` on |
+| `ReEncode()` | `ReEncoded`, `ReMuxed` | `SidecarFile.VerifyStates` |
+| `VerifyAndRepair()` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` |
+| `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `Verified`, `ScannedInterlace` and `ScannedCaptions` on a tool change with `SidecarUpdateOnToolChange` on |
 
 ### Suspect Branches
 
-Each entry describes a branch the diagrams mark, as the code behaves today, and links the issue that tracks its fix. Update the diagram and remove the entry when the fix lands.
-
-- **S2** ([#1069](https://github.com/ptr727/PlexCleaner/issues/1069)): `Process.ProcessFile()` catches no exception. An IO exception in any step ends the whole run with exit code 1, rather than failing one file.
-- **S3** ([#1070](https://github.com/ptr727/PlexCleaner/issues/1070)): Deleting an orphan sidecar returns false, so the file counts as an error and runs `DeleteFailedFile()`. Deleting a non-MKV file in `DeleteNonMkvFile()` counts as a success.
-- **S4** ([#1071](https://github.com/ptr727/PlexCleaner/issues/1071)): With the `Verify` option off, `Verify()` passes and `VerifyAndRepair()` still sets `Verified`. Enabling `Verify` later skips those files, and `Verified` also skips the interlace and caption scans. A metadata repair that sets `VerifyFailed` is retried on every other run, since the next pass clears it.
-- **S5** ([#1072](https://github.com/ptr727/PlexCleaner/issues/1072)): `ReEncode()` and `DeInterlace()` replace the original before their last steps run. A failure after that leaves the rewritten file with no state flag and the file not reported as modified. That is the remux or language restore in `ReEncode()`, and the language restore in `DeInterlace()`. A cancel after a decode-error repair in `VerifyAndRepair()` leaves the repaired file the same way.
-- **S6** ([#1073](https://github.com/ptr727/PlexCleaner/issues/1073)): `Convert.ReMuxToMkv()` moves its output to the `.mkv` name with overwrite, so `name.avi` replaces an existing `name.mkv`. `MakeExtensionLowercase()` replaces a lowercase sibling on a case-sensitive filesystem the same way.
-- **S7** ([#1074](https://github.com/ptr727/PlexCleaner/issues/1074)): `RepairMetadataErrors()` can pass with errors left. `RepairMetadataRemux()` does nothing with `ReMux` off, and `RepairMetadataFlags()` neither re-checks its result nor marks `VerifyFailed`.
-- **S8** ([#1075](https://github.com/ptr727/PlexCleaner/issues/1075)): The cleanup re-run after `VerifyAndRepair()` repeats only metadata, language, tag and default flag cleanup. It skips language and duplicate track removal, captions, cover art and the structure check after a re-encode repair.
-- **S9** ([#1076](https://github.com/ptr727/PlexCleaner/issues/1076)): `ReEncode()` and `DeInterlace()` only warn when their flag is already set. `ReEncode()` processes output that still matches its selection again on every run. `DeInterlace()` does the same while a tool still flags the video as interlaced, since its idet scan skips a file already `DeInterlaced`.
-- **S10** ([#1077](https://github.com/ptr727/PlexCleaner/issues/1077)): `RemoveCoverArt()` removes nothing when only MediaInfo reports cover art, and it does not re-check after the FfProbe path falls through to removing tags. Only a debug assertion catches the leftover.
-- **S11** ([#1078](https://github.com/ptr727/PlexCleaner/issues/1078), [#1079](https://github.com/ptr727/PlexCleaner/issues/1079)): Failed bitrate and packet analysis results are ignored, and `BitrateExceeded` is measured before any repair. No processing step clears it, so it lasts until the media changes outside PlexCleaner. `IsMediaAndToolsCurrent()` treats tools as current when `SidecarUpdateOnToolChange` is on, the opposite sense of `Read()`.
-- **S12** ([#1080](https://github.com/ptr727/PlexCleaner/issues/1080)): `RegisterInvalidFiles` adds a `VerifyFailed` file to `FileIgnoreList` even when `DeleteFailedFile()` already deleted it.
-- **S13** ([#1081](https://github.com/ptr727/PlexCleaner/issues/1081)): `Process.ProcessFiles()` writes the settings file and the results file without exception handling. The System.CommandLine default handler turns a write failure into exit code 1. The exception reaches stderr rather than the log, and `DeleteEmptyFolders()` does not run.
-- **S14** ([#1082](https://github.com/ptr727/PlexCleaner/issues/1082)): When a rename lands on a name that already has a sidecar, `SidecarFile.Read()` replaces the in-memory state with the stored one. That drops `FileReNamed` and any flag the renaming step set.
+Each entry describes a branch the diagrams mark, as the code behaves today, and links the issue that tracks its fix. Update the diagram and remove the entry when the fix lands. The diagrams mark no branch.
 
 ## Code Conventions
 
@@ -831,7 +962,7 @@ enum StatesType {
     BitrateExceeded, ClearedTags, FileReNamed, FileDeleted,
     FileModified, ClearedCaptions, RemovedAttachments,
     SetFlags, RemovedCoverArt, ClearedDefaultFlags,
-    PostDecodeTimestamps
+    PostDecodeTimestamps, ScannedInterlace, ScannedCaptions
 }
 ```
 
@@ -962,7 +1093,7 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 
 ### Performance Considerations
 
-- Sidecar files enable fast re-processing (cached media info, and a `Verified` state skips verification and the scans)
+- Sidecar files enable fast re-processing (cached media info, and a `Verified` or scanned state skips verification and the scans)
 - `--parallel` most effective with I/O-bound operations (re-mux)
 - `--quickscan` limits scan to 3 minutes (trades accuracy for speed)
 - `--testsnippets` creates 30s clips for testing

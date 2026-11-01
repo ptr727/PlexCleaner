@@ -12,7 +12,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 [![Release Status][release-status-shield]][actions-link]\
 [![Docker Status][docker-status-shield]][actions-link]\
-[![Last Commit][last-commit-shield]][commits-link]
+[![Last Commit][last-commit-shield]][commits-link]\
+[![Coverage][coverage-shield]][coverage-link]
 
 ### Releases
 
@@ -27,10 +28,11 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 **Summary:**
 
-- Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
-- Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, the re-encode passed verify only by dropping frames.
-- Added a minimum supported tool version checked at startup, the minimum FFmpeg version is 8.0.
+- Added a minimum version for every media tool, checked at startup, such as FFmpeg 8.0 and HandBrake 1.10.0.
 - Renamed the Docker image test script to `/Test/test.sh` and the version script to `/PlexCleaner/version.sh`.
+- Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
+- Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, since the re-encode drops frames.
+- An exception in one file fails only that file instead of ending the run.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -193,7 +195,17 @@ Choose an installation method based on your platform and requirements:
   - ⚠️ Binaries built but not tested in CI.
   - ⚠️ Manual tool installation required.
 
-PlexCleaner requires FFmpeg 8.0 or newer, and exits with an error at startup when an installed tool is older than its minimum version. The Docker image and the Windows automatic download provide a current FFmpeg, while a winget, manual, Linux, or macOS install must provide one.
+PlexCleaner exits with an error at startup when an installed tool is older than its minimum version. The minimum versions are:
+
+| Tool | Minimum version |
+| --- | --- |
+| FFmpeg and FFprobe | 8.0 |
+| HandBrake | 1.10.0 |
+| MediaInfo | 25.07 |
+| MKVToolNix | 94.0 |
+| 7-Zip | 25.01 |
+
+A version with a release prefix, a HandBrake nightly (by branch or build date), or an FFmpeg build named by date is compared by that. A version string that cannot be compared is accepted with a warning. The Docker image and the Windows automatic download provide current tools. A winget, manual, Linux, or macOS install must provide versions that meet the minimums.
 
 ### Docker
 
@@ -1064,6 +1076,7 @@ Licensed under the [MIT License][license]\
 ![GitHub License][license-shield]
 
 <!-- Shields -->
+[coverage-shield]: https://img.shields.io/codecov/c/github/ptr727/PlexCleaner/main?logo=codecov&label=Coverage
 [docker-develop-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/develop?label=Docker%20Develop&logo=docker&color=orange
 [docker-latest-version-shield]: https://img.shields.io/docker/v/ptr727/plexcleaner/latest?label=Docker%20Latest&logo=docker
 [docker-status-shield]: https://img.shields.io/github/actions/workflow/status/ptr727/PlexCleaner/publish-release.yml?event=schedule&logo=github&label=Docker%20Build
@@ -1077,6 +1090,7 @@ Licensed under the [MIT License][license]\
 [actions-link]: https://github.com/ptr727/PlexCleaner/actions
 [clone-link]: https://github.com/ptr727/PlexCleaner.git
 [commits-link]: https://github.com/ptr727/PlexCleaner/commits/main
+[coverage-link]: https://app.codecov.io/gh/ptr727/PlexCleaner/tree/main
 [discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
 [docker-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [github-link]: https://github.com/ptr727/PlexCleaner

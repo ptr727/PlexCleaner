@@ -1,6 +1,6 @@
 namespace PlexCleaner;
 
-// Counts the file's tool runs that failed to launch, were cancelled, or threw, so the media was not judged
+// Counts the file's tool runs that did not run to a result, so the media was not judged
 internal static class ToolErrorScope
 {
     private static readonly AsyncLocal<Session?> s_current = new();

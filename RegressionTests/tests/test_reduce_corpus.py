@@ -1,6 +1,7 @@
 """Tests for the pure helpers in reduce_corpus."""
 
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -38,6 +39,22 @@ class ReduceCorpusTests(unittest.TestCase):
             self.assertEqual(reduce_corpus.load_accept(rules), {"good": {"state_missing": ["x"]}})
             rules.write_text(json.dumps({"accept": []}))
             self.assertEqual(reduce_corpus.load_accept(rules), {})
+
+    def test_stage_settings_copies_writable(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            settings_dir, workdir = Path(d) / "settings", Path(d) / "work"
+            settings_dir.mkdir()
+            source = settings_dir / reduce_corpus.SETTINGS_NAME
+            source.write_text(json.dumps({"SchemaVersion": 4}))
+            source.chmod(0o444)
+            config = reduce_corpus.stage_settings(settings_dir, workdir)
+            staged = config / reduce_corpus.SETTINGS_NAME
+            self.assertEqual(config, workdir / "config")
+            self.assertTrue(os.access(staged, os.W_OK))
+            staged.write_text(json.dumps({"SchemaVersion": 5}))
+            self.assertEqual(json.loads(source.read_text()), {"SchemaVersion": 4})
+            reduce_corpus.stage_settings(settings_dir, workdir)
+            self.assertEqual(json.loads(staged.read_text()), {"SchemaVersion": 4})
 
 
 if __name__ == "__main__":
