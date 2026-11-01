@@ -678,7 +678,7 @@ Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for complete con
 
 - Re-multiplex non-MKV containers to MKV format.
   - `ReMuxExtensions`, `ReMux`
-- Remove all tags, titles, thumbnails, cover art, and attachments.
+- Remove all tags, titles, thumbnails, cover art, and attachments. A remux or re-encode drops tags and attachments whatever this setting says.
   - `RemoveTags`
 
 **3. Track Language and Metadata:**

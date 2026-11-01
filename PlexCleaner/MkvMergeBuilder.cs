@@ -36,6 +36,8 @@ public partial class MkvMerge
 
     public class InputOptions(ArgumentsBuilder argumentsBuilder)
     {
+        // Drops tags and attachments whatever RemoveTags says, so a rewrite through MkvMerge never carries tool-added tags.
+        // ARCHITECTURE.md "Remux and Container Steps" names the rewrite that skips this pass.
         public InputOptions Default() => NoGlobalTags().NoTrackTags().NoAttachments().NoButtons();
 
         public InputOptions Identify(string option) => Add("--identify").Add($"\"{option}\"");
