@@ -179,23 +179,11 @@ public sealed class ReplaceOriginalTests : IDisposable
     // The packets carry a non-monotonic DTS on the audio stream only, so the lossless tier runs
     private string WriteTimestampProbeData(long audioId)
     {
-        JsonArray packets = [];
-        foreach (double dts in new[] { 1.0, 0.5 })
-        {
-            packets.Add(
-                new JsonObject
-                {
-                    ["codec_type"] = "audio",
-                    ["stream_index"] = audioId,
-                    ["pts_time"] = dts,
-                    ["dts_time"] = dts,
-                    ["duration_time"] = 0.5,
-                    ["size"] = 100,
-                }
-            );
-        }
-        string packetsFile = Path.Combine(_directory, "packets.json");
-        File.WriteAllText(packetsFile, new JsonObject { ["packets"] = packets }.ToJsonString());
+        string packetsFile = FakeTools.WritePackets(
+            _directory,
+            "packets",
+            [("audio", audioId, 1.0, 100), ("audio", audioId, 0.5, 100)]
+        );
 
         JsonArray streams = [];
         foreach ((int index, string type) in new[] { (0, "video"), (1, "audio") })
@@ -241,11 +229,6 @@ public sealed class ReplaceOriginalTests : IDisposable
         FakeTools.WriteScript(
             Tools.FfProbe.GetToolPath(),
             WriteTimestampProbeData(processFile.FfProbeProps.Audio[0].Id)
-        );
-        FakeTools.WriteScript(
-            Tools.MkvMerge.GetToolPath(),
-            FakeTools.SampleIdentifyCase(_directory)
-                + "for a; do case $a in *.tmp4|*.tmp11) echo mkvmerge > \"$a\" ;; esac; done\n"
         );
         FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n");
 

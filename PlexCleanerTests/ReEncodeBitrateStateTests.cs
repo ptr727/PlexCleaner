@@ -81,23 +81,11 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
 
     private string CatPackets(string name, long streamIndex, bool exceeded)
     {
-        JsonArray packets = [];
-        if (exceeded)
-        {
-            packets.Add(
-                new JsonObject
-                {
-                    ["codec_type"] = "video",
-                    ["stream_index"] = streamIndex,
-                    ["pts_time"] = 0.5,
-                    ["dts_time"] = 0.5,
-                    ["duration_time"] = 0.5,
-                    ["size"] = 1000000,
-                }
-            );
-        }
-        string fileName = Path.Combine(_directory, name + ".json");
-        File.WriteAllText(fileName, new JsonObject { ["packets"] = packets }.ToJsonString());
+        string fileName = FakeTools.WritePackets(
+            _directory,
+            name,
+            exceeded ? [("video", streamIndex, 0.5, 1000000)] : []
+        );
         return $"cat \"{fileName}\"";
     }
 
