@@ -1125,6 +1125,12 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 - Tag metadata vs track metadata differences (FFprobe specific)
 - Automatic fallback: At least one track kept even if language doesn't match
 
+**Temporary File Names:**
+
+- Each step writes to a fixed `.tmpN` name beside the media file, with `N` unique per step so nested steps never collide
+- The `.tmp*` extensions are reserved, `ProcessFile.IsTempFile()` matches them, and the README documents the reservation for users
+- A step overwrites an existing file under its temporary name rather than probing for a free one, so an interrupted run needs no cleanup
+
 ## Key Files Reference
 
 - **Program.cs**: Entry point, command routing, global state, cancellation handling
