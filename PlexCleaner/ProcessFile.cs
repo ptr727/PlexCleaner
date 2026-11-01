@@ -67,13 +67,12 @@ public class ProcessFile
         }
 
         // Media file does not exists, delete this sidecar file
-        Log.Information(
-            "Deleting sidecar file with no matching MKV file : {FileName}",
+        FileDelete.Delete(
+            LogEventLevel.Information,
+            "sidecar file",
+            "No matching MKV file",
             FileInfo.FullName
         );
-
-        // Delete the file
-        File.Delete(FileInfo.FullName);
 
         // File deleted, do not continue processing
         modified = true;
@@ -97,10 +96,12 @@ public class ProcessFile
         }
 
         // Non-MKV file, delete
-        Log.Warning("Deleting non-MKV file : {FileName}", FileInfo.FullName);
-
-        // Delete the file
-        File.Delete(FileInfo.FullName);
+        FileDelete.Delete(
+            LogEventLevel.Warning,
+            "non-MKV file",
+            "Unwanted extension",
+            FileInfo.FullName
+        );
 
         // File deleted, do not continue processing
         modified = true;
@@ -1913,29 +1914,41 @@ public class ProcessFile
         return verifyResult;
     }
 
-    public bool DeleteFailedFile()
+    private string? KeepFailedFileReason() =>
+        _renameCollision ? "Rename collision"
+        : ToolErrorScope.Count > 0 ? "Tool error"
+        : ToolErrorScope.SignalCount > 0 ? "Tool signal"
+        : Program.IsCancelledError() ? "Cancelled"
+        : _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
+            ? nameof(SidecarFile.StatesType.PostDecodeTimestamps)
+        : null;
+
+    public bool DeleteFailedFile(string failedOperation)
     {
         // Conditional
-        if (
-            !Program.Config.VerifyOptions.DeleteInvalidFiles
-            || _renameCollision
-            || ToolErrorScope.Count > 0
-            || ToolErrorScope.SignalCount > 0
-            || Program.IsCancelledError()
-            || _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
-        )
+        if (!Program.Config.VerifyOptions.DeleteInvalidFiles)
         {
-            // Return false if not deleted
+            return false;
+        }
+        string? keepReason = KeepFailedFileReason();
+        if (keepReason != null)
+        {
+            Log.Information(
+                "Keeping failed file : {Reason:l} : {FileName}",
+                keepReason,
+                FileInfo.FullName
+            );
             return false;
         }
 
-        // Delete the media file and sidecar file
-        Log.Warning("Deleting media file that failed processing : {FileName}", FileInfo.FullName);
-        try
-        {
-            File.Delete(FileInfo.FullName);
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        if (
+            !FileDelete.TryDelete(
+                LogEventLevel.Warning,
+                "media file",
+                $"Failed {failedOperation}",
+                FileInfo.FullName
+            )
+        )
         {
             return false;
         }
@@ -1948,13 +1961,14 @@ public class ProcessFile
         if (SidecarFile.IsMkvFile(FileInfo))
         {
             string sidecarName = SidecarFile.GetSidecarName(FileInfo);
-            try
+            if (Path.Exists(sidecarName))
             {
-                File.Delete(sidecarName);
-            }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e))
-            {
-                Log.Error("Failed to delete sidecar file : {FileName}", sidecarName);
+                _ = FileDelete.TryDelete(
+                    LogEventLevel.Information,
+                    "sidecar file",
+                    "Media file deleted",
+                    sidecarName
+                );
             }
         }
 
