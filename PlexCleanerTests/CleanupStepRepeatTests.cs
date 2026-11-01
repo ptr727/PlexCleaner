@@ -156,9 +156,9 @@ public sealed class CleanupStepRepeatTests : IDisposable
     private static JsonNode AudioProperties(JsonNode mkvMerge) =>
         TrackProperties(mkvMerge, "audio");
 
-    // The tool data takes the flag only when MkvPropEdit is asked to set it
+    // The tool data takes the flag only when MkvPropEdit sets it on the sample audio track
     private string SetsCommentaryFlag(string flagged) =>
-        $"case \"$*\" in *flag-commentary*) cp \"{flagged}\" \"{_directory}/MkvMergeInfoData.json\" ;; esac";
+        $"t=; for a; do case $a in track:@*) t=${{a#track:@}} ;; flag-commentary=1) [ \"$t\" = 2 ] && cp \"{flagged}\" \"{_directory}/MkvMergeInfoData.json\" ;; esac; done";
 
     [Fact]
     public void RemoveCoverArt_MediaInfoCoverArtRemains_RemuxesOnceAcrossRuns()
