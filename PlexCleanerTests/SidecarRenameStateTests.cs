@@ -100,7 +100,14 @@ public sealed class SidecarRenameStateTests : IDisposable
 
         SidecarFile sidecarFile = new(mediaFile)
         {
-            State = Seeded | SidecarFile.StatesType.Repaired | SidecarFile.VerifyStates,
+            State =
+                Seeded
+                | SidecarFile.StatesType.Repaired
+                | SidecarFile.StatesType.Verified
+                | SidecarFile.StatesType.VerifyFailed
+                | SidecarFile.StatesType.RepairFailed
+                | SidecarFile.StatesType.BitrateExceeded
+                | SidecarFile.StatesType.PostDecodeTimestamps,
         };
         _ = sidecarFile.Open(true).Should().BeTrue();
 

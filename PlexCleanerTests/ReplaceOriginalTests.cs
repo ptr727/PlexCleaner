@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
@@ -151,30 +152,61 @@ public sealed class ReplaceOriginalTests : IDisposable
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 
-    [Fact]
-    public void ReEncode_ReplacesOriginal_ClearsVerifyStates()
+    private static int ReadState(string mediaFile) =>
+        JsonNode.Parse(File.ReadAllText(Path.ChangeExtension(mediaFile, ".PlexCleaner")))![
+            "State"
+        ]!.GetValue<int>();
+
+    [Theory]
+    [InlineData(VerifiedState)]
+    [InlineData(
+        SidecarFile.StatesType.VerifyFailed
+            | SidecarFile.StatesType.RepairFailed
+            | SidecarFile.StatesType.PostDecodeTimestamps
+    )]
+    public void ReEncode_ReplacesOriginal_ClearsVerifyStates(SidecarFile.StatesType state)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        ProcessFile processFile = CreateProcessFile(VerifiedState);
-        _ = WriteFakeTools("*.tmp1|*.tmp4", 0);
+        ProcessFile processFile = CreateProcessFile(state);
+        _ = WriteFakeTools("*.tmp1", 0);
+        FakeTools.WriteSampleToolData(_directory);
         Program.Config.ProcessOptions.ReEncodeAudioFormats = new HashSet<string>(
             [processFile.FfProbeProps.Audio[0].Format],
             StringComparer.OrdinalIgnoreCase
         );
 
-        // MediaInfo has no fake, so the Refresh() after a replace fails and the result is not asserted
         bool modified = false;
-        _ = processFile.ReEncode(false, ref modified);
+        _ = processFile.ReEncode(false, ref modified).Should().BeTrue();
 
+        SidecarFile.StatesType expected =
+            SidecarFile.StatesType.ReEncoded
+            | SidecarFile.StatesType.ReMuxed
+            | (state & SidecarFile.StatesType.Repaired);
         _ = modified.Should().BeTrue();
-        _ = File.ReadAllText(processFile.FileInfo.FullName).Should().StartWith("mkvmerge");
-        _ = processFile
-            .State.Should()
-            .Be(
-                SidecarFile.StatesType.ReEncoded
-                    | SidecarFile.StatesType.ReMuxed
-                    | SidecarFile.StatesType.Repaired
-            );
+        _ = processFile.State.Should().Be(expected);
+        _ = ReadState(processFile.FileInfo.FullName).Should().Be((int)expected);
+    }
+
+    [Fact]
+    public void RemoveClosedCaptions_ReplacesOriginal_ClearsVerifyStates()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile(VerifiedState);
+        _ = WriteFakeTools("*.tmp10", 0);
+        FakeTools.WriteSampleToolData(_directory);
+        processFile.FfProbeProps.Video[0].ClosedCaptions = true;
+
+        bool modified = false;
+        _ = processFile.RemoveClosedCaptions(false, ref modified).Should().BeTrue();
+
+        SidecarFile.StatesType expected =
+            SidecarFile.StatesType.ClearedCaptions
+            | SidecarFile.StatesType.ReMuxed
+            | SidecarFile.StatesType.Repaired;
+        _ = modified.Should().BeTrue();
+        _ = processFile.State.Should().Be(expected);
+        _ = ReadState(processFile.FileInfo.FullName).Should().Be((int)expected);
     }
 }

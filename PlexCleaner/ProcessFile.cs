@@ -1767,6 +1767,7 @@ public class ProcessFile
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.ClearedCaptions;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+        _sidecarFile.State &= ~SidecarFile.VerifyStates;
         return Refresh(true);
     }
 

@@ -863,7 +863,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RemoveTags()` | `RemovedAttachments`, `ClearedTags` | |
 | `RepairMetadataErrors()` | `SetLanguage`, `ReMuxed`, `SetFlags`, `VerifyFailed` | `Verified`, `Repaired` |
 | `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified`, `Repaired` |
-| `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | |
+| `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
 | `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
 | `SetUnknownLanguageTracks()` | `SetLanguage` | |
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |
