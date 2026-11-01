@@ -123,28 +123,30 @@ public sealed class ReplaceOriginalTests : IDisposable
         string mediaFile = processFile.FileInfo.FullName;
         byte[] original = File.ReadAllBytes(mediaFile);
         string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", propEditExit);
+        FakeTools.WriteSampleToolData(_directory);
         processFile.FfProbeProps.Video[0].Interlaced = true;
 
-        // MediaInfo has no fake, so the Refresh() after a replace fails and the result is not asserted
         bool modified = false;
         bool deInterlaced = processFile.DeInterlace(false, ref modified);
 
+        _ = deInterlaced.Should().Be(success);
         _ = modified.Should().Be(success);
         _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp9");
         if (success)
         {
+            SidecarFile.StatesType expected =
+                SidecarFile.StatesType.DeInterlaced
+                | SidecarFile.StatesType.ReMuxed
+                | SidecarFile.StatesType.Repaired;
             _ = File.ReadAllText(mediaFile).Should().StartWith("mkvmerge");
-            _ = processFile
-                .State.Should()
-                .Be(
-                    SidecarFile.StatesType.DeInterlaced
-                        | SidecarFile.StatesType.ReMuxed
-                        | SidecarFile.StatesType.Repaired
-                );
+            _ = processFile.State.Should().Be(expected);
+            _ = FakeTools
+                .ReadSidecarState(SidecarFile.GetSidecarName(processFile.FileInfo))
+                .Should()
+                .Be((int)expected);
         }
         else
         {
-            _ = deInterlaced.Should().BeFalse();
             _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
             _ = processFile.State.Should().Be(VerifiedState);
         }
