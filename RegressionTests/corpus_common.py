@@ -362,7 +362,11 @@ def buckets_for(state, detections, sig_subtypes, in_errors):
 def find_run(explicit, channel="develop", corpus="full"):
     if explicit:
         p = Path(explicit)
-        return p if p.is_absolute() else REG_DIR / p
+        p = p if p.is_absolute() else REG_DIR / p
+        log = p / "PlexCleaner_process.log"
+        if not log.is_file():
+            sys.exit(f"ERROR: --run {explicit} has no process log at {log}")
+        return p
     best, best_mt = None, 0
     for d in REG_DIR.glob("*/"):
         log, bi = d / "PlexCleaner_process.log", d / "buildinfo.json"
