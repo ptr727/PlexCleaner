@@ -243,6 +243,8 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
         ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None);
         FakeTools.WriteSampleToolData(_directory);
+        string mkvPropEdit = Tools.MkvPropEdit.GetToolPath();
+        FakeTools.WriteScript(mkvPropEdit, "echo \"$@\" > \"$0.log\"\n");
         WriteFakeFfProbe(
             CatPackets("first", processFile.FfProbeProps.Video[0].Id, true),
             reMeasureToolError ? "kill -9 $$" : CatPackets("later", 0, false)
@@ -269,10 +271,108 @@ public sealed class ReEncodeBitrateStateTests : IDisposable
 
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("4");
         _ = File.ReadAllText(Tools.FfProbe.GetToolPath() + ".step").Trim().Should().Be("2");
+        _ = File.ReadAllText(mkvPropEdit + ".log").Should().Contain("name.tmp12");
         _ = ToolErrorScope.Count.Should().Be(reMeasureToolError ? 1 : 0);
         _ = processFile.State.Should().Be(expected);
         _ = NextRun(processFile).State.Should().Be(expected);
         _ = modified.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void VerifyAndRepair_HandBrakeRepair_MergesOriginalSubtitlesAndRestoresLanguage(
+        bool subtitle
+    )
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None);
+        FakeTools.WriteSampleToolData(_directory);
+        string mkvPropEdit = Tools.MkvPropEdit.GetToolPath();
+        FakeTools.WriteScript(mkvPropEdit, "echo \"$@\" > \"$0.log\"\n");
+        string handBrake = Tools.HandBrake.GetToolPath();
+        FakeTools.WriteScript(
+            handBrake,
+            "echo \"$@\" > \"$0.log\"\nfor a; do case $a in *.tmp8) echo handbrake > \"$a\" ;; esac; done\n"
+        );
+        string mkvMerge = Tools.MkvMerge.GetToolPath();
+        FakeTools.WriteScript(
+            mkvMerge,
+            FakeTools.SampleIdentifyCase(_directory)
+                + "echo \"$@\" >> \"$0.log\"\nfor a; do case $a in *.tmp*) echo mkvmerge > \"$a\" ;; esac; done\n"
+        );
+        if (subtitle)
+        {
+            AddSubtitleTrack(processFile);
+        }
+        WriteFakeFfProbe(
+            CatPackets("first", processFile.FfProbeProps.Video[0].Id, false),
+            CatPackets("later", 0, false)
+        );
+
+        // Verify fails, the remux tier's verify fails, the FfMpeg re-encode fails, then HandBrake's output verifies clean
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        FakeTools.WriteScript(
+            ffMpeg,
+            """
+            step=$(($(cat "$0.step" 2>/dev/null || echo 0) + 1))
+            echo $step > "$0.step"
+            case $step in
+            1|2|3) exit 1 ;;
+            esac
+            exit 0
+
+            """
+        );
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
+
+        _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("4");
+        _ = File.ReadAllText(handBrake + ".log")
+            .Should()
+            .Contain("--subtitle none")
+            .And.Contain("name.tmp8");
+        _ = File.ReadAllText(mkvPropEdit + ".log").Should().Contain("name.tmp12");
+        string merge = File.ReadAllLines(mkvMerge + ".log")
+            .First(line => line.Contains("name.tmp8"));
+        _ = merge.Contains("name.mkv", StringComparison.Ordinal).Should().Be(subtitle);
+        if (subtitle)
+        {
+            _ = merge
+                .Should()
+                .Contain("--no-video")
+                .And.Contain("--no-audio")
+                .And.Contain("--subtitle-tracks");
+        }
+        _ = File.ReadAllText(processFile.FileInfo.FullName).Should().StartWith("mkvmerge");
+        _ = processFile.State.Should().HaveFlag(SidecarFile.StatesType.Repaired);
+        _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
+        _ = modified.Should().BeTrue();
+    }
+
+    // The original and the rewritten file then both carry a subtitle track after the sample tracks
+    private void AddSubtitleTrack(ProcessFile processFile)
+    {
+        long number = processFile.MkvMergeProps.Count + 1;
+        processFile.MkvMergeProps.Subtitle.Add(
+            new SubtitleProps(processFile.MkvMergeProps) { Number = number, Language = "eng" }
+        );
+        string json = Path.Combine(_directory, "MkvMergeInfoData.json");
+        JsonNode info = JsonNode.Parse(File.ReadAllText(json))!;
+        info["tracks"]!
+            .AsArray()
+            .Add(
+                new JsonObject
+                {
+                    ["codec"] = "SubRip/SRT",
+                    ["id"] = number - 1,
+                    ["type"] = "subtitles",
+                    ["properties"] = new JsonObject { ["number"] = number, ["language"] = "eng" },
+                }
+            );
+        File.WriteAllText(json, info.ToJsonString());
     }
 
     [Fact]

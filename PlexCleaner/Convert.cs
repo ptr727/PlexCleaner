@@ -37,8 +37,7 @@ public static class Convert
             return false;
         }
 
-        // FfMpeg discards IETF language tags, restore them before the output replaces the input
-        if (!Tools.MkvPropEdit.SetTrackLanguage(tempName, languageProps))
+        if (!RestoreLanguageTags(tempName, languageProps))
         {
             File.Delete(tempName);
             return false;
@@ -48,7 +47,11 @@ public static class Convert
         return true;
     }
 
-    public static bool ReMuxToMkv(string inputName, out string outputName)
+    public static bool ReMuxToMkv(
+        string inputName,
+        MediaProps? languageProps,
+        out string outputName
+    )
     {
         // This function will try both MkvMerge and FfMpeg
 
@@ -104,6 +107,16 @@ public static class Convert
                 File.Delete(tempName);
                 return false;
             }
+
+            // Only a Matroska input carries IETF language tags to restore
+            if (
+                languageProps?.IsContainerMkv() == true
+                && !RestoreLanguageTags(tempName, languageProps)
+            )
+            {
+                File.Delete(tempName);
+                return false;
+            }
         }
 
         ReplaceInput(inputName, tempName, outputName);
@@ -112,17 +125,11 @@ public static class Convert
 
     public static bool ReMuxToMkv(
         string inputName,
-        SelectMediaProps? selectMediaProps,
+        SelectMediaProps selectMediaProps,
         out string outputName
     )
     {
         // This function will only use MkvMerge
-        if (selectMediaProps == null)
-        {
-            // Use version that will try both MkvMerge and FfMpeg
-            return ReMuxToMkv(inputName, out outputName);
-        }
-
         // This only works on MKV files and MkvMerge MediaProps types
         Debug.Assert(selectMediaProps.Selected.Parser == MediaTool.ToolType.MkvMerge);
         Debug.Assert(SidecarFile.IsMkvFile(inputName));
@@ -173,6 +180,85 @@ public static class Convert
 
         return true;
     }
+
+    // FfMpeg and HandBrake discard IETF language tags, restore them from the tracks before the rewrite
+    public static bool RestoreLanguageTags(string fileName, MediaProps languageProps)
+    {
+        Debug.Assert(languageProps.Parser == MediaTool.ToolType.MkvMerge);
+        if (!Tools.MkvMerge.GetMediaPropsJson(fileName, out string json))
+        {
+            return false;
+        }
+
+        // A rewrite that drops or reorders tracks fails, the tags would land on the wrong tracks
+        try
+        {
+            if (!HasSameTracks(MkvToolJsonSchema.MkvMerge.FromJson(json).Tracks, languageProps))
+            {
+                Log.Error(
+                    "Rewritten tracks do not match the original tracks : {FileName}",
+                    fileName
+                );
+                return false;
+            }
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            return false;
+        }
+        return Tools.MkvPropEdit.SetTrackLanguage(fileName, languageProps);
+    }
+
+    // HandBrake writes the video, then the audio, then the subtitle tracks, so number copies of the tags that way
+    public static MediaProps GetHandBrakeTrackOrder(MediaProps mediaProps)
+    {
+        MediaProps ordered = new(mediaProps.Parser, mediaProps.FileName);
+        long number = 1;
+        ordered.Video.AddRange(
+            mediaProps.Video.Select(item => CopyLanguage(new VideoProps(ordered), item, number++))
+        );
+        ordered.Audio.AddRange(
+            mediaProps.Audio.Select(item => CopyLanguage(new AudioProps(ordered), item, number++))
+        );
+        ordered.Subtitle.AddRange(
+            mediaProps.Subtitle.Select(item =>
+                CopyLanguage(new SubtitleProps(ordered), item, number++)
+            )
+        );
+        return ordered;
+    }
+
+    private static T CopyLanguage<T>(T copy, TrackProps item, long number)
+        where T : TrackProps
+    {
+        copy.Number = number;
+        copy.Language = item.Language;
+        copy.LanguageIetf = item.LanguageIetf;
+        return copy;
+    }
+
+    // Compare the JSON tracks, parsing them into MediaProps would log every missing IETF tag
+    private static bool HasSameTracks(List<MkvToolJsonSchema.Track> tracks, MediaProps mediaProps)
+    {
+        List<TrackProps> trackList = mediaProps.GetTrackList();
+        return tracks.Count == trackList.Count
+            && trackList.All(item =>
+                tracks.Any(track =>
+                    track.Properties.Number == item.Number
+                    && track.Type.Equals(GetMkvMergeTrackType(item), StringComparison.Ordinal)
+                    && track.Properties.Language.Equals(item.Language, StringComparison.Ordinal)
+                )
+            );
+    }
+
+    private static string GetMkvMergeTrackType(TrackProps trackProps) =>
+        trackProps switch
+        {
+            VideoProps => "video",
+            AudioProps => "audio",
+            SubtitleProps => "subtitles",
+            _ => throw new NotImplementedException(),
+        };
 
     // A rename or move onto targetName replaces an existing entry other than fileName itself
     public static bool WouldReplaceOtherFile(string fileName, string targetName) =>
