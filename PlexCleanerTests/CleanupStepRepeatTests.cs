@@ -156,6 +156,10 @@ public sealed class CleanupStepRepeatTests : IDisposable
     private static JsonNode AudioProperties(JsonNode mkvMerge) =>
         TrackProperties(mkvMerge, "audio");
 
+    // The tool data takes the flag only when MkvPropEdit is asked to set it
+    private string SetsCommentaryFlag(string flagged) =>
+        $"case \"$*\" in *flag-commentary*) cp \"{flagged}\" \"{_directory}/MkvMergeInfoData.json\" ;; esac";
+
     [Fact]
     public void RemoveCoverArt_MediaInfoCoverArtRemains_RemuxesOnceAcrossRuns()
     {
@@ -346,7 +350,7 @@ public sealed class CleanupStepRepeatTests : IDisposable
                 properties["track_name"] = "Commentary";
             },
             mkvMergeRemuxBody: $"cp \"{remuxed}\" \"{_directory}/MkvMergeInfoData.json\"",
-            mkvPropEditBody: $"cp \"{flagged}\" \"{_directory}/MkvMergeInfoData.json\""
+            mkvPropEditBody: SetsCommentaryFlag(flagged)
         );
         JsonNode mkvMerge = JsonNode.Parse(
             File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.orig.json"))
@@ -378,9 +382,11 @@ public sealed class CleanupStepRepeatTests : IDisposable
 
         // The remux stands in for a rewrite that drops a flag
         string dropped = Path.Combine(_directory, "dropped.json");
+        string flagged = Path.Combine(_directory, "flagged.json");
         ProcessFile processFile = CreateProcessFile(
             SidecarFile.StatesType.None,
             mediaInfo: AddMediaInfoCoverArt,
+            mkvPropEditBody: SetsCommentaryFlag(flagged),
             mkvMergeRemuxBody: $"cp \"{dropped}\" \"{_directory}/MkvMergeInfoData.json\"; cp \"{_directory}/MediaInfoData.orig.json\" \"{_directory}/MediaInfoData.json\""
         );
         JsonNode mkvMerge = JsonNode.Parse(
@@ -388,6 +394,8 @@ public sealed class CleanupStepRepeatTests : IDisposable
         )!;
         AudioProperties(mkvMerge)["track_name"] = "Commentary";
         File.WriteAllText(dropped, mkvMerge.ToJsonString());
+        AudioProperties(mkvMerge)["flag_commentary"] = true;
+        File.WriteAllText(flagged, mkvMerge.ToJsonString());
 
         bool modified = false;
         _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
@@ -396,6 +404,7 @@ public sealed class CleanupStepRepeatTests : IDisposable
         _ = processFile.RepairMetadataErrors(ref modified).Should().BeTrue();
 
         _ = Calls.Should().Equal("mkvmerge", "mkvpropedit");
+        _ = processFile.HasMetadataErrors(TrackProps.ActionsType.SetFlags).Should().BeFalse();
     }
 
     [Fact]
@@ -405,6 +414,7 @@ public sealed class CleanupStepRepeatTests : IDisposable
 
         // The unknown language edit stands in for a rewrite that drops a flag
         string dropped = Path.Combine(_directory, "dropped.json");
+        string flagged = Path.Combine(_directory, "flagged.json");
         ProcessFile processFile = CreateProcessFile(
             SidecarFile.StatesType.None,
             mkvMerge: data =>
@@ -414,7 +424,7 @@ public sealed class CleanupStepRepeatTests : IDisposable
                 properties["language_ietf"] = "und";
                 ClearDefaultFlags(data);
             },
-            mkvPropEditBody: $"if [ ! -e \"{_directory}/dropped.done\" ]; then touch \"{_directory}/dropped.done\"; cp \"{dropped}\" \"{_directory}/MkvMergeInfoData.json\"; fi"
+            mkvPropEditBody: $"if [ ! -e \"{_directory}/dropped.done\" ]; then touch \"{_directory}/dropped.done\"; cp \"{dropped}\" \"{_directory}/MkvMergeInfoData.json\"; else {SetsCommentaryFlag(flagged)}; fi"
         );
         JsonNode mkvMerge = JsonNode.Parse(
             File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.json"))
@@ -423,6 +433,8 @@ public sealed class CleanupStepRepeatTests : IDisposable
         AudioProperties(mkvMerge)["language_ietf"] = "en";
         AudioProperties(mkvMerge)["track_name"] = "Commentary";
         File.WriteAllText(dropped, mkvMerge.ToJsonString());
+        AudioProperties(mkvMerge)["flag_commentary"] = true;
+        File.WriteAllText(flagged, mkvMerge.ToJsonString());
 
         bool result = Process.ProcessFile(
             processFile.FileInfo.FullName,
@@ -436,8 +448,8 @@ public sealed class CleanupStepRepeatTests : IDisposable
         _ = result.Should().BeTrue();
         _ = failedOperation.Should().BeNull();
         _ = Calls.Should().Equal("mkvpropedit", "mkvpropedit");
-        _ = Load(processFile.FileInfo.FullName)
-            .State.Should()
-            .HaveFlag(SidecarFile.StatesType.SetFlags);
+        ProcessFile reloaded = Load(processFile.FileInfo.FullName);
+        _ = reloaded.State.Should().HaveFlag(SidecarFile.StatesType.SetFlags);
+        _ = reloaded.HasMetadataErrors(TrackProps.ActionsType.SetFlags).Should().BeFalse();
     }
 }

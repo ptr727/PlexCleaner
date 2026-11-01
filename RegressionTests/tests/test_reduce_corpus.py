@@ -76,9 +76,10 @@ class ReduceCorpusTests(unittest.TestCase):
             ):
                 _, states = reduce_corpus.process_clip(workdir, settings_dir)
             args = fake.call_args.args[0]
-            volumes = [args[i + 1] for i, arg in enumerate(args) if arg == "--volume"]
+            options = args[: args.index(reduce_corpus.IMAGE)]
+            volumes = [options[i + 1] for i, arg in enumerate(options) if arg == "--volume"]
             self.assertIn(f"{workdir / 'config'}:/config:rw", volumes)
-            self.assertIn("1000:100", args)
+            self.assertEqual(options[options.index("--user") + 1], "1000:100")
             self.assertIn(f"--settingsfile=/config/{reduce_corpus.SETTINGS_NAME}", args)
             self.assertTrue((workdir / "config" / reduce_corpus.SETTINGS_NAME).is_file())
             self.assertEqual(states, {"a": set()})
