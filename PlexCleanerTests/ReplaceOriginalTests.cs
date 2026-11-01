@@ -103,7 +103,16 @@ public sealed class ReplaceOriginalTests : IDisposable
         _ = outputName.Should().Be(mediaFile);
         if (mkvMergeExit == 0)
         {
-            _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp1");
+            string propEditArgs = File.ReadAllText(propEditLog);
+            _ = propEditArgs.Should().Contain("name.tmp1");
+            List<TrackProps> tracks = processFile.MkvMergeProps.GetTrackList();
+            _ = tracks.Should().NotBeEmpty();
+            foreach (TrackProps track in tracks)
+            {
+                _ = propEditArgs
+                    .Should()
+                    .Contain($"--edit track:@{track.Number} --set language={track.LanguageAny}");
+            }
         }
         else
         {
