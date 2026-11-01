@@ -10,6 +10,10 @@ public sealed class ReplaceOriginalTests : IDisposable
     private readonly string _directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
     private readonly ToolsOptions1 _toolsOptions = Program.Config.ToolsOptions;
     private readonly bool _useSidecarFiles = Program.Config.ProcessOptions.UseSidecarFiles;
+    private readonly HashSet<string> _reEncodeAudioFormats = Program
+        .Config
+        .ProcessOptions
+        .ReEncodeAudioFormats;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
     private readonly MediaToolInfo _mediaInfoInfo = Tools.MediaInfo.Info;
@@ -33,12 +37,20 @@ public sealed class ReplaceOriginalTests : IDisposable
         Tools.MkvMerge.Info = _mkvMergeInfo;
         Tools.MediaInfo.Info = _mediaInfoInfo;
         Program.Config.ProcessOptions.UseSidecarFiles = _useSidecarFiles;
+        Program.Config.ProcessOptions.ReEncodeAudioFormats = _reEncodeAudioFormats;
         Directory.Delete(_directory, true);
     }
 
-    private ProcessFile CreateProcessFile()
+    private const SidecarFile.StatesType VerifiedState =
+        SidecarFile.StatesType.Verified
+        | SidecarFile.StatesType.Repaired
+        | SidecarFile.StatesType.BitrateExceeded;
+
+    private ProcessFile CreateProcessFile(
+        SidecarFile.StatesType state = SidecarFile.StatesType.None
+    )
     {
-        ProcessFile processFile = new(FakeTools.CopyUnverifiedSample(_directory));
+        ProcessFile processFile = new(FakeTools.CopyUnverifiedSample(_directory, state));
         _ = processFile.GetMediaProps().Should().BeTrue();
         return processFile;
     }
@@ -107,7 +119,7 @@ public sealed class ReplaceOriginalTests : IDisposable
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        ProcessFile processFile = CreateProcessFile();
+        ProcessFile processFile = CreateProcessFile(VerifiedState);
         string mediaFile = processFile.FileInfo.FullName;
         byte[] original = File.ReadAllBytes(mediaFile);
         string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", propEditExit);
@@ -122,14 +134,47 @@ public sealed class ReplaceOriginalTests : IDisposable
         if (success)
         {
             _ = File.ReadAllText(mediaFile).Should().StartWith("mkvmerge");
-            _ = processFile.State.Should().HaveFlag(SidecarFile.StatesType.DeInterlaced);
+            _ = processFile
+                .State.Should()
+                .Be(
+                    SidecarFile.StatesType.DeInterlaced
+                        | SidecarFile.StatesType.ReMuxed
+                        | SidecarFile.StatesType.Repaired
+                );
         }
         else
         {
             _ = deInterlaced.Should().BeFalse();
             _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
-            _ = processFile.State.Should().NotHaveFlag(SidecarFile.StatesType.DeInterlaced);
+            _ = processFile.State.Should().Be(VerifiedState);
         }
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ReEncode_ReplacesOriginal_ClearsVerifyStates()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile(VerifiedState);
+        _ = WriteFakeTools("*.tmp1|*.tmp4", 0);
+        Program.Config.ProcessOptions.ReEncodeAudioFormats = new HashSet<string>(
+            [processFile.FfProbeProps.Audio[0].Format],
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        // MediaInfo has no fake, so the Refresh() after a replace fails and the result is not asserted
+        bool modified = false;
+        _ = processFile.ReEncode(false, ref modified);
+
+        _ = modified.Should().BeTrue();
+        _ = File.ReadAllText(processFile.FileInfo.FullName).Should().StartWith("mkvmerge");
+        _ = processFile
+            .State.Should()
+            .Be(
+                SidecarFile.StatesType.ReEncoded
+                    | SidecarFile.StatesType.ReMuxed
+                    | SidecarFile.StatesType.Repaired
+            );
     }
 }

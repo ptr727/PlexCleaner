@@ -517,6 +517,7 @@ public class ProcessFile
         );
         _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
+        _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
         _ = SaveState();
 
         // Always returns false to signal the repair did not succeed
@@ -1639,6 +1640,7 @@ public class ProcessFile
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.DeInterlaced;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+        _sidecarFile.State &= ~SidecarFile.VerifyStates;
         if (!Refresh(true))
         {
             return false;
@@ -1881,6 +1883,7 @@ public class ProcessFile
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.ReEncoded;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
+        _sidecarFile.State &= ~SidecarFile.VerifyStates;
         if (!Refresh(outputName))
         {
             return false;
@@ -2117,7 +2120,7 @@ public class ProcessFile
             {
                 _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
-                Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
+                _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
 
                 // Update state
                 _ = SaveState();
@@ -2129,7 +2132,6 @@ public class ProcessFile
 
         // Sanity check
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
-        Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
         // Non-monotonic DTS takes the timestamp repair ladder
         if (_lastVerifyResult == VerifyResult.TimestampOnly)
@@ -2345,7 +2347,6 @@ public class ProcessFile
 
         // Sanity check
         Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified));
-        Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Repaired));
 
         // Trying again may not succeed unless the tools changed
         if (_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed))

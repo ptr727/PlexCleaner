@@ -22,6 +22,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS and sent it to repair.
   - A conversion or rename replaces the original only after it fully succeeds, and never replaces a different existing file.
   - `BitrateExceeded` clears when a measurement is under the limit, and is measured again after a re-encode repair.
+  - A re-encoded or deinterlaced file is verified and its bitrate measured again, instead of keeping the verify state of the media it replaced.
   - A renamed file keeps its state, an interrupted repair is retried on the next run, and deleting an orphan sidecar counts as a success.
   - The media info tools no longer rerun after a tool upgrade with `SidecarUpdateOnToolChange` off, or after a state-only change with `UseSidecarFiles` off.
   - A track that needs more than one repair, such as a language remux and track flags, is repaired and reported for each.

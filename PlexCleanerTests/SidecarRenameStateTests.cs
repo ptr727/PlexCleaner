@@ -84,4 +84,29 @@ public sealed class SidecarRenameStateTests : IDisposable
         _ = sidecarFile.State.Should().Be(expected);
         _ = ReadState(sidecarPath).Should().Be((int)expected);
     }
+
+    [Fact]
+    public void Open_SeededVerifyStatesOverStaleSidecar_DropsVerifyStates()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.Verified
+        );
+        string sidecarPath = Path.Combine(_directory, "name.PlexCleaner");
+        File.AppendAllText(mediaFile, "changed");
+
+        FakeTools.WriteSampleToolData(_directory);
+
+        SidecarFile sidecarFile = new(mediaFile)
+        {
+            State = Seeded | SidecarFile.StatesType.Repaired | SidecarFile.VerifyStates,
+        };
+        _ = sidecarFile.Open(true).Should().BeTrue();
+
+        SidecarFile.StatesType expected =
+            Seeded | SidecarFile.StatesType.Repaired | SidecarFile.StatesType.FileModified;
+        _ = sidecarFile.State.Should().Be(expected);
+        _ = ReadState(sidecarPath).Should().Be((int)expected);
+    }
 }
