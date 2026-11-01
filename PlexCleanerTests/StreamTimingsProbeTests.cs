@@ -42,7 +42,7 @@ public class StreamTimingsProbeTests
     [Fact]
     public void MediaStreamTimings_AttachmentStream_Skipped()
     {
-        // lang=json
+        // Lang=json
         const string json = """
             { "streams": [
               { "index": 0, "codec_type": "video", "start_time": "0.000000" },

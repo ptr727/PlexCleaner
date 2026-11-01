@@ -452,7 +452,7 @@ public partial class FfMpeg
 
         public bool GetStreamHashes(string fileName, out Dictionary<int, string> streamHashes)
         {
-            // Streamhash muxer hashes payload only, not timestamps, so an identical hash proves setts changed timestamps and nothing else
+            // Streamhash muxer hashes payload only, not timestamps, so an identical hash proves the repair left the media payload unchanged
             streamHashes = [];
 
             // Stream copy the media streams to the streamhash muxer, the MkvMerge pass drops attachments
