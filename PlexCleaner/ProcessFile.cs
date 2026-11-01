@@ -2389,12 +2389,27 @@ public class ProcessFile
         return true;
     }
 
-    // HandBrake converts subtitles and closed captions to ASS and drops the IETF tags
-    // So it encodes without subtitles, MkvMerge merges the original subtitles back, and the tags are restored
-    private bool ConvertUsingHandBrake(string outputName, bool deInterlace)
+    // Returns false only on cancel, the scan reports and never blocks the HandBrake run
+    private bool ReportClosedCaptionsDropped()
     {
-        // Unconditional, the state flags that skip the scan do not imply one ran with RemoveClosedCaptions off
-        if (!FindClosedCaptionTracks(false, out VideoProps? captionVideo, recordScan: false))
+        // A Verified or VerifyFailed file may never have been scanned with RemoveClosedCaptions off
+        if (
+            State.HasFlag(SidecarFile.StatesType.ScannedCaptions)
+            || State.HasFlag(SidecarFile.StatesType.ClearedCaptions)
+        )
+        {
+            return true;
+        }
+
+        // Its own scope, so a scan tool error does not decide the repair outcome
+        bool scanned;
+        VideoProps? captionVideo;
+        using (ToolErrorScope.BeginScope())
+        {
+            scanned = FindClosedCaptionTracks(false, out captionVideo, recordScan: false);
+        }
+
+        if (!scanned)
         {
             if (Program.IsCancelledError())
             {
@@ -2412,6 +2427,17 @@ public class ProcessFile
                 captionVideo.Format,
                 FileInfo.FullName
             );
+        }
+        return true;
+    }
+
+    // HandBrake converts subtitles and closed captions to ASS and drops the IETF tags
+    // So it encodes without subtitles, MkvMerge merges the original subtitles back, and the tags are restored
+    private bool ConvertUsingHandBrake(string outputName, bool deInterlace)
+    {
+        if (!ReportClosedCaptionsDropped())
+        {
+            return false;
         }
 
         string handBrakeName = Path.ChangeExtension(FileInfo.FullName, ".tmp8");

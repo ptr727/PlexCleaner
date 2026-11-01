@@ -187,4 +187,4 @@ Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.
 
 ### HandBrake Rewrites
 
-A deinterlace and the HandBrake fallback of a re-encode repair encode the video with HandBrake, which does not keep closed captions embedded in the video stream. The original subtitle tracks are merged back, but embedded closed captions are not a track, so they are dropped even with `RemoveClosedCaptions` off. PlexCleaner scans for them before the HandBrake run and logs a warning when the video carries them.
+HandBrake encodes the video in a deinterlace, and in the HandBrake fallback of a re-encode repair. It does not keep closed captions embedded in the video stream. The original subtitle tracks are merged back, but embedded closed captions are not a track, so they are dropped even with `RemoveClosedCaptions` off. PlexCleaner scans for them before the HandBrake run and logs a warning when the video carries them. The scan is skipped when an earlier scan found none or the captions were removed.
