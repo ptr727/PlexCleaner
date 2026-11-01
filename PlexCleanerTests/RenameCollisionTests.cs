@@ -172,11 +172,11 @@ public sealed class RenameCollisionTests : IDisposable
     }
 
     [Fact]
-    public void MakeExtensionLowercase_SecondMoveFails_RestoresOriginalName()
+    public void MakeExtensionLowercase_MoveFails_KeepsOriginalName()
     {
         Assert.SkipUnless(OperatingSystem.IsLinux(), "Needs the Linux 255-byte file name limit");
 
-        // Lowercase U+023A is one UTF-8 byte longer, so only the move to the lowercase name exceeds the limit
+        // Lowercase U+023A is one UTF-8 byte longer, so the lowercase name exceeds the limit
         string mediaFile = CreateFile(new string('a', 250) + ".\u023A\u023A");
         ProcessFile processFile = new(mediaFile);
 
@@ -188,8 +188,7 @@ public sealed class RenameCollisionTests : IDisposable
 
         _ = modified.Should().BeFalse();
         _ = processFile.FileInfo.FullName.Should().Be(mediaFile);
-        _ = File.Exists(mediaFile).Should().BeTrue();
-        _ = Directory.GetFiles(_directory, "*.tmp7").Should().BeEmpty();
+        _ = Directory.GetFiles(_directory).Should().Equal(mediaFile);
     }
 
     [Fact]
@@ -216,22 +215,6 @@ public sealed class RenameCollisionTests : IDisposable
         _ = File.ReadAllText(outputFile).Should().StartWith("newcomer");
         _ = File.ReadAllText(mediaFile).Should().Be("name.avi");
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
-    }
-
-    [Fact]
-    public void ProcessFile_LowercaseWithTempNameTaken_FailsAndKeepsBoth()
-    {
-        string mediaFile = CreateFile("name.MKV");
-        string tempFile = CreateFile("name.tmp7");
-
-        _ = Process
-            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
-            .Should()
-            .BeFalse();
-
-        _ = failedOperation.Should().Be(nameof(ProcessFile.MakeExtensionLowercase));
-        _ = File.ReadAllText(mediaFile).Should().Be("name.MKV");
-        _ = File.ReadAllText(tempFile).Should().Be("name.tmp7");
     }
 
     [Fact]

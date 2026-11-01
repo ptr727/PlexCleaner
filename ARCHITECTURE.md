@@ -527,7 +527,7 @@ flowchart TD
   E2 -->|yes| E3["MkvPropEdit clears tags, sets ClearedTags, warns when it was already set"]
 ```
 
-`MakeExtensionLowercase()` renames through a `.tmp7` name, and it fails the file without a rename when another file holds the lowercase name. When the second move throws, it moves the file back, and the result names the `.tmp7` path when that move fails too.
+`MakeExtensionLowercase()` renames the file in one move, and it fails the file without a rename when another file holds the lowercase name. `File.Move()` renames a file in place when only the case changes, on a case-insensitive file system too. So a failed or interrupted rename leaves the media under its original name.
 
 ### Metadata and Structure Repair
 
@@ -1127,9 +1127,10 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 
 **Temporary File Names:**
 
-- Each step writes to a fixed `.tmpN` name beside the media file, with `N` unique per step so nested steps never collide
+- A tool step writes its output to a fixed `.tmpN` name beside the media file, with each `N` used at one call site so nested steps never collide
 - The `.tmp*` extensions are reserved, `ProcessFile.IsTempFile()` matches them, and the README documents the reservation for users
-- A step overwrites an existing file under its temporary name rather than probing for a free one, so an interrupted run needs no cleanup
+- Each tool wrapper deletes an existing file at its output name before it writes, rather than probing for a free name
+- A temporary name only ever holds tool output, never the media itself, so deleting a leftover temporary file loses no media
 
 ## Key Files Reference
 

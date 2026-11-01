@@ -132,21 +132,8 @@ public class ProcessFile
             return false;
         }
 
-        // Rename the file
-        // Windows is case insensitive, so we need to rename in two steps
-        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp7");
-        Debug.Assert(tempName != FileInfo.FullName);
-        File.Move(FileInfo.FullName, tempName, false);
-        Debug.Assert(lowerName != tempName);
-        try
-        {
-            File.Move(tempName, lowerName, false);
-        }
-        catch
-        {
-            modified |= !UndoRename(tempName);
-            throw;
-        }
+        // One rename, so a failure or an interruption leaves the media under its original name
+        File.Move(FileInfo.FullName, lowerName, false);
 
         // Modified filename
         modified = true;
@@ -161,21 +148,6 @@ public class ProcessFile
         }
         _renameCollision = true;
         return true;
-    }
-
-    private bool UndoRename(string tempName)
-    {
-        try
-        {
-            File.Move(tempName, FileInfo.FullName, false);
-            return true;
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e))
-        {
-            // Report where the media is
-            FileInfo = new FileInfo(tempName);
-            return false;
-        }
     }
 
     public bool IsWriteable() => FileInfo is { Exists: true, IsReadOnly: false };
