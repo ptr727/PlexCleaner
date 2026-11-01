@@ -10,6 +10,8 @@ The clean-compile is the `.NET Format` VS Code task, chaining `CSharpier Format`
 
 The part CI structurally cannot exercise is media processing. The unit tests need no media files and run everywhere, but the behavior of the tool depends on the media it processes and on the external tools (FFmpeg, HandBrake, MkvToolNix, MediaInfo, 7-Zip) it drives, and a pull request runner has neither a media collection nor a reason to trust one. So a change to processing, sidecar, media-tool, or language-tag code is verified locally against real media, by the Docker test script and by the regression harness described under Runbooks, before it is called done. Read [ARCHITECTURE.md](./ARCHITECTURE.md) before changing that code.
 
+Media tools on the host are not required, and a missing or outdated host tool is never a reason to skip a real-tool check. The published image carries every tool at a version that passes the startup version gate. So a check that drives real tools runs in the image, per the runbooks below. A host tool older than `MediaTool.MinimumVersion` stops PlexCleaner at that gate. An older tool can also behave differently from the one the image ships, so a host-tool result proves nothing about shipped behavior. A change needing a tool version that no published tag carries yet builds its own image, per the runbooks below. So "the host tools are too old" marks a skipped verification, never a reason the real-tool check could not run.
+
 ## Runbooks
 
 ### Publish a release
@@ -38,9 +40,26 @@ docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/test" --entrypoint do
   --settingsfile /test/PlexCleaner.json --mediafiles /test/media
 ```
 
+Use the `develop` tag instead of `latest` for the image built from `develop`, which carries Dockerfile and tool changes not yet released.
+
 A self-contained publish crashes in the image with `No usable version of libssl`. The image's Ubuntu ships an OpenSSL that only Ubuntu's own .NET runtime supports.
 
+### Test a tool version the image does not carry
+
+The published tags install their tools from the `ubuntu:rolling` archive, so a tool release that has not reached that archive is in neither tag. Test against it in a container rather than on the host.
+
 To test a different FFmpeg version, mount a static FFmpeg build into the container and put its directory first on `PATH` with `--env PATH=...`. Startup logs the FFmpeg version in use, and the minimum tool version check applies to it. A distribution image with FFmpeg from apt is a quick way to check a single command line against an older FFmpeg release.
+
+For any other tool, or an image change, build a local image from [Docker/Dockerfile](./Docker/Dockerfile) with its media tool install step changed. Its builder stage compiles PlexCleaner from the working tree, so the local image carries the branch build too:
+
+```sh
+docker buildx build --load --platform linux/amd64 --tag plexcleaner:local --file ./Docker/Dockerfile .
+docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/test" \
+  plexcleaner:local /PlexCleaner/PlexCleaner process \
+  --settingsfile /test/PlexCleaner.json --mediafiles /test/media
+```
+
+`/PlexCleaner/version.sh` in the local image prints the tool versions it carries.
 
 ### Run the regression tests
 
