@@ -539,10 +539,12 @@ public sealed class ReplaceOriginalTests : IDisposable
     }
 
     [Theory]
-    [InlineData("Matroska", true)]
-    [InlineData("AVI", false)]
+    [InlineData("Matroska", 0, true)]
+    [InlineData("AVI", 0, false)]
+    [InlineData("Matroska", 2, false)]
     public void RemuxByExtension_FfMpegFallback_RestoresLanguageOnlyForMatroska(
         string container,
+        int identifyExit,
         bool restored
     )
     {
@@ -560,17 +562,22 @@ public sealed class ReplaceOriginalTests : IDisposable
         FakeTools.WriteSampleToolData(_directory);
 
         // The input identifies as the given container, the FfMpeg output as the sample Matroska tracks
+        // Only the input's audio track carries en-GB, so the restored tag shows which list was read
         string identify = FakeTools.SampleIdentifyCase(_directory);
         string identifyJson = Path.Combine(_directory, "MkvMergeInfoData.json");
         JsonNode inputInfo = JsonNode.Parse(File.ReadAllText(identifyJson))!;
         inputInfo["container"]!["type"] = container;
+        JsonNode audio = inputInfo["tracks"]!
+            .AsArray()
+            .First(track => track!["type"]!.GetValue<string>() == "audio")!;
+        audio["properties"]!["language_ietf"] = "en-GB";
         string inputJson = Path.Combine(_directory, "InputInfoData.json");
         File.WriteAllText(inputJson, inputInfo.ToJsonString());
 
         // MkvMerge fails to remux the input, then remuxes the FfMpeg output
         FakeTools.WriteScript(
             Tools.MkvMerge.GetToolPath(),
-            $"case \"$*\" in *--identify*name.avi*) cat \"{inputJson}\"; exit 0 ;; esac\n"
+            $"case \"$*\" in *--identify*name.avi*) cat \"{inputJson}\"; exit {identifyExit} ;; esac\n"
                 + identify
                 + "case \"$*\" in *.tmp4*) ;; *) exit 2 ;; esac\n"
                 + "for a; do case $a in *.tmp4) echo mkvmerge > \"$a\" ;; esac; done\n"
@@ -587,7 +594,12 @@ public sealed class ReplaceOriginalTests : IDisposable
         _ = File.Exists(propEditLog).Should().Be(restored);
         if (restored)
         {
-            _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp2");
+            string propEditArgs = File.ReadAllText(propEditLog);
+            _ = propEditArgs.Should().Contain("name.tmp2");
+            long number = audio["properties"]!["number"]!.GetValue<long>();
+            _ = $" {propEditArgs.Trim()} "
+                .Should()
+                .Contain($" --edit track:@{number} --set language=en-GB ");
         }
         _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
