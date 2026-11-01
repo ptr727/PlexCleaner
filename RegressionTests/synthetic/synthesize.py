@@ -23,6 +23,7 @@ Targeting notes - the PlexCleaner behaviors these builders exploit (see the READ
 - DTS time base: a healthy cadence denser than the default duration, a false DTS only in a 1/framerate encoder time base.
 - DTS duplicate PTS: one repeated frame timestamp, a real repeat that verify reports at native precision.
 - DTS mixed: a demux-visible audio timestamp step back plus a B-frame video timestamp swap that only surfaces after decode.
+- DTS audio tagged: the audio step back alone under a global tag and an attachment, which the lossless setts tier repairs.
 """
 
 import argparse
@@ -215,18 +216,15 @@ def _count_packets(media: Path) -> int:
     )  # fmt: skip
 
 
-def build_dts_mixed(out: Path) -> None:
-    """B-frame video with two frame timestamps swapped, plus AAC audio with one packet timestamp stepping back.
-
-    The demuxer derives video DTS from the sorted timestamps, so only the decoded display order runs backward.
-    The audio step is demux-visible, and the lossless setts tier repairs it alone.
-    """
+def _build_dts_av(out: Path, swap_video: bool, extra: list[str]) -> None:
+    """Mux B-frame video and AAC audio with one audio packet timestamp stepping back, optionally swapping two video frames."""
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)
         video, video_tc = work / "video.h264", work / "video.txt"
         audio, audio_tc = work / "audio.aac", work / "audio.txt"
         video_ts = [i * 1001 / 24 for i in range(96)]
-        video_ts[48], video_ts[49] = video_ts[49], video_ts[48]
+        if swap_video:
+            video_ts[48], video_ts[49] = video_ts[49], video_ts[48]
         # The veryfast preset keeps B-frames, which the ultrafast default disables
         gen_sdr_video(video, rate="24000/1001", frames=len(video_ts), preset="veryfast")
         _write_timestamps(video_tc, video_ts, "v4")
@@ -235,10 +233,44 @@ def build_dts_mixed(out: Path) -> None:
         audio_ts[100] = audio_ts[99] - 5
         _write_timestamps(audio_tc, audio_ts, "v4")
         run(
-            [MKVMERGE, "-o", str(out), "--default-duration", "0:24000/1001p",
+            [MKVMERGE, "-o", str(out), *extra, "--default-duration", "0:24000/1001p",
              "--timestamps", f"0:{video_tc}", str(video),
              "--timestamps", f"0:{audio_tc}", str(audio)]
         )  # fmt: skip
+
+
+def build_dts_mixed(out: Path) -> None:
+    """B-frame video with two frame timestamps swapped, plus AAC audio with one packet timestamp stepping back.
+
+    The demuxer derives video DTS from the sorted timestamps, so only the decoded display order runs backward.
+    The audio step is demux-visible, and the lossless setts tier repairs it alone.
+    """
+    _build_dts_av(out, swap_video=True, extra=[])
+
+
+def build_dts_audio_tagged(out: Path) -> None:
+    """Healthy B-frame video plus AAC audio with one packet timestamp stepping back, under a global tag and an attachment.
+
+    The only DTS break is demux-visible audio, so the lossless setts tier repairs the whole file.
+    The tag and the attachment show whether the repaired file drops them like every other rewrite.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        tags, note = Path(td) / "tags.xml", Path(td) / "note.txt"
+        note.write_text("Synthetic attachment\n", encoding="utf-8")
+        tags.write_text(
+            '<?xml version="1.0"?>\n<Tags><Tag><Targets/><Simple><Name>COMMENT</Name>'
+            "<String>Synthetic</String></Simple></Tag></Tags>\n",
+            encoding="utf-8",
+        )
+        extra = [
+            "--global-tags",
+            str(tags),
+            "--attachment-mime-type",
+            "text/plain",
+            "--attach-file",
+            str(note),
+        ]
+        _build_dts_av(out, swap_video=False, extra=extra)
 
 
 TARGETS: dict[str, Callable[[Path], None]] = {
@@ -249,6 +281,7 @@ TARGETS: dict[str, Callable[[Path], None]] = {
     "dts-timebase": build_dts_timebase,
     "dts-duplicate-pts": build_dts_duplicate_pts,
     "dts-mixed": build_dts_mixed,
+    "dts-audio-tagged": build_dts_audio_tagged,
 }
 
 
