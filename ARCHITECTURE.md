@@ -527,7 +527,7 @@ flowchart TD
   E2 -->|yes| E3["MkvPropEdit clears tags, sets ClearedTags, warns when it was already set"]
 ```
 
-`MakeExtensionLowercase()` renames through a `.tmp7` name, and it fails the file without a rename when another file holds the lowercase name. When the second move throws, it moves the file back, and the result names the `.tmp7` path when that move fails too.
+`MakeExtensionLowercase()` renames through a `.rename.mkv` step name. It fails the file without a rename when another file holds the lowercase name or the step name. On a case-insensitive Linux mount such as SMB, a single case-only move does nothing or fails, so it renames in two moves. When the second move throws, it moves the file back, and the result names the step name when that move fails too. The step name is an MKV name, so a later run processes a stranded file as media rather than deleting it as a non-MKV file.
 
 ### Metadata and Structure Repair
 
@@ -1124,6 +1124,14 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 - ISO 639-2B vs IETF tag validation in `TrackProps.SetLanguage()`
 - Tag metadata vs track metadata differences (FFprobe specific)
 - Automatic fallback: At least one track kept even if language doesn't match
+
+**Temporary File Names:**
+
+- A tool step writes its output to a fixed `.tmpN` name beside the media file
+- Each `N` belongs to one call site, so nested steps never collide
+- The `.tmp*` extensions are reserved, `ProcessFile.IsTempFile()` matches them, and the README documents the reservation for users
+- Each tool wrapper deletes an existing file at its output name before it writes, rather than probing for a free name
+- A temporary name only ever holds tool output, never the media itself, so deleting a leftover temporary file loses no media
 
 ## Key Files Reference
 

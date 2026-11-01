@@ -46,9 +46,7 @@ public sealed class SidecarRenameStateTests : IDisposable
         );
         string sidecarPath = Path.Combine(_directory, "name.PlexCleaner");
         string renamed = Path.Combine(_directory, "name.MKV");
-        string tempName = Path.ChangeExtension(mediaFile, ".tmp7");
-        File.Move(mediaFile, tempName);
-        File.Move(tempName, renamed);
+        File.Move(mediaFile, renamed);
 
         SidecarFile sidecarFile = new(renamed) { State = Seeded };
         _ = sidecarFile.Open().Should().BeTrue();

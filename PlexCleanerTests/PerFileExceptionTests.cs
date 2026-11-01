@@ -79,18 +79,31 @@ public sealed class PerFileExceptionTests : IDisposable
     [Fact]
     public void ProcessFile_StepThrows_FailsAndKeepsFile()
     {
+        Assert.SkipWhen(
+            OperatingSystem.IsWindows() || Environment.IsPrivilegedProcess,
+            "A privileged process or Windows renames in a locked folder"
+        );
         string mediaFile = Path.Combine(_directory, "name.MKV");
         File.WriteAllText(mediaFile, "");
 
-        // A directory on the rename target makes the lowercase rename throw
-        _ = Directory.CreateDirectory(Path.ChangeExtension(mediaFile, ".tmp7"));
+        // A folder without write permission makes the lowercase rename throw
+        File.SetUnixFileMode(_directory, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+        try
+        {
+            _ = Process
+                .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+                .Should()
+                .BeFalse();
 
-        _ = Process
-            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
-            .Should()
-            .BeFalse();
-
-        _ = failedOperation.Should().Be(nameof(ProcessFile.MakeExtensionLowercase));
-        _ = File.Exists(mediaFile).Should().BeTrue();
+            _ = failedOperation.Should().Be(nameof(ProcessFile.MakeExtensionLowercase));
+            _ = File.Exists(mediaFile).Should().BeTrue();
+        }
+        finally
+        {
+            File.SetUnixFileMode(
+                _directory,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+            );
+        }
     }
 }

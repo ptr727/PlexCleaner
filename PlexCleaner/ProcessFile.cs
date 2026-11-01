@@ -127,24 +127,21 @@ public class ProcessFile
         // Make the extension lowercase
         Log.Information("Making file extension lowercase : {FileName}", FileInfo.FullName);
         string lowerName = Path.ChangeExtension(FileInfo.FullName, lowerExtension);
-        if (IsRenameCollision(lowerName))
+        string stepName = GetRenameStepName(lowerName);
+        if (IsRenameCollision(lowerName) || IsRenameCollision(stepName))
         {
             return false;
         }
 
-        // Rename the file
-        // Windows is case insensitive, so we need to rename in two steps
-        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp7");
-        Debug.Assert(tempName != FileInfo.FullName);
-        File.Move(FileInfo.FullName, tempName, false);
-        Debug.Assert(lowerName != tempName);
+        // A case-only move on a case-insensitive Linux mount does nothing or fails, so rename through another name
+        File.Move(FileInfo.FullName, stepName, false);
         try
         {
-            File.Move(tempName, lowerName, false);
+            File.Move(stepName, lowerName, false);
         }
         catch
         {
-            modified |= !UndoRename(tempName);
+            modified |= !UndoRename(stepName);
             throw;
         }
 
@@ -152,6 +149,10 @@ public class ProcessFile
         modified = true;
         return Refresh(lowerName);
     }
+
+    // An MKV name, so a later run processes a stranded file rather than deleting it as a non-MKV file
+    public static string GetRenameStepName(string lowerName) =>
+        Path.ChangeExtension(lowerName, ".rename.mkv");
 
     private bool IsRenameCollision(string targetName)
     {
@@ -163,17 +164,17 @@ public class ProcessFile
         return true;
     }
 
-    private bool UndoRename(string tempName)
+    private bool UndoRename(string stepName)
     {
         try
         {
-            File.Move(tempName, FileInfo.FullName, false);
+            File.Move(stepName, FileInfo.FullName, false);
             return true;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Report where the media is
-            FileInfo = new FileInfo(tempName);
+            FileInfo = new FileInfo(stepName);
             return false;
         }
     }
