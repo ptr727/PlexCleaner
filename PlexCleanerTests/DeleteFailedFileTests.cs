@@ -12,6 +12,10 @@ public sealed class DeleteFailedFileTests : IDisposable
     private readonly string _directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
     private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
     private readonly bool _deleteEmptyFolders = Program.Config.ProcessOptions.DeleteEmptyFolders;
+    private readonly bool _deleteUnwantedExtensions = Program
+        .Config
+        .ProcessOptions
+        .DeleteUnwantedExtensions;
     private readonly int _threadCount = Program.Options.ThreadCount;
 
     public DeleteFailedFileTests()
@@ -24,6 +28,7 @@ public sealed class DeleteFailedFileTests : IDisposable
     {
         Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
         Program.Config.ProcessOptions.DeleteEmptyFolders = _deleteEmptyFolders;
+        Program.Config.ProcessOptions.DeleteUnwantedExtensions = _deleteUnwantedExtensions;
         Program.Options.ThreadCount = _threadCount;
         foreach (string file in Directory.EnumerateFiles(_directory))
         {
@@ -190,6 +195,41 @@ public sealed class DeleteFailedFileTests : IDisposable
                 message.StartsWith("Failed to delete sidecar file : ", StringComparison.Ordinal)
                 && message.Contains(sidecarName, StringComparison.Ordinal)
             );
+    }
+
+    [Fact]
+    public void NonMkvDeleteThrows_LogsFailedDeleteAndPropagates()
+    {
+        Program.Config.ProcessOptions.DeleteUnwantedExtensions = true;
+        string nonMkvName = Path.Combine(_directory, "name.avi");
+        _ = Directory.CreateDirectory(nonMkvName);
+
+        Exception? thrown = null;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+        {
+            bool modified = false;
+            try
+            {
+                _ = new ProcessFile(nonMkvName).DeleteNonMkvFile(ref modified);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                thrown = e;
+            }
+        });
+
+        _ = thrown.Should().NotBeNull();
+        _ = Messages(events, LogEventLevel.Warning)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Deleting non-MKV file : Unwanted extension : ");
+        _ = Messages(events, LogEventLevel.Error)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Failed to delete non-MKV file : ")
+            .And.Contain(nonMkvName);
     }
 
     [Fact]

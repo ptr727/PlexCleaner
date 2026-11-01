@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Serilog.Events;
 
 namespace PlexCleaner;
 
@@ -235,19 +236,12 @@ public static class Convert
         }
 
         // The media is at the output name, so a failed delete still reports the output and the modification
-        Log.Information(
-            "Deleting input file : Converted to {OutputName} : {FileName}",
-            outputName,
+        _ = FileDelete.TryDelete(
+            LogEventLevel.Information,
+            "input file",
+            $"Converted to {outputName}",
             inputName
         );
-        try
-        {
-            File.Delete(inputName);
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e))
-        {
-            Log.Error("Failed to delete input file : {FileName}", inputName);
-        }
     }
 
     // A failed cleanup is logged so the move failure is the exception that propagates

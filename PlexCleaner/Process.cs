@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Serilog.Events;
 
 namespace PlexCleaner;
 
@@ -516,14 +517,16 @@ public static class Process
                 continue;
             }
 
-            Log.Information("Deleting folder : Empty : {Folder}", dirInfo.FullName);
-            try
+            if (
+                !FileDelete.TryDelete(
+                    LogEventLevel.Information,
+                    "folder",
+                    "Empty",
+                    dirInfo.FullName,
+                    Directory.Delete
+                )
+            )
             {
-                Directory.Delete(dirInfo.FullName);
-            }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e))
-            {
-                Log.Error("Failed to delete folder : {Folder}", dirInfo.FullName);
                 failed++;
                 continue;
             }
