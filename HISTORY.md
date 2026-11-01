@@ -29,10 +29,11 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - A renamed file keeps its state, an interrupted repair is retried on the next run, and deleting an orphan sidecar counts as a success.
   - The media info tools no longer rerun after a tool upgrade with `SidecarUpdateOnToolChange` off, or after a state-only change with `UseSidecarFiles` off.
   - A track that needs more than one repair, such as a language remux and track flags, is repaired and reported for each.
-  - Every FFmpeg or HandBrake rewrite restores the IETF language tags those tools drop, and one that drops or reorders tracks keeps the original.
+  - An FFmpeg or HandBrake rewrite of an MKV file restores the IETF language tags those tools drop.
+    - The rewrite fails before it replaces the original when the track count, types, or languages no longer match.
     - Every HandBrake run keeps the original subtitle tracks unchanged, so the HandBrake fallback of a re-encode repair no longer converts them to ASS.
-  - The `.tmp*` extensions beside a media file are reserved for PlexCleaner.
-    - An uppercase extension rename interrupted partway leaves a file that is still processed as media.
+  - PlexCleaner overwrites or deletes a file with a `.tmp*` extension beside a media file, so those names are reserved.
+    - An uppercase extension rename goes through a `.rename.mkv` name rather than `.tmp7`, so an interrupted rename no longer leaves media a later run deletes.
 - Version 3.22:
   - Added always-on runtime metrics published via `System.Diagnostics.Metrics` under the `PlexCleaner.Process` meter, readable with `dotnet-counters` with no extra infrastructure.
     - Overall progress is operation-weighted: each heavy full-file operation (the closed-caption and interlace scans, bitrate analysis, re-encode, deinterlace, and verify) counts the file's size as work to do when it starts and as work done when it finishes, so a run mixing tiny and huge files reports the actual work completed, and the total grows as the non-deterministic per-file path is discovered.
