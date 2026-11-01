@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -347,7 +348,17 @@ public sealed class VerifyToolErrorTests : IDisposable
                     | SidecarFile.StatesType.RepairFailed
                     | SidecarFile.StatesType.PostDecodeTimestamps
             );
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        bool deleted = true;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            deleted = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+        );
+        _ = deleted.Should().BeFalse();
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Information)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Keeping failed file : PostDecodeTimestamps : ");
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("2");
 
         ProcessFile nextRun = new(mediaFile);

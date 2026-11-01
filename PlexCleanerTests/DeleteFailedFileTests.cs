@@ -1,4 +1,3 @@
-using System.Globalization;
 using AwesomeAssertions;
 using PlexCleaner;
 using Serilog.Events;
@@ -123,13 +122,6 @@ public sealed class DeleteFailedFileTests : IDisposable
         _ = processFile.State.Should().HaveFlag(SidecarFile.StatesType.FileDeleted);
     }
 
-    private static List<string> Messages(IReadOnlyList<LogEvent> events, LogEventLevel level) =>
-        [
-            .. events
-                .Where(e => e.Level == level)
-                .Select(e => e.RenderMessage(CultureInfo.InvariantCulture)),
-        ];
-
     [Fact]
     public void MkvFile_LogsOperationAndSidecarDelete()
     {
@@ -140,13 +132,15 @@ public sealed class DeleteFailedFileTests : IDisposable
             new ProcessFile(mediaFile).DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
         );
 
-        _ = Messages(events, LogEventLevel.Warning)
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Warning)
             .Should()
             .ContainSingle()
             .Which.Should()
             .StartWith("Deleting media file : Failed VerifyAndRepair : ")
             .And.Contain(mediaFile);
-        _ = Messages(events, LogEventLevel.Information)
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Information)
             .Should()
             .ContainSingle()
             .Which.Should()
@@ -154,8 +148,10 @@ public sealed class DeleteFailedFileTests : IDisposable
             .And.Contain(sidecarFile);
     }
 
-    [Fact]
-    public void ToolError_LogsKeepReason()
+    [Theory]
+    [InlineData(false, "Tool error")]
+    [InlineData(true, "Tool signal")]
+    public void ToolFailure_LogsKeepReason(bool signal, string reason)
     {
         string mediaFile = CreateFile("name.mkv");
 
@@ -163,7 +159,14 @@ public sealed class DeleteFailedFileTests : IDisposable
         IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
         {
             using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-            ToolErrorScope.Record();
+            if (signal)
+            {
+                ToolErrorScope.RecordSignal();
+            }
+            else
+            {
+                ToolErrorScope.Record();
+            }
             deleted = new ProcessFile(mediaFile).DeleteFailedFile(
                 nameof(ProcessFile.VerifyAndRepair)
             );
@@ -171,11 +174,12 @@ public sealed class DeleteFailedFileTests : IDisposable
 
         _ = deleted.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
-        _ = Messages(events, LogEventLevel.Information)
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Information)
             .Should()
             .ContainSingle()
             .Which.Should()
-            .StartWith("Keeping failed file : Tool error : ");
+            .StartWith($"Keeping failed file : {reason} : ");
     }
 
     [Fact]
@@ -189,7 +193,8 @@ public sealed class DeleteFailedFileTests : IDisposable
             new ProcessFile(mediaFile).DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
         );
 
-        _ = Messages(events, LogEventLevel.Error)
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Error)
             .Should()
             .Contain(message =>
                 message.StartsWith("Failed to delete sidecar file : ", StringComparison.Ordinal)
@@ -219,12 +224,14 @@ public sealed class DeleteFailedFileTests : IDisposable
         });
 
         _ = thrown.Should().NotBeNull();
-        _ = Messages(events, LogEventLevel.Warning)
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Warning)
             .Should()
             .ContainSingle()
             .Which.Should()
             .StartWith("Deleting non-MKV file : Unwanted extension : ");
-        _ = Messages(events, LogEventLevel.Error)
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Error)
             .Should()
             .ContainSingle()
             .Which.Should()
@@ -250,7 +257,8 @@ public sealed class DeleteFailedFileTests : IDisposable
         _ = Directory.Exists(outer).Should().BeFalse();
         List<string> deletes =
         [
-            .. Messages(events, LogEventLevel.Information)
+            .. LogCapture
+                .Messages(events, LogEventLevel.Information)
                 .Where(message =>
                     message.StartsWith("Deleting folder : Empty : ", StringComparison.Ordinal)
                 ),

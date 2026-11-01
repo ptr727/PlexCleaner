@@ -1,3 +1,4 @@
+using System.Globalization;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -34,4 +35,11 @@ internal static class LogCapture
         }
         return sink.Events;
     }
+
+    public static List<string> Messages(IReadOnlyList<LogEvent> events, LogEventLevel level) =>
+        [
+            .. events
+                .Where(e => e.Level == level)
+                .Select(e => e.RenderMessage(CultureInfo.InvariantCulture)),
+        ];
 }
