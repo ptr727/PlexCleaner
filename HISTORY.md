@@ -30,7 +30,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - The media info tools no longer rerun after a tool upgrade with `SidecarUpdateOnToolChange` off, or after a state-only change with `UseSidecarFiles` off.
   - A track that needs more than one repair, such as a language remux and track flags, is repaired and reported for each.
   - An FFmpeg or HandBrake rewrite of an MKV file restores the IETF language tags those tools drop.
-    - The rewrite fails before it replaces the original when the track count, types, or languages no longer match.
+    - The rewrite fails before it replaces the original when its track count, or any track's number, type, or language, no longer matches.
     - Every HandBrake run keeps the original subtitle tracks unchanged, so the HandBrake fallback of a re-encode repair no longer converts them to ASS.
   - PlexCleaner overwrites or deletes a file with a `.tmp*` extension beside a media file, so those names are reserved.
     - An uppercase extension rename goes through a `.rename.mkv` name rather than `.tmp7`, so an interrupted rename no longer leaves media a later run deletes.
