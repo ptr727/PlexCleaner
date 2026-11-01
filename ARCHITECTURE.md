@@ -1127,7 +1127,8 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 
 **Temporary File Names:**
 
-- A tool step writes its output to a fixed `.tmpN` name beside the media file, with each `N` used at one call site so nested steps never collide
+- A tool step writes its output to a fixed `.tmpN` name beside the media file
+- Each `N` belongs to one call site, so nested steps never collide
 - The `.tmp*` extensions are reserved, `ProcessFile.IsTempFile()` matches them, and the README documents the reservation for users
 - Each tool wrapper deletes an existing file at its output name before it writes, rather than probing for a free name
 - A temporary name only ever holds tool output, never the media itself, so deleting a leftover temporary file loses no media
