@@ -127,14 +127,13 @@ public class ProcessFile
         // Make the extension lowercase
         Log.Information("Making file extension lowercase : {FileName}", FileInfo.FullName);
         string lowerName = Path.ChangeExtension(FileInfo.FullName, lowerExtension);
-        if (IsRenameCollision(lowerName))
+        string stepName = GetRenameStepName(lowerName);
+        if (IsRenameCollision(lowerName) || IsRenameCollision(stepName))
         {
             return false;
         }
 
-        // Linux ignores a case-only rename on a case-insensitive mount, so rename through another name
-        // The step name is an MKV name, so a later run processes a stranded file rather than deleting it
-        string stepName = Path.ChangeExtension(lowerName, ".rename.mkv");
+        // A case-only move on a case-insensitive Linux mount does nothing or fails, so rename through another name
         File.Move(FileInfo.FullName, stepName, false);
         try
         {
@@ -150,6 +149,10 @@ public class ProcessFile
         modified = true;
         return Refresh(lowerName);
     }
+
+    // An MKV name, so a later run processes a stranded file rather than deleting it as a non-MKV file
+    public static string GetRenameStepName(string lowerName) =>
+        Path.ChangeExtension(lowerName, ".rename.mkv");
 
     private bool IsRenameCollision(string targetName)
     {

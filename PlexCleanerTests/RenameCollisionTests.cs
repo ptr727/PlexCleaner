@@ -218,11 +218,28 @@ public sealed class RenameCollisionTests : IDisposable
     {
         Program.Config.ProcessOptions.DeleteUnwantedExtensions = true;
         Program.Config.VerifyOptions.DeleteInvalidFiles = false;
-        string stepFile = CreateFile("name.rename.mkv");
+        string stepFile = ProcessFile.GetRenameStepName(Path.Combine(_directory, "name.mkv"));
+        File.WriteAllText(stepFile, "step");
 
         _ = Process.ProcessFile(stepFile, out _, out _, out _, out _, out _);
 
-        _ = File.ReadAllText(stepFile).Should().Be("name.rename.mkv");
+        _ = File.ReadAllText(stepFile).Should().Be("step");
+    }
+
+    [Fact]
+    public void MakeExtensionLowercase_StepNameTaken_FailsWithoutThrowing()
+    {
+        string mediaFile = CreateFile("name.MKV");
+        string stepFile = ProcessFile.GetRenameStepName(Path.Combine(_directory, "name.mkv"));
+        File.WriteAllText(stepFile, "step");
+        ProcessFile processFile = new(mediaFile);
+
+        bool modified = false;
+        _ = processFile.MakeExtensionLowercase(ref modified).Should().BeFalse();
+
+        _ = modified.Should().BeFalse();
+        _ = File.ReadAllText(mediaFile).Should().Be("name.MKV");
+        _ = File.ReadAllText(stepFile).Should().Be("step");
     }
 
     [Fact]
