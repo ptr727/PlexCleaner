@@ -2431,8 +2431,8 @@ public class ProcessFile
         return true;
     }
 
-    // HandBrake converts subtitles and closed captions to ASS and drops the IETF tags
-    // So it encodes without subtitles, MkvMerge merges the original subtitles back, and the tags are restored
+    // HandBrake would convert the subtitles to ASS, and it drops the IETF tags and embedded closed captions
+    // It encodes without subtitles, MkvMerge merges the original subtitles back, and the tags are restored
     private bool ConvertUsingHandBrake(string outputName, bool deInterlace)
     {
         if (!ReportClosedCaptionsDropped())

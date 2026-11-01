@@ -1,6 +1,6 @@
 # PlexCleaner Architecture
 
-This document describes the architecture, processing pipeline, and design patterns of PlexCleaner for contributors and agents working on the codebase. Cross-cutting agent and workflow governance lives in [AGENTS.md](./AGENTS.md) and [GOVERNANCE.md](./GOVERNANCE.md), the CI/CD workflow contract in [WORKFLOW.md](./WORKFLOW.md), C# code style in [CODESTYLE.md](./CODESTYLE.md), and GitHub Copilot review mechanics in [.github/copilot-instructions.md](./.github/copilot-instructions.md).
+This document describes the architecture, processing pipeline, and design patterns of PlexCleaner for contributors and agents working on the codebase. Cross-cutting agent and workflow governance lives in [AGENTS.md][agents] and [GOVERNANCE.md][governance], and the CI/CD workflow contract in [WORKFLOW.md][workflow]. C# code style lives in [CODESTYLE.md][codestyle], and GitHub Copilot review mechanics in [.github/copilot-instructions.md][copilot-instructions].
 
 ## Project Overview
 
@@ -19,11 +19,11 @@ The tool orchestrates external media processing tools (FFmpeg, HandBrake, MkvToo
 
 User-facing documentation is organized as follows:
 
-- **[README.md](./README.md)**: Main project documentation, quick start, installation, usage, and FAQ.
-- **[Docs/LanguageMatching.md](./Docs/LanguageMatching.md)**: Technical details on IETF/RFC 5646 language tag matching and configuration.
-- **[Docs/CustomOptions.md](./Docs/CustomOptions.md)**: FFmpeg and HandBrake custom encoding parameters, hardware acceleration setup, and encoder options.
-- **[Docs/ClosedCaptions.md](./Docs/ClosedCaptions.md)**: Detailed technical analysis of EIA-608/CTA-708 closed caption detection methods and tools.
-- **[HISTORY.md](./HISTORY.md)**: Release notes and version history.
+- **[README.md][readme]**: Main project documentation, quick start, installation, usage, and FAQ.
+- **[Docs/LanguageMatching.md][language-matching]**: Technical details on IETF/RFC 5646 language tag matching and configuration.
+- **[Docs/CustomOptions.md][custom-options]**: FFmpeg and HandBrake custom encoding parameters, hardware acceleration setup, and encoder options.
+- **[Docs/ClosedCaptions.md][closed-captions]**: Detailed technical analysis of EIA-608/CTA-708 closed caption detection methods and tools.
+- **[HISTORY.md][history]**: Release notes and version history.
 
 ## Architecture
 
@@ -31,7 +31,7 @@ User-facing documentation is organized as follows:
 
 PlexCleaner provides multiple commands:
 
-- **process**: Batch process media files in specified folders, see [Process Command Logic](#process-command-logic)
+- **process**: Batch process media files in specified folders, see [Process Command Logic][process-command-logic]
 - **monitor**: Watch folders for changes and automatically process modified files
 - **verify**: Verify media files using FFmpeg
 - **remux**: Re-multiplex media files to MKV
@@ -67,7 +67,7 @@ string rawArguments = "-hide_banner " + option;
 
 ### Process Execution with CliWrap
 
-All external process execution uses [CliWrap](https://github.com/Tyrrrz/CliWrap) (v3.x):
+All external process execution uses [CliWrap][cliwrap-link] (v3.x):
 
 - Builders create `ArgumentsBuilder` instances
 - Execute via `Cli.Wrap(toolPath).WithArguments(builder)`
@@ -91,9 +91,9 @@ Critical performance feature - DO NOT break compatibility:
 - Contains: processing state, tool versions, media properties, file hash
 - Hash: First 64KB + last 64KB of file (not timestamp-based)
 - Schema versioned (`SchemaVersion: 5` in `SidecarFileJsonSchema5`, global alias in `GlobalUsings.cs`)
-- A `Verified`, `VerifyFailed` or scanned state skips only the checks that read it, see [Sidecar Refresh](#sidecar-refresh)
+- A `Verified`, `VerifyFailed` or scanned state skips only the checks that read it, see [Sidecar Refresh][sidecar-refresh]
 - State flags are bitwise: `StatesType` enum with `[Flags]` attribute
-- Sidecar operations: `Open()`, `Create()`, `Read()`, `Update()`, see [Sidecar Refresh](#sidecar-refresh)
+- Sidecar operations: `Open()`, `Create()`, `Read()`, `Update()`, see [Sidecar Refresh][sidecar-refresh]
 
 ### Media Tool Abstraction
 
@@ -122,7 +122,7 @@ Critical performance feature - DO NOT break compatibility:
 - Language tags: ISO 639-2B (`Language`) and RFC 5646/BCP 47 (`LanguageIetf`)
 - Flags: Default, Forced, HearingImpaired, VisualImpaired, Descriptions, Original, Commentary
 - State: one of None, Keep, Remove, Unsupported, what happens to the track as a whole
-- Actions: any combination of SetLanguage, SetFlags, ReMux, ReEncode, DeInterlace, what the track needs done, see [Track State and Actions](#track-state-and-actions)
+- Actions: any combination of SetLanguage, SetFlags, ReMux, ReEncode, DeInterlace, what the track needs done, see [Track State and Actions][track-state-and-actions]
 - Title, Format, Codec, Id, Number, Uid
 
 **Track selection (`SelectMediaProps.cs`):**
@@ -164,7 +164,7 @@ Critical performance feature - DO NOT break compatibility:
 
 - Files must "settle" (no changes for `MonitorWaitTime` seconds) before processing
 - Files must be readable (not being written) before processing
-- Cleanup: deletes empty folders when `DeleteEmptyFolders` is on, see [Run Flow](#run-flow)
+- Cleanup: deletes empty folders when `DeleteEmptyFolders` is on, see [Run Flow][run-flow]
 - Pre-process: Optional initial scan of all monitored folders on startup
 
 **Concurrency:**
@@ -221,7 +221,7 @@ Conventions used in every diagram:
 - A rounded node is an exit.
 - "State has" names the sidecar `StatesType` flags. A track's own state and actions are always named as the track state or a track action.
 - A tool step drawn without a fail edge still fails the file when its tool fails.
-- A node styled with a dashed red border is a suspect branch. Its `S` number points into [Suspect Branches](#suspect-branches).
+- A node styled with a dashed red border is a suspect branch. Its `S` number points into [Suspect Branches][suspect-branches].
 - Change a diagram in the same change that moves a branch it draws.
 
 ### Run Flow
@@ -646,7 +646,9 @@ flowchart TD
   FOUND -->|"yes, deinterlace command"| AGAIN["Warn, deinterlace again"]
   AGAIN --> D0
   FOUND -->|no| D0["Adds the DeInterlace action to the video track"]
-  D0 --> D1["ConvertUsingHandBrake(): HandBrake deinterlaces to .tmp8, subtitles excluded"]
+  D0 --> DC["ConvertUsingHandBrake(): ReportClosedCaptionsDropped() warns when the video carries closed captions"]
+  DC -->|cancelled| FAIL
+  DC --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
   D1 -->|fail| FAIL
   D1 --> D2{"Original has subtitles?"}
   D2 -->|no| D3["MkvMerge remux to .tmp9"]
@@ -663,7 +665,7 @@ flowchart TD
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
 
-Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes D1 to D5 for its caller. HandBrake converts subtitles to ASS, and adds embedded closed captions as one more subtitle track. So it encodes without subtitles, and MkvMerge merges the original subtitle tracks back unchanged. The repair by re-encode uses it for its HandBrake fallback.
+Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes DC to D5 for its caller. The repair by re-encode uses it for its HandBrake fallback. HandBrake would convert the subtitles to ASS, so it encodes without them, and MkvMerge merges the original subtitle tracks back unchanged. MkvMerge merges back only tracks, so closed captions embedded in the video stream are lost. `ReportClosedCaptionsDropped()` logs a warning first when the video carries them, as [Docs/ClosedCaptions.md][closed-captions] describes.
 
 ### Track Selection
 
@@ -808,7 +810,7 @@ flowchart TD
   R1 -->|fail| R2{"Cancelled, or remux only?"}
   R2 -->|yes| RF
   R2 -->|no| R3["FfMpeg re-encode to .tmp12"]
-  R3 -->|"fail, not cancelled"| R4["ConvertUsingHandBrake(): HandBrake re-encode to .tmp8 without subtitles, MkvMerge merges the original subtitles back to .tmp12, RestoreLanguageTags()"]
+  R3 -->|"fail, not cancelled"| R4["ConvertUsingHandBrake(): closed caption warning, HandBrake re-encode to .tmp8 without subtitles, MkvMerge merges the original subtitles back to .tmp12, RestoreLanguageTags()"]
   R3 -->|"fail, cancelled"| RF
   R4 -->|fail| RF
   R3 --> R5["Convert.ReMux(), then RestoreLanguageTags()"]
@@ -885,7 +887,7 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 
 ## Code Conventions
 
-For formatter, EditorConfig, pre-commit hooks, line endings, and charset details, see [CODESTYLE.md](./CODESTYLE.md).
+For formatter, EditorConfig, pre-commit hooks, line endings, and charset details, see [CODESTYLE.md][codestyle].
 
 ### Code Style
 
@@ -982,7 +984,7 @@ enum StatesType {
 }
 ```
 
-Check states with `HasFlag()`, combine with `|=`. [State Flags by Step](#state-flags-by-step) lists which step sets each flag.
+Check states with `HasFlag()`, combine with `|=`. [State Flags by Step][state-flags-by-step] lists which step sets each flag.
 
 ### Configuration Schema
 
@@ -1036,11 +1038,11 @@ Check states with `HasFlag()`, combine with `|=`. [State Flags by Step](#state-f
 
 ### Regression Testing
 
-- Cross-version processing-consistency checks against a curated media collection, with a ZFS-clone harness and Python catalog / reduce / locate / audit tooling under `RegressionTests/`. See [`RegressionTests/README.md`](./RegressionTests/README.md).
+- Cross-version processing-consistency checks against a curated media collection, with a ZFS-clone harness and Python catalog / reduce / locate / audit tooling under `RegressionTests/`. See [`RegressionTests/README.md`][regression-tests-readme].
 
 ## Build and Release
 
-The authoritative release governance is [GOVERNANCE.md](./GOVERNANCE.md) "Release Model" and the workflow contract is [WORKFLOW.md](./WORKFLOW.md). This section is a short architectural summary.
+The authoritative release governance is [GOVERNANCE.md][governance] "Release Model" and the workflow contract is [WORKFLOW.md][workflow]. This section is a short architectural summary.
 
 ### Local Development
 
@@ -1173,3 +1175,27 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 - **KeepAwake.cs**: System sleep prevention
 - **PlexCleaner.defaults.json**: Canonical configuration reference
 - **.editorconfig** / **.csharpier.json**: Code style definitions
+
+<!-- Repo -->
+
+[agents]: ./AGENTS.md
+[closed-captions]: ./Docs/ClosedCaptions.md
+[codestyle]: ./CODESTYLE.md
+[copilot-instructions]: ./.github/copilot-instructions.md
+[custom-options]: ./Docs/CustomOptions.md
+[governance]: ./GOVERNANCE.md
+[history]: ./HISTORY.md
+[language-matching]: ./Docs/LanguageMatching.md
+[process-command-logic]: #process-command-logic
+[readme]: ./README.md
+[regression-tests-readme]: ./RegressionTests/README.md
+[run-flow]: #run-flow
+[sidecar-refresh]: #sidecar-refresh
+[state-flags-by-step]: #state-flags-by-step
+[suspect-branches]: #suspect-branches
+[track-state-and-actions]: #track-state-and-actions
+[workflow]: ./WORKFLOW.md
+
+<!-- External -->
+
+[cliwrap-link]: https://github.com/Tyrrrz/CliWrap
