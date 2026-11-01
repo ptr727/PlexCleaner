@@ -230,6 +230,12 @@ public sealed class ReplaceOriginalTests : IDisposable
             Tools.FfProbe.GetToolPath(),
             WriteTimestampProbeData(processFile.FfProbeProps.Audio[0].Id)
         );
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            FakeTools.SampleIdentifyCase(_directory)
+                + "for a; do case $a in *.tmp14) [ -f \"$a\" ] || exit 2 ;; esac; done\n"
+                + "for a; do case $a in *.tmp4|*.tmp11) echo mkvmerge > \"$a\" ;; esac; done\n"
+        );
         FakeTools.WriteScript(Tools.HandBrake.GetToolPath(), "exit 1\n");
 
         // Only the setts output verifies clean, so a later tier cannot replace the original
