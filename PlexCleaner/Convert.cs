@@ -182,16 +182,16 @@ public static class Convert
             return false;
         }
 
-        // A rewrite that drops or reorders tracks would put the tags on the wrong tracks
+        // A rewrite that drops or reorders tracks fails, the tags would land on the wrong tracks
         try
         {
             if (!HasSameTracks(MkvToolJsonSchema.MkvMerge.FromJson(json).Tracks, languageProps))
             {
-                Log.Warning(
-                    "Rewrite changed the tracks, IETF language tags not restored : {FileName}",
+                Log.Error(
+                    "Rewritten tracks do not match the original tracks : {FileName}",
                     fileName
                 );
-                return true;
+                return false;
             }
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))

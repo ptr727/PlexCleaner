@@ -147,7 +147,7 @@ Critical performance feature - DO NOT break compatibility:
 
 - Only MkvMerge reports IETF tags, and a missing one is derived from the ISO 639-2B tag
 - MkvMerge normalizes to IETF tags when `SetIetfLanguageTags` enabled
-- FfMpeg and HandBrake drop the IETF tags when they write a file. Each of their rewrites restores the tags with MkvPropEdit before the output replaces the original, from the track list read before the rewrite. `Convert.RestoreLanguageTags()` edits only when the output keeps each track's number, type, and ISO 639-2B tag. Otherwise it warns and leaves the derived tags to `SetIetfLanguageTags`. The FfMpeg remux fallback restores them only for a Matroska input, since another container carries no IETF tags.
+- FfMpeg and HandBrake drop the IETF tags when they write a file. Each of their rewrites restores the tags with MkvPropEdit before the output replaces the original, from the track list read before the rewrite. `Convert.RestoreLanguageTags()` first checks that the output keeps each track's number, type, and ISO 639-2B tag. Otherwise the rewrite fails, and the original stays. The FfMpeg remux fallback restores them only for a Matroska input, since another container carries no IETF tags.
 - FFprobe uses tag metadata which may differ from track metadata
 - Track validation: Checks ISO/IETF consistency, sets error states for mismatches
 
@@ -651,14 +651,12 @@ flowchart TD
   D2 -->|yes| D4["MkvMerge merges the original subtitles back to .tmp9"]
   D3 -->|fail| FAIL
   D4 -->|fail| FAIL
-  D3 --> D5["MkvPropEdit restores the track languages in .tmp9"]
+  D3 --> D5["RestoreLanguageTags(): tracks match, MkvPropEdit restores the track languages in .tmp9"]
   D4 --> D5
   D5 -->|fail| FAIL
   D5 --> D6["Move .tmp9 over the original"]
   D6 --> D7["Sets DeInterlaced and ReMuxed, Refresh()"]
-  D7 --> D8{"Track order matches?"}
-  D8 -->|no| FAIL
-  D8 -->|yes| AOK
+  D7 --> AOK
 ```
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
@@ -746,13 +744,11 @@ flowchart TD
   C1 -->|fail| FAIL(["Fail"])
   C1 --> C2["ConvertToMkv(): Convert.ReMux() of .tmp1"]
   C2 -->|fail| FAIL
-  C2 --> C3["ConvertToMkv(): MkvPropEdit restores the track languages in .tmp1"]
+  C2 --> C3["ConvertToMkv(): RestoreLanguageTags(), tracks match, MkvPropEdit restores the track languages in .tmp1"]
   C3 -->|fail| FAIL
   C3 --> C6["ConvertToMkv(): move .tmp1 over the original"]
   C6 --> C4["Sets ReEncoded and ReMuxed, Refresh()"]
-  C4 --> C5{"Track order matches?"}
-  C5 -->|no| FAIL
-  C5 -->|yes| AOK
+  C4 --> AOK
 ```
 
 The encoder output can still match the selection, so the `process` command does not re-encode a file already `ReEncoded` again. The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and they decide no branch.

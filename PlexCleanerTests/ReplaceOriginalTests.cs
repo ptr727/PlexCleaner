@@ -191,39 +191,63 @@ public sealed class ReplaceOriginalTests : IDisposable
     }
 
     [Theory]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    public void RestoreLanguageTags_EditsOnlyWhenTracksMatch(bool changeTracks, bool edited)
+    [InlineData("none", true)]
+    [InlineData("number", false)]
+    [InlineData("type", false)]
+    [InlineData("language", false)]
+    [InlineData("dropped", false)]
+    public void RestoreLanguageTags_EditsOnlyWhenTracksMatch(string change, bool success)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         ProcessFile processFile = CreateProcessFile();
         string propEditLog = WriteFakeTools("*.tmp1", 0);
         string tempName = Path.ChangeExtension(processFile.FileInfo.FullName, ".tmp1");
         File.WriteAllText(tempName, "ffmpeg");
-        if (changeTracks)
+        MediaProps languageProps = processFile.MkvMergeProps;
+        VideoProps video = languageProps.Video[0];
+        switch (change)
         {
-            processFile.MkvMergeProps.GetTrackList()[0].Number += 100;
+            case "number":
+                video.Number += 100;
+                break;
+            case "type":
+                _ = languageProps.Video.Remove(video);
+                languageProps.Audio.Add(
+                    new AudioProps(languageProps)
+                    {
+                        Number = video.Number,
+                        Language = video.Language,
+                    }
+                );
+                break;
+            case "language":
+                video.Language = "zxx";
+                break;
+            case "dropped":
+                languageProps.Audio.RemoveAt(0);
+                break;
+            default:
+                break;
         }
 
-        _ = PlexCleaner
-            .Convert.RestoreLanguageTags(tempName, processFile.MkvMergeProps)
-            .Should()
-            .BeTrue();
+        _ = PlexCleaner.Convert.RestoreLanguageTags(tempName, languageProps).Should().Be(success);
 
-        _ = File.Exists(propEditLog).Should().Be(edited);
-        if (edited)
+        _ = File.Exists(propEditLog).Should().Be(success);
+        if (success)
         {
             _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp1");
         }
     }
 
-    [Fact]
-    public void RestoreLanguageTags_IdentifyFails_ReturnsFalse()
+    [Theory]
+    [InlineData("exit 2\n")]
+    [InlineData("echo '{'\n")]
+    public void RestoreLanguageTags_IdentifyFails_ReturnsFalse(string mkvMerge)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         ProcessFile processFile = CreateProcessFile();
         string propEditLog = WriteFakeTools("*.tmp1", 0);
-        FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), "exit 2\n");
+        FakeTools.WriteScript(Tools.MkvMerge.GetToolPath(), mkvMerge);
         string tempName = Path.ChangeExtension(processFile.FileInfo.FullName, ".tmp1");
         File.WriteAllText(tempName, "ffmpeg");
 
@@ -232,6 +256,43 @@ public sealed class ReplaceOriginalTests : IDisposable
             .Should()
             .BeFalse();
         _ = File.Exists(propEditLog).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(2, false)]
+    public void RemoveClosedCaptions_ReplacesOriginalOnlyAfterLanguageRestore(
+        int propEditExit,
+        bool success
+    )
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile();
+        string mediaFile = processFile.FileInfo.FullName;
+        byte[] original = File.ReadAllBytes(mediaFile);
+        string propEditLog = WriteFakeTools("*.tmp10", propEditExit);
+        FakeTools.WriteSampleToolData(_directory);
+        processFile.FfProbeProps.Video[0].ClosedCaptions = true;
+        processFile.FfProbeProps.Video[0].Format = "h264";
+
+        bool modified = false;
+        bool removed = processFile.RemoveClosedCaptions(false, ref modified);
+
+        _ = removed.Should().Be(success);
+        _ = modified.Should().Be(success);
+        _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp10");
+        if (success)
+        {
+            _ = File.ReadAllText(mediaFile).Should().StartWith("mkvmerge");
+            _ = processFile.State.Should().HaveFlag(SidecarFile.StatesType.ClearedCaptions);
+        }
+        else
+        {
+            _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
+            _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
+        }
+        _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 
     [Theory]

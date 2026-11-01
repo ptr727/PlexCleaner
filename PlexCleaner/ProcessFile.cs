@@ -1640,23 +1640,7 @@ public class ProcessFile
         _sidecarFile.State |= SidecarFile.StatesType.DeInterlaced;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         _sidecarFile.State &= ~SidecarFile.VerifyStates;
-        if (!Refresh(true))
-        {
-            return false;
-        }
-
-        // Verify that the pre- and post- info is using the same track numbers
-        // If this fails then SetTrackLanguage() will have used the wrong tracks
-        if (!MkvMergeProps.VerifyTrackOrder(postMkvMerge))
-        {
-            Log.Error(
-                "MkvMerge and HandBrake track metadata does not match : {FileName}",
-                FileInfo.FullName
-            );
-            Debug.Assert(false);
-            return false;
-        }
-        return true;
+        return Refresh(true);
     }
 
     public bool RemoveClosedCaptions(bool conditional, ref bool modified)
@@ -1883,23 +1867,7 @@ public class ProcessFile
         _sidecarFile.State |= SidecarFile.StatesType.ReEncoded;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         _sidecarFile.State &= ~SidecarFile.VerifyStates;
-        if (!Refresh(outputName))
-        {
-            return false;
-        }
-
-        // Verify that the pre- and post- info is using the same track numbers
-        // If this fails then SetTrackLanguage() will have used the wrong tracks
-        if (!MkvMergeProps.VerifyTrackOrder(postMkvMerge))
-        {
-            Log.Error(
-                "MkvMerge and FfMpeg track metadata does not match : {FileName}",
-                FileInfo.FullName
-            );
-            Debug.Assert(false);
-            return false;
-        }
-        return true;
+        return Refresh(outputName);
     }
 
     public bool VerifyTrackCounts()

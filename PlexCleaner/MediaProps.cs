@@ -191,49 +191,4 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
 
         return matchedTrackList;
     }
-
-    public bool VerifyTrackOrder(MediaProps mediaProps)
-    {
-        // Verify that this MediaProps matches the presented MediaProps
-        // Used to verify that the track numbers for MkvMerge remains the same prior to and after ffmpeg and handbrake
-        // This logic works for MkvMerge only
-        Debug.Assert(Parser == MediaTool.ToolType.MkvMerge);
-        Debug.Assert(mediaProps.Parser == MediaTool.ToolType.MkvMerge);
-
-        // Track counts
-        if (Count != mediaProps.Count)
-        {
-            return false;
-        }
-
-        // Get track items as list
-        List<TrackProps> thisTrackList = GetTrackList();
-        List<TrackProps> thatTrackList = mediaProps.GetTrackList();
-        foreach (TrackProps thisItem in thisTrackList)
-        {
-            // Find the matching item by matroska header number
-            TrackProps? thatItem = thatTrackList.Find(item => item.Number == thisItem.Number);
-            if (thatItem == null)
-            {
-                return false;
-            }
-
-            // The types have to match
-            if (thisItem.GetType() != thatItem.GetType())
-            {
-                return false;
-            }
-
-            // The ISO693-3 language has to match
-            if (!thisItem.Language.Equals(thatItem.Language, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            // Other properties may have changed during encoding
-        }
-
-        // Done
-        return true;
-    }
 }
