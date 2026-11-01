@@ -132,8 +132,19 @@ public class ProcessFile
             return false;
         }
 
-        // One rename, so a failure or an interruption leaves the media under its original name
-        File.Move(FileInfo.FullName, lowerName, false);
+        // Linux ignores a case-only rename on a case-insensitive mount, so rename through another name
+        // The step name is an MKV name, so a later run processes a stranded file rather than deleting it
+        string stepName = Path.ChangeExtension(lowerName, ".rename.mkv");
+        File.Move(FileInfo.FullName, stepName, false);
+        try
+        {
+            File.Move(stepName, lowerName, false);
+        }
+        catch
+        {
+            modified |= !UndoRename(stepName);
+            throw;
+        }
 
         // Modified filename
         modified = true;
@@ -148,6 +159,21 @@ public class ProcessFile
         }
         _renameCollision = true;
         return true;
+    }
+
+    private bool UndoRename(string stepName)
+    {
+        try
+        {
+            File.Move(stepName, FileInfo.FullName, false);
+            return true;
+        }
+        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        {
+            // Report where the media is
+            FileInfo = new FileInfo(stepName);
+            return false;
+        }
     }
 
     public bool IsWriteable() => FileInfo is { Exists: true, IsReadOnly: false };

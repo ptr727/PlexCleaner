@@ -527,7 +527,7 @@ flowchart TD
   E2 -->|yes| E3["MkvPropEdit clears tags, sets ClearedTags, warns when it was already set"]
 ```
 
-`MakeExtensionLowercase()` renames the file in one move, and it fails the file without a rename when another file holds the lowercase name. `File.Move()` renames a file in place when only the case changes, on a case-insensitive file system too. So a failed or interrupted rename leaves the media under its original name.
+`MakeExtensionLowercase()` renames through a `.rename.mkv` step name, and it fails the file without a rename when another file holds the lowercase name. Linux `rename(2)` ignores a case-only rename on a case-insensitive mount such as SMB, so a single move is not enough. When the second move throws, it moves the file back, and the result names the step name when that move fails too. The step name is an MKV name, so a later run processes a stranded file as media rather than deleting it.
 
 ### Metadata and Structure Repair
 

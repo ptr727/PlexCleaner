@@ -11,6 +11,7 @@ public sealed class RenameCollisionTests : IDisposable
     private readonly ToolsOptions1 _toolsOptions = Program.Config.ToolsOptions;
     private readonly bool _reMux = Program.Config.ProcessOptions.ReMux;
     private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
+    private readonly bool _deleteUnwanted = Program.Config.ProcessOptions.DeleteUnwantedExtensions;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
 
     public RenameCollisionTests()
@@ -30,6 +31,7 @@ public sealed class RenameCollisionTests : IDisposable
         Program.Config.ToolsOptions = _toolsOptions;
         Program.Config.ProcessOptions.ReMux = _reMux;
         Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
+        Program.Config.ProcessOptions.DeleteUnwantedExtensions = _deleteUnwanted;
         Tools.MkvMerge.Info = _mkvMergeInfo;
         Directory.Delete(_directory, true);
     }
@@ -172,12 +174,12 @@ public sealed class RenameCollisionTests : IDisposable
     }
 
     [Fact]
-    public void MakeExtensionLowercase_MoveFails_KeepsOriginalName()
+    public void MakeExtensionLowercase_FirstMoveFails_KeepsOriginalName()
     {
         Assert.SkipUnless(OperatingSystem.IsLinux(), "Needs the Linux 255-byte file name limit");
 
-        // Lowercase U+023A is one UTF-8 byte longer, so the lowercase name exceeds the limit
-        string mediaFile = CreateFile(new string('a', 250) + ".\u023A\u023A");
+        // Only the step name exceeds the limit
+        string mediaFile = CreateFile(new string('a', 250) + ".MKV");
         ProcessFile processFile = new(mediaFile);
 
         bool modified = false;
@@ -189,6 +191,38 @@ public sealed class RenameCollisionTests : IDisposable
         _ = modified.Should().BeFalse();
         _ = processFile.FileInfo.FullName.Should().Be(mediaFile);
         _ = Directory.GetFiles(_directory).Should().Equal(mediaFile);
+    }
+
+    [Fact]
+    public void MakeExtensionLowercase_SecondMoveFails_RestoresOriginalName()
+    {
+        Assert.SkipUnless(OperatingSystem.IsLinux(), "Needs the Linux 255-byte file name limit");
+
+        // Lowercase U+023A is one UTF-8 byte longer, so only the lowercase name exceeds the limit
+        string mediaFile = CreateFile(new string('a', 240) + "." + new string('\u023A', 6));
+        ProcessFile processFile = new(mediaFile);
+
+        bool modified = false;
+        _ = processFile
+            .Invoking(item => item.MakeExtensionLowercase(ref modified))
+            .Should()
+            .Throw<IOException>();
+
+        _ = modified.Should().BeFalse();
+        _ = processFile.FileInfo.FullName.Should().Be(mediaFile);
+        _ = Directory.GetFiles(_directory).Should().Equal(mediaFile);
+    }
+
+    [Fact]
+    public void ProcessFile_StrandedStepName_KeepsFile()
+    {
+        Program.Config.ProcessOptions.DeleteUnwantedExtensions = true;
+        Program.Config.VerifyOptions.DeleteInvalidFiles = false;
+        string stepFile = CreateFile("name.rename.mkv");
+
+        _ = Process.ProcessFile(stepFile, out _, out _, out _, out _, out _);
+
+        _ = File.ReadAllText(stepFile).Should().Be("name.rename.mkv");
     }
 
     [Fact]
