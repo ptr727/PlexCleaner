@@ -230,6 +230,7 @@ public sealed class ReplaceOriginalTests : IDisposable
             Tools.FfProbe.GetToolPath(),
             WriteTimestampProbeData(processFile.FfProbeProps.Audio[0].Id)
         );
+        // The remux fails when the setts output is missing, so a skipped rewrite cannot pass
         FakeTools.WriteScript(
             Tools.MkvMerge.GetToolPath(),
             FakeTools.SampleIdentifyCase(_directory)
