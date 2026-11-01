@@ -1,10 +1,12 @@
-"""Tests for the pure helpers in reduce_corpus."""
+"""Tests for the helpers in reduce_corpus."""
 
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import reduce_corpus
 
@@ -55,6 +57,26 @@ class ReduceCorpusTests(unittest.TestCase):
             self.assertEqual(json.loads(source.read_text()), {"SchemaVersion": 4})
             reduce_corpus.stage_settings(settings_dir, workdir)
             self.assertEqual(json.loads(staged.read_text()), {"SchemaVersion": 4})
+
+    def test_process_clip_mounts_staged_settings_writable(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            settings_dir, workdir = Path(d) / "settings", Path(d) / "work"
+            settings_dir.mkdir()
+            (settings_dir / reduce_corpus.SETTINGS_NAME).write_text("{}")
+            results = {"Results": {"Results": [{"OriginalFileName": "/media/a.mkv"}]}}
+
+            def run(args: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+                (workdir / "out" / "clip_results.json").write_text(json.dumps(results))
+                return subprocess.CompletedProcess(args, 0, "")
+
+            with mock.patch.object(reduce_corpus.subprocess, "run", side_effect=run) as fake:
+                _, states = reduce_corpus.process_clip(workdir, settings_dir)
+            args = fake.call_args.args[0]
+            volumes = [args[i + 1] for i, arg in enumerate(args) if arg == "--volume"]
+            self.assertIn(f"{workdir / 'config'}:/config:rw", volumes)
+            self.assertIn(f"--settingsfile=/config/{reduce_corpus.SETTINGS_NAME}", args)
+            self.assertTrue((workdir / "config" / reduce_corpus.SETTINGS_NAME).is_file())
+            self.assertEqual(states, {"a": set()})
 
 
 if __name__ == "__main__":

@@ -52,7 +52,7 @@ public static class Tools
         return false;
     }
 
-    private static bool VerifyToolVersions()
+    internal static bool VerifyToolVersions()
     {
         List<MediaTool> unsupportedTools = GetToolList()
             .FindAll(tool =>
