@@ -175,26 +175,21 @@ Critical performance feature - DO NOT break compatibility:
 
 ### XML and JSON Parsing
 
-AOT-safe parsers in `MediaInfoXmlParser.cs`:
+AOT-safe parser in `MediaInfoXmlParser.cs`, avoiding `XmlSerializer` (not AOT-compatible):
 
-- **MediaInfoFromXml()**: Parses specific MediaInfo XML elements into `MediaInfoToolXmlSchema.MediaInfo`
-  - Manually parses only known elements needed by PlexCleaner (id, format, language, etc.)
-  - Used by sidecar file system to parse XML output when JSON unavailable
-  - Avoids XmlSerializer (not AOT-compatible)
 - **GenericXmlToJson()**: Converts any XML file to JSON format
-  - Preserves all elements and attributes (unlike MediaInfoFromXml's selective parsing)
+  - Used by the sidecar v4 to v5 upgrade, which converts the stored MediaInfo XML to JSON
+  - Preserves every element below the root with its attributes, except namespace and `xsi` attributes
+  - Does not write the root element's own attributes
   - Handles attributes: prefix with `@` for elements with children, no prefix for leaf elements
   - Detects arrays: elements appearing multiple times become JSON arrays
   - Two-pass algorithm: collect children to detect arrays, then write JSON
-  - Uses `XmlReader` and `Utf8JsonWriter` for streaming efficiency
+  - Reads with `XmlReader` into an in-memory `ElementData` tree, then writes it with `Utf8JsonWriter`
   - Special handling for MediaInfo's mixed attribute/text content format (creatingLibrary)
-- **MediaInfoXmlToJson()**: Converts parsed MediaInfo XML to MediaInfo JSON schema
-  - Bridges between XML and JSON schema types
-  - Maps only known MediaInfo track properties
 
 Parser design patterns:
 
-- Forward-only `XmlReader` with depth tracking for streaming
+- Forward-only `XmlReader` with depth tracking
 - Recursive `ElementData` tree for generic XML-to-JSON conversion
 - Namespace filtering (skip `xmlns`, `xsi` attributes)
 - Special handling for MediaInfo's mixed attribute/text content format

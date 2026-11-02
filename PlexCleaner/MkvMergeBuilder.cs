@@ -11,8 +11,6 @@ public partial class MkvMerge
         public GlobalOptions Default() =>
             DisableTrackStatisticsTags().NormalizeLanguageIetfExtended();
 
-        public GlobalOptions Quiet() => Add("--quiet");
-
         public GlobalOptions NormalizeLanguageIetf(string option) =>
             Add("--normalize-language-ietf").Add(option);
 

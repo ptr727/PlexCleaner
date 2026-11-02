@@ -18,8 +18,6 @@ public partial class FfProbe
 
         public GlobalOptions LogLevelError() => LogLevel("error");
 
-        public GlobalOptions LogLevelQuiet() => LogLevel("quiet");
-
         public GlobalOptions HideBanner() => Add("-hide_banner");
 
         public GlobalOptions AnalyzeDuration() => Add("-analyzeduration");
@@ -55,8 +53,6 @@ public partial class FfProbe
         public FfProbeOptions ShowStreams() => Add("-show_streams");
 
         public FfProbeOptions ShowPackets() => Add("-show_packets");
-
-        public FfProbeOptions ShowFrames() => Add("-show_frames");
 
         public FfProbeOptions ShowFormat() => Add("-show_format");
 
