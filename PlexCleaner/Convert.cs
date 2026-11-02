@@ -253,7 +253,7 @@ public static class Convert
     }
 
     // Compare the JSON tracks, parsing them into MediaProps would log every missing IETF tag
-    // HandBrake writes the video track as und, so an undefined rewritten language is the one the restore sets
+    // HandBrake writes the video track as und, so an undefined rewritten video language is the one the restore sets
     private static bool HasSameTracks(List<MkvToolJsonSchema.Track> tracks, MediaProps mediaProps)
     {
         List<TrackProps> trackList = mediaProps.GetTrackList();
@@ -263,7 +263,7 @@ public static class Convert
                     track.Properties.Number == item.Number
                     && track.Type.Equals(GetMkvMergeTrackType(item), StringComparison.Ordinal)
                     && (
-                        Language.IsUndefined(track.Properties.Language)
+                        (item is VideoProps && Language.IsUndefined(track.Properties.Language))
                         || track.Properties.Language.Equals(item.Language, StringComparison.Ordinal)
                     )
                 )

@@ -404,19 +404,21 @@ public sealed class ReplaceOriginalTests : IDisposable
     [InlineData("language", false)]
     [InlineData("dropped", false)]
     [InlineData("undefined", true)]
+    [InlineData("undefinedaudio", false)]
     public void RestoreLanguageTags_EditsOnlyWhenTracksMatch(string change, bool success)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         ProcessFile processFile = CreateProcessFile();
         string propEditLog = WriteFakeTools("*.tmp1", 0);
-        if (change == "undefined")
+        if (change.StartsWith("undefined", StringComparison.Ordinal))
         {
             string identify = Path.Combine(_directory, "MkvMergeInfoData.json");
             JsonNode json = JsonNode.Parse(File.ReadAllText(identify))!;
-            JsonNode videoTrack = json["tracks"]!
+            string type = change == "undefined" ? "video" : "audio";
+            JsonNode undefinedTrack = json["tracks"]!
                 .AsArray()
-                .First(track => track!["type"]!.GetValue<string>() == "video")!;
-            videoTrack["properties"]!["language"] = "und";
+                .First(track => track!["type"]!.GetValue<string>() == type)!;
+            undefinedTrack["properties"]!["language"] = "und";
             File.WriteAllText(identify, json.ToJsonString());
         }
         string tempName = Path.ChangeExtension(processFile.FileInfo.FullName, ".tmp1");
@@ -459,7 +461,7 @@ public sealed class ReplaceOriginalTests : IDisposable
         {
             _ = File.ReadAllText(propEditLog)
                 .Should()
-                .Contain($"--edit track:@{video.Number} --set language={video.LanguageAny}");
+                .Contain($" --edit track:@{video.Number} --set language={video.LanguageAny} ");
         }
     }
 
