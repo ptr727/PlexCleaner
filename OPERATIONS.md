@@ -87,13 +87,13 @@ docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE
   --volume "$tool:/dotnet-coverage:ro" --volume "$PWD/.artifacts/coverage:/coverage" \
   --volume "$PWD/.artifacts/coverage/PlexCleaner.json:/Test/PlexCleaner.json" \
   --entrypoint dotnet docker.io/ptr727/plexcleaner:develop /dotnet-coverage/dotnet-coverage.dll \
-  collect --output-format cobertura --output /coverage/image.cobertura.xml /Test/test.sh
+  collect --output-format cobertura --output /coverage/image.xml /Test/test.sh
 ```
 
-To measure a branch, use a local image built per [Test a tool version the image does not carry](#test-a-tool-version-the-image-does-not-carry) in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout, then merge the reports with the pinned ReportGenerator:
+To measure a branch, use a local image built per [Test a tool version the image does not carry](#test-a-tool-version-the-image-does-not-carry) in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout into a report the merge reads, then merge the reports with the pinned ReportGenerator:
 
 ```sh
-sed -i "s#filename=\"/Builder/#filename=\"$PWD/#" ./.artifacts/coverage/image.cobertura.xml
+sed "s#filename=\"/Builder/#filename=\"$PWD/#" ./.artifacts/coverage/image.xml > ./.artifacts/coverage/image.cobertura.xml
 dotnet reportgenerator "-reports:./.artifacts/coverage/*.cobertura.xml" "-targetdir:./.artifacts/coverage/report" \
   "-reporttypes:Html;TextSummary" "-filefilters:+**/PlexCleaner/*;+**/Plugins/*;-**/.artifacts/*"
 ```
