@@ -50,24 +50,31 @@ public sealed class ReplaceOriginalTests : IDisposable
         Directory.Delete(_directory, true);
     }
 
-    // The rewrite output answers its identify with the sample tracks changed the way HandBrake writes them
-    private void WriteRewriteIdentify(string output, string type)
+    // Each test reads the sample identify, changes what it tests, and writes it where its fake answers from
+    private string WriteChangedIdentify(string name, Action<JsonNode> change)
     {
-        string json = Path.Combine(_directory, "identify-" + output + ".json");
+        string json = Path.Combine(_directory, name);
         JsonNode identify = JsonNode.Parse(
             File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.json"))
         )!;
-        JsonArray tracks = identify["tracks"]!.AsArray();
-        JsonNode track = tracks.First(item => item!["type"]!.GetValue<string>() == type)!;
-        if (type == "video")
-        {
-            track["properties"]!["language"] = "und";
-        }
-        else
-        {
-            _ = tracks.Remove(track);
-        }
+        change(identify);
         File.WriteAllText(json, identify.ToJsonString());
+        return json;
+    }
+
+    private static JsonNode FirstTrack(JsonNode identify, string type) =>
+        identify["tracks"]!.AsArray().First(track => track!["type"]!.GetValue<string>() == type)!;
+
+    private static void SetUndefined(JsonNode identify, string type) =>
+        FirstTrack(identify, type)["properties"]!["language"] = "und";
+
+    private static void Drop(JsonNode identify, string type) =>
+        _ = identify["tracks"]!.AsArray().Remove(FirstTrack(identify, type));
+
+    // Only the rewrite output answers with the changed tracks, every other identify with the sample
+    private void WriteRewriteIdentify(string output, Action<JsonNode> change)
+    {
+        string json = WriteChangedIdentify("identify-" + output + ".json", change);
         FakeTools.WriteScript(
             Tools.MkvMerge.GetToolPath(),
             $"case \"$*\" in *--identify*{output}*) cat \"{json}\"; exit 0 ;; esac\n"
@@ -77,11 +84,10 @@ public sealed class ReplaceOriginalTests : IDisposable
     }
 
     [Theory]
-    [InlineData("video", true)]
-    [InlineData("audio", false)]
+    [InlineData(true)]
+    [InlineData(false)]
     public void DeInterlace_HandBrakeOutput_RestoresUndefinedVideoRefusesDroppedAudio(
-        string type,
-        bool success
+        bool undefinedVideo
     )
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
@@ -92,14 +98,27 @@ public sealed class ReplaceOriginalTests : IDisposable
         VideoProps video = processFile.MkvMergeProps.Video[0];
         string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", 0);
         FakeTools.WriteSampleToolData(_directory);
-        WriteRewriteIdentify("name.tmp9", type);
+        WriteRewriteIdentify(
+            "name.tmp9",
+            identify =>
+            {
+                if (undefinedVideo)
+                {
+                    SetUndefined(identify, "video");
+                }
+                else
+                {
+                    Drop(identify, "audio");
+                }
+            }
+        );
         processFile.FfProbeProps.Video[0].Interlaced = true;
 
         bool modified = false;
-        _ = processFile.DeInterlace(false, ref modified).Should().Be(success);
+        _ = processFile.DeInterlace(false, ref modified).Should().Be(undefinedVideo);
 
-        _ = modified.Should().Be(success);
-        if (success)
+        _ = modified.Should().Be(undefinedVideo);
+        if (undefinedVideo)
         {
             _ = File.ReadAllText(propEditLog)
                 .Should()
@@ -126,17 +145,18 @@ public sealed class ReplaceOriginalTests : IDisposable
         byte[] original = File.ReadAllBytes(mediaFile);
         string propEditLog = WriteFakeTools("*.tmp8", 0);
         FakeTools.WriteSampleToolData(_directory);
-        WriteRewriteIdentify("name.tmp12", "audio");
+        WriteRewriteIdentify("name.tmp12", identify => Drop(identify, "audio"));
         string handBrake = Tools.HandBrake.GetToolPath();
         FakeTools.WriteScript(
             handBrake,
             "for a; do case $a in *.tmp8) echo handbrake > \"$a\" ;; esac; done\necho ran > \"$0.log\"\n"
         );
 
-        // Encrypted audio has no decoder, so FfMpeg fails every verify and re-encode
+        // Encrypted audio has no decoder, so only the HandBrake output without it verifies clean
         FakeTools.WriteScript(
             Tools.FfMpeg.GetToolPath(),
-            "echo '[aist#0:1/none @ 0x0] Decoding requested, but no decoder found for: none' >&2\nexit 234\n"
+            "case \"$*\" in *-xerror*name.tmp12*) exit 0 ;; esac\n"
+                + "echo '[aist#0:1/none @ 0x0] Decoding requested, but no decoder found for: none' >&2\nexit 234\n"
         );
 
         bool modified = false;
@@ -507,7 +527,7 @@ public sealed class ReplaceOriginalTests : IDisposable
     [InlineData("type", false)]
     [InlineData("language", false)]
     [InlineData("dropped", false)]
-    [InlineData("undefined", true)]
+    [InlineData("undefinedvideo", true)]
     [InlineData("undefinedaudio", false)]
     public void RestoreLanguageTags_EditsOnlyWhenTracksMatch(string change, bool success)
     {
@@ -516,14 +536,10 @@ public sealed class ReplaceOriginalTests : IDisposable
         string propEditLog = WriteFakeTools("*.tmp1", 0);
         if (change.StartsWith("undefined", StringComparison.Ordinal))
         {
-            string identify = Path.Combine(_directory, "MkvMergeInfoData.json");
-            JsonNode json = JsonNode.Parse(File.ReadAllText(identify))!;
-            string type = change == "undefined" ? "video" : "audio";
-            JsonNode undefinedTrack = json["tracks"]!
-                .AsArray()
-                .First(track => track!["type"]!.GetValue<string>() == type)!;
-            undefinedTrack["properties"]!["language"] = "und";
-            File.WriteAllText(identify, json.ToJsonString());
+            _ = WriteChangedIdentify(
+                "MkvMergeInfoData.json",
+                identify => SetUndefined(identify, change["undefined".Length..])
+            );
         }
         string tempName = Path.ChangeExtension(processFile.FileInfo.FullName, ".tmp1");
         File.WriteAllText(tempName, "ffmpeg");
@@ -561,7 +577,7 @@ public sealed class ReplaceOriginalTests : IDisposable
         {
             _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp1");
         }
-        if (change == "undefined")
+        if (change == "undefinedvideo")
         {
             _ = File.ReadAllText(propEditLog)
                 .Should()
@@ -687,15 +703,14 @@ public sealed class ReplaceOriginalTests : IDisposable
         // The input identifies as the given container, the FfMpeg output as the sample Matroska tracks
         // Only the input's audio track carries en-GB, so the restored tag shows which list was read
         string identify = FakeTools.SampleIdentifyCase(_directory);
-        string identifyJson = Path.Combine(_directory, "MkvMergeInfoData.json");
-        JsonNode inputInfo = JsonNode.Parse(File.ReadAllText(identifyJson))!;
-        inputInfo["container"]!["type"] = container;
-        JsonNode audio = inputInfo["tracks"]!
-            .AsArray()
-            .First(track => track!["type"]!.GetValue<string>() == "audio")!;
-        audio["properties"]!["language_ietf"] = "en-GB";
-        string inputJson = Path.Combine(_directory, "InputInfoData.json");
-        File.WriteAllText(inputJson, inputInfo.ToJsonString());
+        string inputJson = WriteChangedIdentify(
+            "InputInfoData.json",
+            inputInfo =>
+            {
+                inputInfo["container"]!["type"] = container;
+                FirstTrack(inputInfo, "audio")["properties"]!["language_ietf"] = "en-GB";
+            }
+        );
 
         // MkvMerge fails to remux the input, then remuxes the FfMpeg output
         FakeTools.WriteScript(
@@ -719,7 +734,9 @@ public sealed class ReplaceOriginalTests : IDisposable
         {
             string propEditArgs = File.ReadAllText(propEditLog);
             _ = propEditArgs.Should().Contain("name.tmp2");
-            long number = audio["properties"]!["number"]!.GetValue<long>();
+            long number = FirstTrack(JsonNode.Parse(File.ReadAllText(inputJson))!, "audio")[
+                "properties"
+            ]!["number"]!.GetValue<long>();
             _ = $" {propEditArgs.Trim()} "
                 .Should()
                 .Contain($" --edit track:@{number} --set language=en-GB ");
