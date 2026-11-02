@@ -90,7 +90,7 @@ docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE
   collect --output-format cobertura --output /coverage/image.xml /Test/test.sh
 ```
 
-[RegressionTests/integration-test.sh](./RegressionTests/integration-test.sh) runs the same `dotnet-coverage collect` over the integration job's media and checks the results. To measure a branch, use a local image built per [Test a tool version the image does not carry](#test-a-tool-version-the-image-does-not-carry) in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout into a report the merge reads, then merge the reports with the pinned ReportGenerator:
+[RegressionTests/integration-test.sh](./RegressionTests/integration-test.sh) runs the same `dotnet-coverage collect` over the integration job's media and checks the results. Its report, `WORKDIR/out/image.xml`, takes the place of `./.artifacts/coverage/image.xml` in the rewrite below. To measure a branch, use a local image built per [Test a tool version the image does not carry](#test-a-tool-version-the-image-does-not-carry) in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout into a report the merge reads, then merge the reports with the pinned ReportGenerator:
 
 ```sh
 sed "s#filename=\"/Builder/#filename=\"$PWD/#" ./.artifacts/coverage/image.xml > ./.artifacts/coverage/image.cobertura.xml
