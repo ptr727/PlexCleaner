@@ -2853,40 +2853,6 @@ public class ProcessFile
         return true;
     }
 
-    public bool TestMediaProps()
-    {
-        // Only called from test code to verify behavior of parsing logic
-
-        // Get media info
-        if (!Refresh(false))
-        {
-            Log.Error("Failed to get media tool info : {FileName}", FileInfo.FullName);
-            return false;
-        }
-
-        // Verify that all codecs and tracks are supported
-        if (MediaInfoProps.Unsupported || FfProbeProps.Unsupported || MkvMergeProps.Unsupported)
-        {
-            Log.Error("Unsupported media info : {FileName}", FileInfo.FullName);
-            if (MediaInfoProps.Unsupported)
-            {
-                MediaInfoProps.WriteLine("Unsupported");
-            }
-            if (MkvMergeProps.Unsupported)
-            {
-                MkvMergeProps.WriteLine("Unsupported");
-            }
-            if (FfProbeProps.Unsupported)
-            {
-                FfProbeProps.WriteLine("Unsupported");
-            }
-            return false;
-        }
-
-        // Done
-        return true;
-    }
-
     public bool GetBitrateInfo(out BitrateInfo? bitrateInfo) =>
         GetPacketAnalysis(Program.Options.QuickScan, out bitrateInfo, out _);
 
