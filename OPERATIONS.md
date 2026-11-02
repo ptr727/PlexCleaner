@@ -67,12 +67,13 @@ The regression harness under [RegressionTests/](./RegressionTests/) processes a 
 
 ### Measure code coverage
 
-[Codecov](https://app.codecov.io/gh/ptr727/PlexCleaner) merges the coverage of several runs, each uploading under its own flag. The CI unit tests upload with no flag. The `integration` flag is a CI run of the Docker test commands in the image. The `regression` and `windows` flags are host-specific runs, and [codecov.yml](./codecov.yml) carries them forward between their sporadic uploads. Those runs need the media collection and a Windows workstation, so their scripts and uploads live in the private HomeAutomation-Config repository rather than here.
+[Codecov](https://app.codecov.io/gh/ptr727/PlexCleaner) merges the coverage of several runs. CI's validator uploads the .NET unit tests with no flag, and the `RegressionTests/` Python tests under a `python-<version>` flag. [codecov.yml](./codecov.yml) declares a flag for each further run. It reserves `integration` for a CI run of the Docker test commands in the image. The `regression` and `windows` flags are host-specific runs, and it carries them forward between their sporadic uploads. Those runs need the media collection and a Windows workstation, so their scripts and uploads live in the private HomeAutomation-Config repository rather than here.
 
-Measure the unit tests the way CI does. The reports land under `.artifacts/coverage`, which git ignores:
+Measure the unit tests the way CI does. The reports land under `.artifacts/coverage`, which git ignores. Each run adds a report, so clear the directory first to keep an older commit's report out of the merge:
 
 ```sh
 dotnet tool restore
+rm -rf ./.artifacts/coverage
 dotnet test --project PlexCleanerTests/PlexCleanerTests.csproj --coverage --coverage-output-format cobertura --results-directory ./.artifacts/coverage
 ```
 
@@ -89,7 +90,7 @@ docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE
   collect --output-format cobertura --output /coverage/image.cobertura.xml /Test/test.sh
 ```
 
-To measure a branch, use a local image built per the runbook above in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout, then merge the reports with the pinned ReportGenerator:
+To measure a branch, use a local image built per [Test a tool version the image does not carry](#test-a-tool-version-the-image-does-not-carry) in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout, then merge the reports with the pinned ReportGenerator:
 
 ```sh
 sed -i "s#filename=\"/Builder/#filename=\"$PWD/#" ./.artifacts/coverage/image.cobertura.xml
@@ -97,7 +98,7 @@ dotnet reportgenerator "-reports:./.artifacts/coverage/*.cobertura.xml" "-target
   "-reporttypes:Html;TextSummary" "-filefilters:+**/PlexCleaner/*;+**/Plugins/*;-**/.artifacts/*"
 ```
 
-The file filter keeps the project sources and drops the source-generated files under `.artifacts/obj`, which Codecov also drops. The merged rate still reads higher than Codecov's. ReportGenerator counts a line with partly covered branches as covered, while Codecov counts it as a partial, which lowers its rate. Codecov's total also holds the Python coverage of `RegressionTests/`. A comparison holds only when every report comes from the same commit. A published image's `--version` ends in its commit's short SHA, and a local image is the checkout it was built from.
+The file filter keeps the project sources and drops the source-generated files under `.artifacts/obj`, which Codecov also drops. Codecov's total also holds the Python coverage of `RegressionTests/`, so compare against its .NET files alone. The merged rate still reads higher than Codecov's .NET rate. ReportGenerator counts a line with partly covered branches as covered, while Codecov counts it as a partial, which lowers its rate. A comparison holds only when every report comes from the same commit. A published image's `--version` ends in its commit's short SHA, and a local image is the checkout it was built from.
 
 On Windows, run the `win-x64` folder of the release archive under `dotnet-coverage collect`. It is framework-dependent with its PDB beside it, not a single-file executable, so it instruments as shipped. A `develop` prerelease carries the Debug build, a `main` release carries the Release build, and `PlexCleaner.exe --version` names the commit.
 
