@@ -67,13 +67,12 @@ public class ProcessFile
         }
 
         // Media file does not exists, delete this sidecar file
-        Log.Information(
-            "Deleting sidecar file with no matching MKV file : {FileName}",
+        FileDelete.Delete(
+            LogEventLevel.Information,
+            "sidecar file",
+            "No matching MKV file",
             FileInfo.FullName
         );
-
-        // Delete the file
-        File.Delete(FileInfo.FullName);
 
         // File deleted, do not continue processing
         modified = true;
@@ -97,10 +96,12 @@ public class ProcessFile
         }
 
         // Non-MKV file, delete
-        Log.Warning("Deleting non-MKV file : {FileName}", FileInfo.FullName);
-
-        // Delete the file
-        File.Delete(FileInfo.FullName);
+        FileDelete.Delete(
+            LogEventLevel.Warning,
+            "non-MKV file",
+            "Unwanted extension",
+            FileInfo.FullName
+        );
 
         // File deleted, do not continue processing
         modified = true;
@@ -127,24 +128,21 @@ public class ProcessFile
         // Make the extension lowercase
         Log.Information("Making file extension lowercase : {FileName}", FileInfo.FullName);
         string lowerName = Path.ChangeExtension(FileInfo.FullName, lowerExtension);
-        if (IsRenameCollision(lowerName))
+        string stepName = GetRenameStepName(lowerName);
+        if (IsRenameCollision(lowerName) || IsRenameCollision(stepName))
         {
             return false;
         }
 
-        // Rename the file
-        // Windows is case insensitive, so we need to rename in two steps
-        string tempName = Path.ChangeExtension(FileInfo.FullName, ".tmp7");
-        Debug.Assert(tempName != FileInfo.FullName);
-        File.Move(FileInfo.FullName, tempName, false);
-        Debug.Assert(lowerName != tempName);
+        // A case-only move on a case-insensitive Linux mount does nothing or fails, so rename through another name
+        File.Move(FileInfo.FullName, stepName, false);
         try
         {
-            File.Move(tempName, lowerName, false);
+            File.Move(stepName, lowerName, false);
         }
         catch
         {
-            modified |= !UndoRename(tempName);
+            modified |= !UndoRename(stepName);
             throw;
         }
 
@@ -152,6 +150,10 @@ public class ProcessFile
         modified = true;
         return Refresh(lowerName);
     }
+
+    // An MKV name, so a later run processes a stranded file rather than deleting it as a non-MKV file
+    public static string GetRenameStepName(string lowerName) =>
+        Path.ChangeExtension(lowerName, ".rename.mkv");
 
     private bool IsRenameCollision(string targetName)
     {
@@ -163,17 +165,17 @@ public class ProcessFile
         return true;
     }
 
-    private bool UndoRename(string tempName)
+    private bool UndoRename(string stepName)
     {
         try
         {
-            File.Move(tempName, FileInfo.FullName, false);
+            File.Move(stepName, FileInfo.FullName, false);
             return true;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
         {
             // Report where the media is
-            FileInfo = new FileInfo(tempName);
+            FileInfo = new FileInfo(stepName);
             return false;
         }
     }
@@ -213,8 +215,8 @@ public class ProcessFile
             return false;
         }
 
-        // ReMux the file, use the new filename
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
+        // ReMux the file, use the new filename, the media props are not read yet
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, languageProps: null, out string outputName))
         {
             // Error
             return false;
@@ -263,7 +265,7 @@ public class ProcessFile
         );
 
         // ReMux the file, use the new filename
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out string outputName))
         {
             // Error
             return false;
@@ -580,10 +582,10 @@ public class ProcessFile
 
         // Conditional with tracks or all tracks
         if (
-            !Convert.ReMuxToMkv(
-                FileInfo.FullName,
-                selectMediaProps.NotSelected.Count > 0 ? selectMediaProps : null,
-                out string outputName
+            !(
+                selectMediaProps.NotSelected.Count > 0
+                    ? Convert.ReMuxToMkv(FileInfo.FullName, selectMediaProps, out string outputName)
+                    : Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out outputName)
             )
         )
         {
@@ -875,7 +877,7 @@ public class ProcessFile
 
         // Remux to rewrite the container structure
         Log.Information("Remux to repair Matroska structure : {FileName}", FileInfo.FullName);
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, out string outputName))
+        if (!Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out string outputName))
         {
             // Error
             return false;
@@ -1418,7 +1420,11 @@ public class ProcessFile
         return true;
     }
 
-    private bool FindClosedCaptionTracks(bool conditional, out VideoProps? videoProps)
+    private bool FindClosedCaptionTracks(
+        bool conditional,
+        out VideoProps? videoProps,
+        bool recordScan = true
+    )
     {
         // Return false on error
         // Set videoProps if contains closed captions
@@ -1476,7 +1482,9 @@ public class ProcessFile
             return true;
         }
 
-        return Program.Options.QuickScan || SetScanned(SidecarFile.StatesType.ScannedCaptions);
+        return !recordScan
+            || Program.Options.QuickScan
+            || SetScanned(SidecarFile.StatesType.ScannedCaptions);
     }
 
     private bool SetScanned(SidecarFile.StatesType scanned)
@@ -1553,111 +1561,24 @@ public class ProcessFile
         videoProps.Actions |= TrackProps.ActionsType.DeInterlace;
         videoProps.WriteLine("Interlaced");
 
-        // TODO: HandBrake will convert closed captions and subtitle tracks to ASS format
-        // To work around this we will deinterlace without subtitles then add the subtitles back
-        // https://github.com/ptr727/PlexCleaner/issues/95
-
         // Create a temp filename for the deinterlaced output
-        string deintName = Path.ChangeExtension(FileInfo.FullName, ".tmp8");
+        string deintName = Path.ChangeExtension(FileInfo.FullName, ".tmp9");
         Debug.Assert(FileInfo.FullName != deintName);
-
-        // DeInterlace using HandBrake and ignore subtitles
-        if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, deintName, false, true))
+        if (!ConvertUsingHandBrake(deintName, true))
         {
             Log.Error("Failed to deinterlace interlaced media : {FileName}", FileInfo.FullName);
-            File.Delete(deintName);
-            return false;
-        }
-
-        // Create a temp filename for the remuxed output
-        string remuxName = Path.ChangeExtension(FileInfo.FullName, ".tmp9");
-        Debug.Assert(FileInfo.FullName != remuxName);
-
-        // If there are subtitles in the original file merge them back
-        if (MkvMergeProps.Subtitle.Count == 0)
-        {
-            // No subtitles, just remux all content
-            Log.Information("Remuxing deinterlaced media : {FileName}", FileInfo.FullName);
-            if (!Tools.MkvMerge.ReMuxToMkv(deintName, remuxName))
-            {
-                Log.Error("Failed to remux deinterlaced media : {FileName}", FileInfo.FullName);
-                File.Delete(deintName);
-                File.Delete(remuxName);
-                return false;
-            }
-        }
-        else
-        {
-            // Merge the deinterlaced file with the subtitles from the original file
-            MediaProps subtitleProps = new(MediaTool.ToolType.MkvMerge, FileInfo.FullName);
-            subtitleProps.Subtitle.AddRange(MkvMergeProps.Subtitle);
-            Log.Information(
-                "Remuxing subtitles and deinterlaced media : {FileName}",
-                FileInfo.FullName
-            );
-            if (!Tools.MkvMerge.MergeToMkv(deintName, FileInfo.FullName, subtitleProps, remuxName))
-            {
-                Log.Error(
-                    "Failed to remux subtitles and deinterlaced media : {FileName}",
-                    FileInfo.FullName
-                );
-                File.Delete(deintName);
-                File.Delete(remuxName);
-                return false;
-            }
-        }
-
-        File.Delete(deintName);
-
-        // Clone the original MkvMergeInfo
-        MediaProps postMkvMerge = MkvMergeProps.Clone();
-
-        // The remuxed output will be [Video] [Audio] [Subtitles]
-        // Reset the track numbers to be in the expected order
-        int trackNumber = 1;
-        postMkvMerge.Video.Clear();
-        postMkvMerge.Video.AddRange(MkvMergeProps.Video);
-        postMkvMerge.Video.ForEach(item => item.Number = trackNumber++);
-        postMkvMerge.Audio.Clear();
-        postMkvMerge.Audio.AddRange(MkvMergeProps.Audio);
-        postMkvMerge.Audio.ForEach(item => item.Number = trackNumber++);
-        postMkvMerge.Subtitle.Clear();
-        postMkvMerge.Subtitle.AddRange(MkvMergeProps.Subtitle);
-        postMkvMerge.Subtitle.ForEach(item => item.Number = trackNumber++);
-
-        // FfMpeg and HandBrake discards IETF language tags, restore them after encoding and deinterlacing
-        // https://github.com/ptr727/PlexCleaner/issues/148
-        if (!Tools.MkvPropEdit.SetTrackLanguage(remuxName, postMkvMerge))
-        {
-            File.Delete(remuxName);
             return false;
         }
 
         // Replace the original only after every rewriting step succeeds
-        File.Move(remuxName, FileInfo.FullName, true);
+        File.Move(deintName, FileInfo.FullName, true);
 
         // Refresh
         modified = true;
         _sidecarFile.State |= SidecarFile.StatesType.DeInterlaced;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         _sidecarFile.State &= ~SidecarFile.VerifyStates;
-        if (!Refresh(true))
-        {
-            return false;
-        }
-
-        // Verify that the pre- and post- info is using the same track numbers
-        // If this fails then SetTrackLanguage() will have used the wrong tracks
-        if (!MkvMergeProps.VerifyTrackOrder(postMkvMerge))
-        {
-            Log.Error(
-                "MkvMerge and HandBrake track metadata does not match : {FileName}",
-                FileInfo.FullName
-            );
-            Debug.Assert(false);
-            return false;
-        }
-        return true;
+        return Refresh(true);
     }
 
     public bool RemoveClosedCaptions(bool conditional, ref bool modified)
@@ -1753,7 +1674,7 @@ public class ProcessFile
         }
 
         // ReMux using MkvMerge after FfMpeg encoding
-        if (!Convert.ReMux(tempName))
+        if (!Convert.ReMux(tempName) || !Convert.RestoreLanguageTags(tempName, MkvMergeProps))
         {
             // Error
             File.Delete(tempName);
@@ -1860,16 +1781,12 @@ public class ProcessFile
         Log.Information("Reencoding required tracks : {FileName}", FileInfo.FullName);
         selectMediaProps.WriteLine("ReEncode", "Passthrough");
 
-        // The FfMpeg map is constructed using the same order as the original file
-        // No need to adjust the track numbers
-        MediaProps postMkvMerge = MkvMergeProps.Clone();
-
-        // ReEncode selected tracks
+        // ReEncode selected tracks, the FfMpeg map keeps the original track order
         if (
             !Convert.ConvertToMkv(
                 FileInfo.FullName,
                 selectMediaProps,
-                postMkvMerge,
+                MkvMergeProps,
                 out string outputName
             )
         )
@@ -1884,23 +1801,7 @@ public class ProcessFile
         _sidecarFile.State |= SidecarFile.StatesType.ReEncoded;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         _sidecarFile.State &= ~SidecarFile.VerifyStates;
-        if (!Refresh(outputName))
-        {
-            return false;
-        }
-
-        // Verify that the pre- and post- info is using the same track numbers
-        // If this fails then SetTrackLanguage() will have used the wrong tracks
-        if (!MkvMergeProps.VerifyTrackOrder(postMkvMerge))
-        {
-            Log.Error(
-                "MkvMerge and FfMpeg track metadata does not match : {FileName}",
-                FileInfo.FullName
-            );
-            Debug.Assert(false);
-            return false;
-        }
-        return true;
+        return Refresh(outputName);
     }
 
     public bool VerifyTrackCounts()
@@ -2019,29 +1920,41 @@ public class ProcessFile
         return verifyResult;
     }
 
-    public bool DeleteFailedFile()
+    private string? KeepFailedFileReason() =>
+        _renameCollision ? "Rename collision"
+        : ToolErrorScope.Count > 0 ? "Tool error"
+        : ToolErrorScope.SignalCount > 0 ? "Tool signal"
+        : Program.IsCancelledError() ? "Cancelled"
+        : _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
+            ? nameof(SidecarFile.StatesType.PostDecodeTimestamps)
+        : null;
+
+    public bool DeleteFailedFile(string failedOperation)
     {
         // Conditional
-        if (
-            !Program.Config.VerifyOptions.DeleteInvalidFiles
-            || _renameCollision
-            || ToolErrorScope.Count > 0
-            || ToolErrorScope.SignalCount > 0
-            || Program.IsCancelledError()
-            || _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
-        )
+        if (!Program.Config.VerifyOptions.DeleteInvalidFiles)
         {
-            // Return false if not deleted
+            return false;
+        }
+        string? keepReason = KeepFailedFileReason();
+        if (keepReason != null)
+        {
+            Log.Information(
+                "Keeping failed file : {Reason:l} : {FileName}",
+                keepReason,
+                FileInfo.FullName
+            );
             return false;
         }
 
-        // Delete the media file and sidecar file
-        Log.Warning("Deleting media file that failed processing : {FileName}", FileInfo.FullName);
-        try
-        {
-            File.Delete(FileInfo.FullName);
-        }
-        catch (Exception e) when (Log.Logger.LogAndHandle(e))
+        if (
+            !FileDelete.TryDelete(
+                LogEventLevel.Warning,
+                "media file",
+                $"Failed {failedOperation}",
+                FileInfo.FullName
+            )
+        )
         {
             return false;
         }
@@ -2054,13 +1967,14 @@ public class ProcessFile
         if (SidecarFile.IsMkvFile(FileInfo))
         {
             string sidecarName = SidecarFile.GetSidecarName(FileInfo);
-            try
+            if (Path.Exists(sidecarName))
             {
-                File.Delete(sidecarName);
-            }
-            catch (Exception e) when (Log.Logger.LogAndHandle(e))
-            {
-                Log.Error("Failed to delete sidecar file : {FileName}", sidecarName);
+                _ = FileDelete.TryDelete(
+                    LogEventLevel.Information,
+                    "sidecar file",
+                    "Media file deleted",
+                    sidecarName
+                );
             }
         }
 
@@ -2410,7 +2324,17 @@ public class ProcessFile
             "Attempting media repair by reencoding using FfMpeg : {FileName}",
             FileInfo.FullName
         );
-        if (!Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempName))
+        if (Tools.FfMpeg.ConvertToMkv(FileInfo.FullName, tempName))
+        {
+            // ReMux using MkvMerge after FfMpeg encoding
+            if (!Convert.ReMux(tempName) || !Convert.RestoreLanguageTags(tempName, MkvMergeProps))
+            {
+                // Failed
+                File.Delete(tempName);
+                return false;
+            }
+        }
+        else
         {
             // Failed, delete temp file
             File.Delete(tempName);
@@ -2429,11 +2353,8 @@ public class ProcessFile
                 "Attempting media repair by reencoding using HandBrake : {FileName}",
                 FileInfo.FullName
             );
-            if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, tempName, true, false))
+            if (!ConvertUsingHandBrake(tempName, false))
             {
-                // Failed, delete temp file
-                File.Delete(tempName);
-
                 // Cancel requested
                 if (Program.IsCancelledError())
                 {
@@ -2446,14 +2367,6 @@ public class ProcessFile
                 // Caller will update state
                 return false;
             }
-        }
-
-        // ReMux using MkvMerge after FfMpeg or HandBrake encoding
-        if (!Convert.ReMux(tempName))
-        {
-            // Failed
-            File.Delete(tempName);
-            return false;
         }
 
         // Require a clean re-verify, accepting a timestamp-only result would mark a file Verified that
@@ -2473,6 +2386,101 @@ public class ProcessFile
         Log.Information("Repair succeeded : {FileName}", FileInfo.FullName);
 
         // Caller will update state
+        return true;
+    }
+
+    // Returns false only on cancel, the scan reports and never blocks the HandBrake run
+    private bool ReportClosedCaptionsDropped()
+    {
+        // A Verified or VerifyFailed file may never have been scanned with RemoveClosedCaptions off
+        if (
+            State.HasFlag(SidecarFile.StatesType.ScannedCaptions)
+            || State.HasFlag(SidecarFile.StatesType.ClearedCaptions)
+        )
+        {
+            return true;
+        }
+
+        // Its own scope, so a scan tool error does not decide the repair outcome
+        bool scanned;
+        VideoProps? captionVideo;
+        using (ToolErrorScope.BeginScope())
+        {
+            scanned = FindClosedCaptionTracks(false, out captionVideo, recordScan: false);
+        }
+
+        if (!scanned)
+        {
+            if (Program.IsCancelledError())
+            {
+                return false;
+            }
+            Log.Warning(
+                "Unknown if HandBrake drops Closed Captions in the video stream : {FileName}",
+                FileInfo.FullName
+            );
+        }
+        else if (captionVideo != null)
+        {
+            Log.Warning(
+                "HandBrake drops the Closed Captions in the video stream : Format: {Format} : {FileName}",
+                captionVideo.Format,
+                FileInfo.FullName
+            );
+        }
+        return true;
+    }
+
+    // HandBrake would convert the subtitles to ASS, and it drops the IETF tags and embedded closed captions
+    // It encodes without subtitles, MkvMerge merges the original subtitles back, and the tags are restored
+    private bool ConvertUsingHandBrake(string outputName, bool deInterlace)
+    {
+        if (!ReportClosedCaptionsDropped())
+        {
+            return false;
+        }
+
+        string handBrakeName = Path.ChangeExtension(FileInfo.FullName, ".tmp8");
+        Debug.Assert(FileInfo.FullName != handBrakeName);
+        if (!Tools.HandBrake.ConvertToMkv(FileInfo.FullName, handBrakeName, deInterlace))
+        {
+            File.Delete(handBrakeName);
+            return false;
+        }
+
+        bool merged;
+        if (MkvMergeProps.Subtitle.Count == 0)
+        {
+            Log.Information("Remuxing the HandBrake output : {FileName}", FileInfo.FullName);
+            merged = Tools.MkvMerge.ReMuxToMkv(handBrakeName, outputName);
+        }
+        else
+        {
+            MediaProps subtitleProps = new(MediaTool.ToolType.MkvMerge, FileInfo.FullName);
+            subtitleProps.Subtitle.AddRange(MkvMergeProps.Subtitle);
+            Log.Information(
+                "Remuxing subtitles and the HandBrake output : {FileName}",
+                FileInfo.FullName
+            );
+            merged = Tools.MkvMerge.MergeToMkv(
+                handBrakeName,
+                FileInfo.FullName,
+                subtitleProps,
+                outputName
+            );
+        }
+        File.Delete(handBrakeName);
+        if (!merged)
+        {
+            Log.Error("Failed to merge the HandBrake output : {FileName}", FileInfo.FullName);
+            File.Delete(outputName);
+            return false;
+        }
+        if (!Convert.RestoreLanguageTags(outputName, Convert.GetHandBrakeTrackOrder(MkvMergeProps)))
+        {
+            File.Delete(outputName);
+            return false;
+        }
         return true;
     }
 
@@ -2613,6 +2621,13 @@ public class ProcessFile
             return false;
         }
 
+        // The MkvMerge pass drops tags and attachments like every other rewrite, and the gate judges its output
+        if (!Convert.ReMux(tempName))
+        {
+            File.Delete(tempName);
+            return false;
+        }
+
         // Reject unless the payload is byte-identical and the result verifies clean
         if (!TimestampRepairRegressionGate(FileInfo.FullName, tempName))
         {
@@ -2627,6 +2642,11 @@ public class ProcessFile
                 verifyResult == VerifyResult.TimestampOnly
                 && GetPacketAnalysis(tempName, false, out _, out DtsInfo? residualDtsInfo)
                 && DtsInfo.IsPostDecodeOnly(residualDtsInfo);
+            File.Delete(tempName);
+            return false;
+        }
+        if (!Convert.RestoreLanguageTags(tempName, MkvMergeProps))
+        {
             File.Delete(tempName);
             return false;
         }

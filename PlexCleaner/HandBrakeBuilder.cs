@@ -86,8 +86,6 @@ public partial class HandBrake
 
         public OutputOptions AudioEncoder(string option) => AudioEncoder().Add(option);
 
-        public OutputOptions AllSubtitles() => Add("--all-subtitles");
-
         public OutputOptions Subtitle() => Add("--subtitle");
 
         public OutputOptions Subtitle(string option) => Subtitle().Add(option);

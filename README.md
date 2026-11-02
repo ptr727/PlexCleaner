@@ -167,6 +167,16 @@ PlexCleaner is optimized for processing large media libraries efficiently. Key p
 - Parallel processing, using the `--parallel` option, is useful when a single instance of FFmpeg or HandBrake does not saturate all the available CPU resources.
 - Processing can be interrupted using `Ctrl-Break`, if using sidecar files restarting will skip previously verified files.
 
+**Temporary Files:**
+
+- Processing writes tool output beside the media file, under a `.tmp` extension numbered per step. (`filename.mkv` -> `filename.tmp4`)
+- The `.tmp*` extensions are reserved for PlexCleaner, so do not keep your own files under them in a media folder.
+- A file found under a temporary name, such as one left behind by an interrupted run, is overwritten.
+- A temporary file is deleted when its tool fails or the step no longer needs it, or moved to its target name on success.
+- A temporary file only ever holds tool output, never the media itself, so a leftover temporary file is safe to delete.
+- With `DeleteUnwantedExtensions` enabled, the `process` command deletes a leftover temporary file like any other non-MKV file.
+- The `monitor` command ignores changes to temporary files.
+
 **Docker Considerations:**
 
 - Processing very large media collections on docker may result in a very large docker log file, set appropriate [docker logging][docker-logging-link] options.
@@ -668,7 +678,7 @@ Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for complete con
 
 - Re-multiplex non-MKV containers to MKV format.
   - `ReMuxExtensions`, `ReMux`
-- Remove all tags, titles, thumbnails, cover art, and attachments.
+- Remove all tags, titles, thumbnails, cover art, and attachments. A remux or re-encode drops tags and attachments whatever this setting says.
   - `RemoveTags`
 
 **3. Track Language and Metadata:**

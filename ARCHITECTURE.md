@@ -1,6 +1,6 @@
 # PlexCleaner Architecture
 
-This document describes the architecture, processing pipeline, and design patterns of PlexCleaner for contributors and agents working on the codebase. Cross-cutting agent and workflow governance lives in [AGENTS.md](./AGENTS.md) and [GOVERNANCE.md](./GOVERNANCE.md), the CI/CD workflow contract in [WORKFLOW.md](./WORKFLOW.md), C# code style in [CODESTYLE.md](./CODESTYLE.md), and GitHub Copilot review mechanics in [.github/copilot-instructions.md](./.github/copilot-instructions.md).
+This document describes the architecture, processing pipeline, and design patterns of PlexCleaner for contributors and agents working on the codebase. Cross-cutting agent and workflow governance lives in [AGENTS.md][agents] and [GOVERNANCE.md][governance], and the CI/CD workflow contract in [WORKFLOW.md][workflow]. C# code style lives in [CODESTYLE.md][codestyle], and GitHub Copilot review mechanics in [.github/copilot-instructions.md][copilot-instructions].
 
 ## Project Overview
 
@@ -19,11 +19,11 @@ The tool orchestrates external media processing tools (FFmpeg, HandBrake, MkvToo
 
 User-facing documentation is organized as follows:
 
-- **[README.md](./README.md)**: Main project documentation, quick start, installation, usage, and FAQ.
-- **[Docs/LanguageMatching.md](./Docs/LanguageMatching.md)**: Technical details on IETF/RFC 5646 language tag matching and configuration.
-- **[Docs/CustomOptions.md](./Docs/CustomOptions.md)**: FFmpeg and HandBrake custom encoding parameters, hardware acceleration setup, and encoder options.
-- **[Docs/ClosedCaptions.md](./Docs/ClosedCaptions.md)**: Detailed technical analysis of EIA-608/CTA-708 closed caption detection methods and tools.
-- **[HISTORY.md](./HISTORY.md)**: Release notes and version history.
+- **[README.md][readme]**: Main project documentation, quick start, installation, usage, and FAQ.
+- **[Docs/LanguageMatching.md][language-matching]**: Technical details on IETF/RFC 5646 language tag matching and configuration.
+- **[Docs/CustomOptions.md][custom-options]**: FFmpeg and HandBrake custom encoding parameters, hardware acceleration setup, and encoder options.
+- **[Docs/ClosedCaptions.md][closed-captions]**: Detailed technical analysis of EIA-608/CTA-708 closed caption detection methods and tools.
+- **[HISTORY.md][history]**: Release notes and version history.
 
 ## Architecture
 
@@ -31,7 +31,7 @@ User-facing documentation is organized as follows:
 
 PlexCleaner provides multiple commands:
 
-- **process**: Batch process media files in specified folders, see [Process Command Logic](#process-command-logic)
+- **process**: Batch process media files in specified folders, see [Process Command Logic][process-command-logic]
 - **monitor**: Watch folders for changes and automatically process modified files
 - **verify**: Verify media files using FFmpeg
 - **remux**: Re-multiplex media files to MKV
@@ -67,7 +67,7 @@ string rawArguments = "-hide_banner " + option;
 
 ### Process Execution with CliWrap
 
-All external process execution uses [CliWrap](https://github.com/Tyrrrz/CliWrap) (v3.x):
+All external process execution uses [CliWrap][cliwrap-link] (v3.x):
 
 - Builders create `ArgumentsBuilder` instances
 - Execute via `Cli.Wrap(toolPath).WithArguments(builder)`
@@ -91,9 +91,9 @@ Critical performance feature - DO NOT break compatibility:
 - Contains: processing state, tool versions, media properties, file hash
 - Hash: First 64KB + last 64KB of file (not timestamp-based)
 - Schema versioned (`SchemaVersion: 5` in `SidecarFileJsonSchema5`, global alias in `GlobalUsings.cs`)
-- A `Verified`, `VerifyFailed` or scanned state skips only the checks that read it, see [Sidecar Refresh](#sidecar-refresh)
+- A `Verified`, `VerifyFailed` or scanned state skips only the checks that read it, see [Sidecar Refresh][sidecar-refresh]
 - State flags are bitwise: `StatesType` enum with `[Flags]` attribute
-- Sidecar operations: `Open()`, `Create()`, `Read()`, `Update()`, see [Sidecar Refresh](#sidecar-refresh)
+- Sidecar operations: `Open()`, `Create()`, `Read()`, `Update()`, see [Sidecar Refresh][sidecar-refresh]
 
 ### Media Tool Abstraction
 
@@ -122,7 +122,7 @@ Critical performance feature - DO NOT break compatibility:
 - Language tags: ISO 639-2B (`Language`) and RFC 5646/BCP 47 (`LanguageIetf`)
 - Flags: Default, Forced, HearingImpaired, VisualImpaired, Descriptions, Original, Commentary
 - State: one of None, Keep, Remove, Unsupported, what happens to the track as a whole
-- Actions: any combination of SetLanguage, SetFlags, ReMux, ReEncode, DeInterlace, what the track needs done, see [Track State and Actions](#track-state-and-actions)
+- Actions: any combination of SetLanguage, SetFlags, ReMux, ReEncode, DeInterlace, what the track needs done, see [Track State and Actions][track-state-and-actions]
 - Title, Format, Codec, Id, Number, Uid
 
 **Track selection (`SelectMediaProps.cs`):**
@@ -147,6 +147,7 @@ Critical performance feature - DO NOT break compatibility:
 
 - Only MkvMerge reports IETF tags, and a missing one is derived from the ISO 639-2B tag
 - MkvMerge normalizes to IETF tags when `SetIetfLanguageTags` enabled
+- FfMpeg and HandBrake drop the IETF tags when they write a file. Each of their rewrites restores the tags with MkvPropEdit before the output replaces the original, from the original input's track list. `Convert.RestoreLanguageTags()` first checks that the output keeps each track's number, type, and ISO 639-2B tag. Otherwise the rewrite fails, and the original stays. A HandBrake output holds the video, then the audio, then the subtitle tracks, so `GetHandBrakeTrackOrder()` numbers copies of the tags that way. The FfMpeg remux fallback restores them only for a Matroska input, since another container carries no IETF tags.
 - FFprobe uses tag metadata which may differ from track metadata
 - Track validation: Checks ISO/IETF consistency, sets error states for mismatches
 
@@ -163,7 +164,7 @@ Critical performance feature - DO NOT break compatibility:
 
 - Files must "settle" (no changes for `MonitorWaitTime` seconds) before processing
 - Files must be readable (not being written) before processing
-- Cleanup: deletes empty folders when `DeleteEmptyFolders` is on, see [Run Flow](#run-flow)
+- Cleanup: deletes empty folders when `DeleteEmptyFolders` is on, see [Run Flow][run-flow]
 - Pre-process: Optional initial scan of all monitored folders on startup
 
 **Concurrency:**
@@ -220,7 +221,7 @@ Conventions used in every diagram:
 - A rounded node is an exit.
 - "State has" names the sidecar `StatesType` flags. A track's own state and actions are always named as the track state or a track action.
 - A tool step drawn without a fail edge still fails the file when its tool fails.
-- A node styled with a dashed red border is a suspect branch. Its `S` number points into [Suspect Branches](#suspect-branches).
+- A node styled with a dashed red border is a suspect branch. Its `S` number points into [Suspect Branches][suspect-branches].
 - Change a diagram in the same change that moves a branch it draws.
 
 ### Run Flow
@@ -428,6 +429,8 @@ flowchart TD
 
 The remux steps rewrite the container and set `ReMuxed`. `RemoveTags()` and `RemoveAttachments()` edit the file in place with MkvPropEdit.
 
+Every step that rewrites the file writes its output through MkvMerge. That MkvMerge pass uses `MkvMergeBuilder.InputOptions.Default()`, which drops global tags, track tags, attachments, and buttons. That covers remux, track removal, re-encode, deinterlace, and closed caption removal. It also covers the lossless timestamp repair, repair by re-encode, and the cover art remux, the FfMpeg remux fallback included. The pass drops them whatever `RemoveTags` says, so an FfMpeg or HandBrake rewrite does not add tags to the output. `RemoveTags` is the explicit removal, and it clears tags and attachments in place with MkvPropEdit. With it off, a file keeps its tags only while no MkvMerge pass rewrites it. The FfProbe and MediaInfo cover art paths clear attachments in place whatever `RemoveTags` says. The FfProbe path also forces `RemoveTags()`, as the cover art flow below shows.
+
 `Convert.ReMuxToMkv()` remuxes the whole file to the `.mkv` name, and a node that names it without a track selection runs this flow. With a track selection, it remuxes once with MkvMerge to `.tmp3`, with no FfMpeg fallback, then moves the output the same way.
 
 ```mermaid
@@ -439,8 +442,12 @@ flowchart TD
   X3 -->|fail| XF
   X3 --> X4["ReMux(): MkvMerge pass over the FfMpeg output"]
   X4 -->|fail| XF
+  X4 --> X10["The input's MkvMerge track list, read here when the caller passed none"]
+  X10 -->|"read cancelled"| XF
+  X10 --> X9["RestoreLanguageTags() when the input is Matroska"]
+  X9 -->|fail| XF
   X1 --> X5{"The .mkv name is the input file itself?"}
-  X4 --> X5
+  X9 --> X5
   X5 -->|yes| X6["Move over the input"]
   X5 -->|no| X7["Move to the .mkv name"]
   X6 -->|"move fails"| XT(["Throw after deleting the temp file, the input stays"])
@@ -527,7 +534,7 @@ flowchart TD
   E2 -->|yes| E3["MkvPropEdit clears tags, sets ClearedTags, warns when it was already set"]
 ```
 
-`MakeExtensionLowercase()` renames through a `.tmp7` name, and it fails the file without a rename when another file holds the lowercase name. When the second move throws, it moves the file back, and the result names the `.tmp7` path when that move fails too.
+`MakeExtensionLowercase()` renames through a `.rename.mkv` step name. It fails the file without a rename when another file holds the lowercase name or the step name. On a case-insensitive Linux mount such as SMB, a single case-only move does nothing or fails, so it renames in two moves. When the second move throws, it moves the file back, and the result names the step name when that move fails too. The step name is an MKV name, so a later run processes a stranded file as media rather than deleting it as a non-MKV file.
 
 ### Metadata and Structure Repair
 
@@ -609,7 +616,7 @@ flowchart TD
   C2 -->|yes| FAIL
   C2 -->|no| C3["FfMpeg removes the NAL units to .tmp10"]
   C3 -->|fail| FAIL
-  C3 --> C4["Convert.ReMux()"]
+  C3 --> C4["Convert.ReMux(), then RestoreLanguageTags()"]
   C4 -->|fail| FAIL
   C4 --> C5["Move over the original, sets ClearedCaptions and ReMuxed, Refresh()"]
 ```
@@ -639,24 +646,26 @@ flowchart TD
   FOUND -->|"yes, deinterlace command"| AGAIN["Warn, deinterlace again"]
   AGAIN --> D0
   FOUND -->|no| D0["Adds the DeInterlace action to the video track"]
-  D0 --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
+  D0 --> DC["ConvertUsingHandBrake(): ReportClosedCaptionsDropped() warns when the video carries closed captions"]
+  DC -->|cancelled| FAIL
+  DC --> D1["HandBrake deinterlaces to .tmp8, subtitles excluded"]
   D1 -->|fail| FAIL
   D1 --> D2{"Original has subtitles?"}
   D2 -->|no| D3["MkvMerge remux to .tmp9"]
   D2 -->|yes| D4["MkvMerge merges the original subtitles back to .tmp9"]
   D3 -->|fail| FAIL
   D4 -->|fail| FAIL
-  D3 --> D5["MkvPropEdit restores the track languages in .tmp9"]
+  D3 --> D5["RestoreLanguageTags(): tracks match, MkvPropEdit restores the track languages in .tmp9"]
   D4 --> D5
   D5 -->|fail| FAIL
   D5 --> D6["Move .tmp9 over the original"]
   D6 --> D7["Sets DeInterlaced and ReMuxed, Refresh()"]
-  D7 --> D8{"Track order matches?"}
-  D8 -->|no| FAIL
-  D8 -->|yes| AOK
+  D7 --> AOK
 ```
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
+
+Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes DC to D5 for its caller. The repair by re-encode uses it for its HandBrake fallback. HandBrake would convert the subtitles to ASS, so it encodes without them, and MkvMerge merges the original subtitle tracks back unchanged. MkvMerge merges back only tracks, so closed captions embedded in the video stream are lost. `ReportClosedCaptionsDropped()` logs a warning first when the video carries them, as [Docs/ClosedCaptions.md][closed-captions] describes.
 
 ### Track Selection
 
@@ -741,13 +750,11 @@ flowchart TD
   C1 -->|fail| FAIL(["Fail"])
   C1 --> C2["ConvertToMkv(): Convert.ReMux() of .tmp1"]
   C2 -->|fail| FAIL
-  C2 --> C3["ConvertToMkv(): MkvPropEdit restores the track languages in .tmp1"]
+  C2 --> C3["ConvertToMkv(): RestoreLanguageTags(), tracks match, MkvPropEdit restores the track languages in .tmp1"]
   C3 -->|fail| FAIL
   C3 --> C6["ConvertToMkv(): move .tmp1 over the original"]
   C6 --> C4["Sets ReEncoded and ReMuxed, Refresh()"]
-  C4 --> C5{"Track order matches?"}
-  C5 -->|no| FAIL
-  C5 -->|yes| AOK
+  C4 --> AOK
 ```
 
 The encoder output can still match the selection, so the `process` command does not re-encode a file already `ReEncoded` again. The `ConvertOptions` settings shape the FfMpeg and HandBrake command lines, and they decide no branch.
@@ -789,10 +796,10 @@ flowchart TD
   T0 -->|"fails on a cancel, a tool error, or a signal"| FAIL
   T0 -->|"fails otherwise, warns, full ladder"| R0
   T0 --> T1["TryLosslessTimestampRepair(): only when every non-monotonic stream is audio"]
-  T1 --> T2["FfMpeg rewrites timestamps to .tmp14"]
+  T1 --> T2["FfMpeg rewrites timestamps to .tmp14, then Convert.ReMux()"]
   T2 --> T3["TimestampRepairRegressionGate(): stream hashes equal, start and duration within 40 ms"]
   T3 --> T4{"Re-verify Clean?"}
-  T4 -->|yes| T5["Move over the original"]
+  T4 -->|yes| T5["RestoreLanguageTags(), then move over the original"]
   T5 --> RS
   T1 -->|"not audio only, or any step fails"| T6["Remux only when the original or the rewritten file shows a DTS issue only after decode"]
   T4 -->|no| T6
@@ -803,13 +810,15 @@ flowchart TD
   R1 -->|fail| R2{"Cancelled, or remux only?"}
   R2 -->|yes| RF
   R2 -->|no| R3["FfMpeg re-encode to .tmp12"]
-  R3 -->|"fail, not cancelled"| R4["HandBrake re-encode to .tmp12, subtitles included"]
+  R3 -->|"fail, not cancelled"| R4["ConvertUsingHandBrake(): closed caption warning, HandBrake re-encode to .tmp8 without subtitles, MkvMerge merges the original subtitles back to .tmp12, RestoreLanguageTags()"]
   R3 -->|"fail, cancelled"| RF
   R4 -->|fail| RF
-  R3 --> R5["Convert.ReMux(), then re-verify Clean"]
-  R4 --> R5
+  R3 --> R5["Convert.ReMux(), then RestoreLanguageTags()"]
   R5 -->|fail| RF
-  R5 -->|pass| R6
+  R5 --> R7{"Re-verify Clean?"}
+  R4 --> R7
+  R7 -->|no| RF
+  R7 -->|yes| R6
   R6 -->|"TimestampOnly path"| RS
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the next run verifies the replaced media again"| FAIL
@@ -878,7 +887,7 @@ Each entry describes a branch the diagrams mark, as the code behaves today, and 
 
 ## Code Conventions
 
-For formatter, EditorConfig, pre-commit hooks, line endings, and charset details, see [CODESTYLE.md](./CODESTYLE.md).
+For formatter, EditorConfig, pre-commit hooks, line endings, and charset details, see [CODESTYLE.md][codestyle].
 
 ### Code Style
 
@@ -921,6 +930,15 @@ Serilog log levels describe the **nature** of an event, applied uniformly across
 - **Verbose** - very granular: filesystem-watcher events, per-packet/byte-level progress.
 
 The elevation trigger (Warning) must be preserved: keep exactly one decision-Warning per media modification, with the action at Information and the underlying tool at Debug.
+
+### Delete and keep logging
+
+- Every delete of user content goes through `FileDelete`, which logs one line before it acts, shaped `Deleting {What} : {Reason} : {FileName}`.
+- Deleting a media file is a Warning, since it is the decision to modify the media.
+- Deleting a sidecar, an empty folder, or the input a conversion replaced is Information.
+- A failed delete logs Error `Failed to delete {What} : {FileName}`, and a failed delete of a non-MKV or orphan sidecar file then fails the file.
+- With `DeleteInvalidFiles` on, `DeleteFailedFile` logs Information `Keeping failed file : {Reason} : {FileName}` for each failed file it keeps.
+- A read-only file or an exception never reaches `DeleteFailedFile`, and its own Error line says why the file is kept.
 
 ### Tool execution and failure logging
 
@@ -966,7 +984,7 @@ enum StatesType {
 }
 ```
 
-Check states with `HasFlag()`, combine with `|=`. [State Flags by Step](#state-flags-by-step) lists which step sets each flag.
+Check states with `HasFlag()`, combine with `|=`. [State Flags by Step][state-flags-by-step] lists which step sets each flag.
 
 ### Configuration Schema
 
@@ -1020,11 +1038,11 @@ Check states with `HasFlag()`, combine with `|=`. [State Flags by Step](#state-f
 
 ### Regression Testing
 
-- Cross-version processing-consistency checks against a curated media collection, with a ZFS-clone harness and Python catalog / reduce / locate / audit tooling under `RegressionTests/`. See [`RegressionTests/README.md`](./RegressionTests/README.md).
+- Cross-version processing-consistency checks against a curated media collection, with a ZFS-clone harness and Python catalog / reduce / locate / audit tooling under `RegressionTests/`. See [`RegressionTests/README.md`][regression-tests-readme].
 
 ## Build and Release
 
-The authoritative release governance is [GOVERNANCE.md](./GOVERNANCE.md) "Release Model" and the workflow contract is [WORKFLOW.md](./WORKFLOW.md). This section is a short architectural summary.
+The authoritative release governance is [GOVERNANCE.md][governance] "Release Model" and the workflow contract is [WORKFLOW.md][workflow]. This section is a short architectural summary.
 
 ### Local Development
 
@@ -1125,6 +1143,14 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 - Tag metadata vs track metadata differences (FFprobe specific)
 - Automatic fallback: At least one track kept even if language doesn't match
 
+**Temporary File Names:**
+
+- A tool step writes its output to a fixed `.tmpN` name beside the media file
+- Each `N` belongs to one call site, so nested steps never collide
+- The `.tmp*` extensions are reserved, `ProcessFile.IsTempFile()` matches them, and the README documents the reservation for users
+- Each tool wrapper deletes an existing file at its output name before it writes, rather than probing for a free name
+- A temporary name only ever holds tool output, never the media itself, so deleting a leftover temporary file loses no media
+
 ## Key Files Reference
 
 - **Program.cs**: Entry point, command routing, global state, cancellation handling
@@ -1149,3 +1175,27 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 - **KeepAwake.cs**: System sleep prevention
 - **PlexCleaner.defaults.json**: Canonical configuration reference
 - **.editorconfig** / **.csharpier.json**: Code style definitions
+
+<!-- Repo -->
+
+[agents]: ./AGENTS.md
+[closed-captions]: ./Docs/ClosedCaptions.md
+[codestyle]: ./CODESTYLE.md
+[copilot-instructions]: ./.github/copilot-instructions.md
+[custom-options]: ./Docs/CustomOptions.md
+[governance]: ./GOVERNANCE.md
+[history]: ./HISTORY.md
+[language-matching]: ./Docs/LanguageMatching.md
+[process-command-logic]: #process-command-logic
+[readme]: ./README.md
+[regression-tests-readme]: ./RegressionTests/README.md
+[run-flow]: #run-flow
+[sidecar-refresh]: #sidecar-refresh
+[state-flags-by-step]: #state-flags-by-step
+[suspect-branches]: #suspect-branches
+[track-state-and-actions]: #track-state-and-actions
+[workflow]: ./WORKFLOW.md
+
+<!-- External -->
+
+[cliwrap-link]: https://github.com/Tyrrrz/CliWrap

@@ -28,25 +28,62 @@ internal static class FakeTools
         Tools.MkvMerge.Info = new MediaToolInfo(Tools.MkvMerge) { Version = "96.0" };
         Tools.MediaInfo.Info = new MediaToolInfo(Tools.MediaInfo) { Version = "25.10" };
 
-        string sampleDirectory = PlexCleanerFixture.GetSamplesAbsoluteDirectory();
         string mediaFile = Path.Combine(directory, "name.mkv");
-        File.Copy(Path.Combine(sampleDirectory, "Sidecar.v5.mkv"), mediaFile);
+        File.Copy(
+            Path.Combine(PlexCleanerFixture.GetSamplesAbsoluteDirectory(), "Sidecar.v5.mkv"),
+            mediaFile
+        );
 
-        JsonNode sidecar = JsonNode.Parse(
-            File.ReadAllText(Path.Combine(sampleDirectory, "Sidecar.v5.PlexCleaner"))
-        )!;
+        JsonNode sidecar = ReadSampleSidecar();
         sidecar["State"] = (int)state;
         File.WriteAllText(Path.Combine(directory, "name.PlexCleaner"), sidecar.ToJsonString());
         return mediaFile;
     }
 
+    public static string WritePackets(
+        string directory,
+        string name,
+        IEnumerable<(string CodecType, long StreamIndex, double Dts, long Size)> packets
+    )
+    {
+        JsonArray array = [];
+        foreach ((string codecType, long streamIndex, double dts, long size) in packets)
+        {
+            array.Add(
+                new JsonObject
+                {
+                    ["codec_type"] = codecType,
+                    ["stream_index"] = streamIndex,
+                    ["pts_time"] = dts,
+                    ["dts_time"] = dts,
+                    ["duration_time"] = 0.5,
+                    ["size"] = size,
+                }
+            );
+        }
+        string fileName = Path.Combine(directory, name + ".json");
+        File.WriteAllText(fileName, new JsonObject { ["packets"] = array }.ToJsonString());
+        return fileName;
+    }
+
     public static int ReadSidecarState(string sidecarPath) =>
         JsonNode.Parse(File.ReadAllText(sidecarPath))!["State"]!.GetValue<int>();
 
-    // The tools return the stored sample data, so a media refresh after a replace can run
-    public static void WriteSampleToolData(string directory)
+    // A shell case answering an identify with the sample tracks, so a rewrite can restore the language tags
+    public static string SampleIdentifyCase(string directory)
     {
-        JsonNode stored = JsonNode.Parse(
+        string json = Path.Combine(directory, "MkvMergeInfoData.json");
+        File.WriteAllText(
+            json,
+            StringCompression.Decompress(
+                ReadSampleSidecar()["MkvMergeInfoData"]!.GetValue<string>()
+            )
+        );
+        return $"case \"$*\" in *--identify*) cat \"{json}\"; exit 0 ;; esac\n";
+    }
+
+    private static JsonNode ReadSampleSidecar() =>
+        JsonNode.Parse(
             File.ReadAllText(
                 Path.Combine(
                     PlexCleanerFixture.GetSamplesAbsoluteDirectory(),
@@ -54,7 +91,12 @@ internal static class FakeTools
                 )
             )
         )!;
-        foreach (string key in new[] { "MediaInfoData", "MkvMergeInfoData", "FfProbeInfoData" })
+
+    // The tools return the stored sample data, so a media refresh after a replace can run
+    public static void WriteSampleToolData(string directory)
+    {
+        JsonNode stored = ReadSampleSidecar();
+        foreach (string key in new[] { "MediaInfoData", "FfProbeInfoData" })
         {
             File.WriteAllText(
                 Path.Combine(directory, key + ".json"),
@@ -73,13 +115,8 @@ internal static class FakeTools
         // A remux writes its tool name into each temp output
         WriteScript(
             Tools.MkvMerge.GetToolPath(),
-            $$"""
-            case "$*" in
-            *--identify*) cat "{{Path.Combine(directory, "MkvMergeInfoData.json")}}" ;;
-            *) for a; do case $a in *.tmp*) echo mkvmerge > "$a" ;; esac; done ;;
-            esac
-
-            """
+            SampleIdentifyCase(directory)
+                + "for a; do case $a in *.tmp*) echo mkvmerge > \"$a\" ;; esac; done\n"
         );
     }
 }
