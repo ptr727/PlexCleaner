@@ -1400,10 +1400,15 @@ public class ProcessFile
         }
 
         // Count the frame types using the idet filter
-        if (!GetIdetInfo(out idetInfo) || idetInfo == null)
+        if (!GetIdetInfo(out idetInfo))
         {
             // Error, an idet execution or parse failure is unexpected, abort the file so the bug surfaces
             return false;
+        }
+        if (idetInfo == null)
+        {
+            // Unreliable counts, set no scan state and leave the decode errors to verify and repair
+            return true;
         }
 
         // Idet result
@@ -2915,7 +2920,7 @@ public class ProcessFile
     private bool GetIdetInfo(out FfMpegIdetInfo? idetInfo)
     {
         // Count the frame types using the idet filter
-        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo) || idetInfo == null)
+        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo))
         {
             // Cancel requested
             if (Program.IsCancelledError())

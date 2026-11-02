@@ -39,10 +39,6 @@ public partial class FfMpeg
 
         public GlobalOptions AbortOnEmptyOutput() => AbortOn("empty_output");
 
-        public GlobalOptions MaxErrorRate() => Add("-max_error_rate");
-
-        public GlobalOptions MaxErrorRate(string option) => MaxErrorRate().Add(option);
-
         public GlobalOptions NoStdIn() => Add("-nostdin");
 
         public GlobalOptions Add(string option) => Add(option, false);
