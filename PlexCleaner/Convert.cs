@@ -261,7 +261,10 @@ public static class Convert
                 tracks.Any(track =>
                     track.Properties.Number == item.Number
                     && track.Type.Equals(GetMkvMergeTrackType(item), StringComparison.Ordinal)
-                    && track.Properties.Language.Equals(item.Language, StringComparison.Ordinal)
+                    && (
+                        (item is VideoProps && Language.IsUndefined(track.Properties.Language))
+                        || track.Properties.Language.Equals(item.Language, StringComparison.Ordinal)
+                    )
                 )
             );
     }
