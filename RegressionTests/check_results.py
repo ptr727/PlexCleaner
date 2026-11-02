@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from corpus_common import state_flags
+
 Outcome = dict[str, Any]
 
 
@@ -20,12 +22,11 @@ def outcomes(results: dict[str, Any]) -> dict[str, Outcome]:
         name = Path(item["OriginalFileName"]).name
         if name in found:
             raise ValueError(f"duplicate result for {name}")
-        state = item["State"]
         found[name] = {
             "NewFileName": Path(item["NewFileName"]).name,
             "Result": item["Result"],
             "Modified": item["Modified"],
-            "State": sorted(flag.strip() for flag in state.split(",")) if state else [],
+            "State": sorted(state_flags(item.get("State"))),
             "FailedOperation": item.get("FailedOperation"),
         }
     return found

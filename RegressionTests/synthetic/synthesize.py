@@ -323,10 +323,10 @@ def build_cover_art(out: Path) -> None:
 
 
 def build_language_tags(out: Path) -> None:
-    """Tracks whose language needs setting: an undefined audio and a subtitle with no IETF tag.
+    """Tracks whose language needs setting: an undefined audio and no IETF tag on any track.
 
     The audio is ``und``, which SetUnknownLanguage replaces with the default language.
-    The subtitle carries only the legacy ISO 639-2 tag, which reads as an IETF tag to set.
+    The global ``--disable-language-ietf`` leaves every track the legacy ISO 639-2 tag alone.
     """
     with tempfile.TemporaryDirectory() as td:
         work = Path(td)

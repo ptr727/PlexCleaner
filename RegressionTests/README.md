@@ -155,7 +155,7 @@ Pick the detections a fixture must reproduce, build a candidate, then **validate
 - **Progressive SDR source** -- ffmpeg `idet` reads small `testsrc2` frames as interlaced, with both field orders outnumbering the progressive frames. A deinterlace re-encode then hides the path a fixture targets, so the SDR primitives use `testsrc`, which `idet` reads as progressive. The 4K HDR base keeps `testsrc2`, which `idet` reads as progressive at that size.
 - **Containers and names** -- `container-mp4` is remuxed by its extension. `container-renamed` is an MP4 under an MKV name, which only the mkvmerge container check finds. `uppercase-extension` is renamed, and `unwanted-extension` is deleted.
 - **Cover art** -- `cover-art` attaches a JPEG, which ffprobe reports as a cover art video track, and the attachment removal clears it.
-- **Language tags** -- `language-tags` carries an undefined audio language and a subtitle with only the legacy ISO 639-2 tag.
+- **Language tags** -- `language-tags` carries only legacy ISO 639-2 tags, which read as IETF tags to set, and its audio language is undefined.
 - **Interlaced** -- `interlaced` weaves 59.94 progressive frames into 29.97 top-field-first frames, which `idet` detects and processing deinterlaces.
 - **Re-encode** -- `reencode` carries MPEG-2 video and MP2 audio, both on the re-encode lists.
 - **Closed captions on SDR** -- `sdr-cc` injects the A53 CC SEI into an SDR HEVC stream, which processing removes.
@@ -165,11 +165,11 @@ Pick the detections a fixture must reproduce, build a candidate, then **validate
 
 ### Extending the library
 
-Add a builder function that constructs the target with the primitives, register it in `TARGETS`, and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit copyrighted media or media filenames. A target joins the integration run through `CORPUS_NAMES`, which also names its file, and its expected result is recorded as below. Candidate next steps: AVI and WMV container targets, and per-frame-varying HDR10+ metadata.
+Add a builder function that constructs the target with the primitives, register it in `TARGETS`, and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit copyrighted media or media filenames. Every target except `hdr10-base` joins the integration run, under the file name `CORPUS_NAMES` gives it. So a new target fails the run until its expected result is recorded as below. Candidate next steps: AVI and WMV container targets, and per-frame-varying HDR10+ metadata.
 
 ### CI integration run
 
-The `integration` CI job runs [`integration-test.sh`](integration-test.sh) against an image built from the pull request tree. It generates the corpus in a throwaway container from that image with `python3` added, and adds the [Matroska test files](https://github.com/ietf-wg-cellar/matroska-test-files) at a pinned commit. It then runs the image's `/Test/test.sh` under `dotnet-coverage` with every optional processing step on. [`check_results.py`](check_results.py) compares each file's result, its new name, and its `State` flags with [`synthetic/expected-results.json`](synthetic/expected-results.json), and any difference fails the job. Codecov receives the coverage under the `integration` flag. Run it locally against an image built per [OPERATIONS.md](../OPERATIONS.md) "Test a tool version the image does not carry":
+The `integration` CI job runs [`integration-test.sh`](integration-test.sh) against an image built from the pull request tree. It generates the corpus in a throwaway container from that image with `python3` added, and adds the [Matroska test files](https://github.com/ietf-wg-cellar/matroska-test-files) at a pinned commit. It then runs the image's `/Test/test.sh` under `dotnet-coverage` with every optional processing step on. [`check_results.py`](check_results.py) compares each file's result, new name, `Modified` flag, `State` flags, and failed operation with [`synthetic/expected-results.json`](synthetic/expected-results.json), and any difference fails the job. Codecov receives the coverage under the `integration` flag. Run it locally against an image built per [OPERATIONS.md](../OPERATIONS.md) "Test a tool version the image does not carry":
 
 ```shell
 dotnet tool restore

@@ -52,6 +52,7 @@ from corpus_common import (
     make_head_clip,
     parse_log,
     set_language_ietf,
+    state_flags,
     stem_of,
     strip_language_ietf,
 )
@@ -278,9 +279,7 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
         return logmap, None
     states: dict[str, set[str]] = {}
     for r in results:
-        states[stem_of(os.path.basename(r["OriginalFileName"]))] = {
-            s.strip() for s in (r.get("State") or "").split(",") if s.strip()
-        }
+        states[stem_of(os.path.basename(r["OriginalFileName"]))] = state_flags(r.get("State"))
     return logmap, states
 
 

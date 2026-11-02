@@ -579,7 +579,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
   `validate-task.yml`, `build-release-task.yml`, `build-docker-task.yml`, `build-executable-task.yml` or
   `get-version-task.yml` exists under `.github/workflows/`.
 - **D1:** CI triggers on `pull_request` to `main` and `develop` and on `workflow_dispatch`, with no `push`
-  trigger. The `changes` job's single `release` entry lists the executable and Docker paths and no workflow or
+  trigger. The `changes` job's `release` entry lists the executable and Docker paths and no workflow or
   doc path. `validate` calls the hub validator by pin, passes `CODECOV_TOKEN` by name, and declares
   `RegressionTests`. `smoke-build` `needs:` `changes` and runs with `smoke: true` only on a `release` change
   or a dispatch. Every build `upload-artifact` is gated `!smoke`. `global.json` declares

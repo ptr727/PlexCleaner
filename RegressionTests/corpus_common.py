@@ -118,6 +118,11 @@ def stem_of(p):
     return Path(p).stem
 
 
+def state_flags(state: str | None) -> set[str]:
+    """Split a results file's comma-separated State into its flag names."""
+    return {s.strip() for s in (state or "").split(",") if s.strip()}
+
+
 def hms(seconds):
     """Seconds -> HH:MM:SS (mkvmerge rejects a seconds field > 59, so never emit 00:00:60)."""
     seconds = int(seconds)

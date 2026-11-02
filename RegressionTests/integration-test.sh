@@ -51,7 +51,11 @@ mkdir -p "$work/media" "$work/out"
 work="$(cd "$work" && pwd)"
 
 version="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["tools"]["dotnet-coverage"]["version"])' "$repo/.config/dotnet-tools.json")"
-tool_dll="$(find "${NUGET_PACKAGES:-$HOME/.nuget/packages}/dotnet-coverage/$version" -name dotnet-coverage.dll -print -quit)"
+tool_dir="${NUGET_PACKAGES:-$HOME/.nuget/packages}/dotnet-coverage/$version"
+tool_dll=""
+if [[ -d "$tool_dir" ]]; then
+    tool_dll="$(find "$tool_dir" -name dotnet-coverage.dll -print -quit)"
+fi
 if [[ -z "$tool_dll" ]]; then
     echo "integration-test.sh: dotnet-coverage $version is not restored, run: dotnet tool restore" >&2
     exit 1
@@ -77,6 +81,10 @@ docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE
     --volume "$work/out:/tmp/PlexCleaner-Test" --volume "$work/out/PlexCleaner.json:/Test/PlexCleaner.json" \
     --entrypoint dotnet "$image" /dotnet-coverage/dotnet-coverage.dll \
     collect --output-format cobertura --output /tmp/PlexCleaner-Test/image.xml /Test/test.sh
+if [[ ! -s "$work/out/image.xml" ]]; then
+    echo "integration-test.sh: dotnet-coverage wrote no coverage report" >&2
+    exit 1
+fi
 
 python3 "$repo/RegressionTests/check_results.py" \
     --expected "$repo/RegressionTests/synthetic/expected-results.json" --results "$work/out/Results.json"
