@@ -9,21 +9,21 @@ PlexCleaner's behavior depends heavily on the specific media it processes: most 
 The committed contents are code plus a synthetic example. No media and no media filenames live in the repository:
 
 - The **media collection** lives on a server, next to the media (like a Plex library would). It is never committed. The copyrighted filenames stay out of source control entirely.
-- The same holds for issues, pull requests, and commit messages, per [GOVERNANCE.md](../GOVERNANCE.md) "Representative Data in Agent-Authored Text". A defect found in the collection is reported with a synthetic fixture that carries the triggering property.
-- The **media-specific reduction rules** (issue-localized cut windows and relaxed-acceptance overrides) also live with the media, in an external JSON file the tooling reads and writes. The repo ships only [`reduction-rules.example.json`](reduction-rules.example.json) with synthetic placeholder names.
+- The same holds for issues, pull requests, and commit messages, per [GOVERNANCE.md][governance] "Representative Data in Agent-Authored Text". A defect found in the collection is reported with a synthetic fixture that carries the triggering property.
+- The **media-specific reduction rules** (issue-localized cut windows and relaxed-acceptance overrides) also live with the media, in an external JSON file the tooling reads and writes. The repo ships only [`reduction-rules.example.json`][reduction-rules-example] with synthetic placeholder names.
 
 ## Layout
 
-- [`regression-test.sh`](regression-test.sh) -- the harness: provision a test dataset, process it through one Docker image tag, and write per-version results and logs for diffing.
-- [`corpus_common.py`](corpus_common.py) -- shared library: log parsing, deterministic issue classification, and the clip and metadata-surgery helpers.
-- [`catalog_corpus.py`](catalog_corpus.py) -- derive a machine-readable issue catalog (`catalog.json`) for a collection from a processing run.
-- [`reduce_corpus.py`](reduce_corpus.py) -- build and validate a reduced collection: shrink each sample while proving every issue survives.
-- [`locate_issue.py`](locate_issue.py) -- find where a decode signature lives in a file, and optionally record the located window into the external rules file.
-- [`audit_physical.py`](audit_physical.py) -- physical-error-shape coverage audit of the reduced collection.
-- [`reduction-rules.example.json`](reduction-rules.example.json) -- synthetic example of the external rules schema.
-- [`synthetic/`](synthetic/) -- the synthetic-targeting library: build small, fully synthetic fixtures that reproduce specific detections without any copyrighted media (see below).
-- [`pyproject.toml`](pyproject.toml) -- ruff and mypy configuration for the Python tooling.
-- [`tests/`](tests/) -- the `unittest` suite for the pure helpers in the Python tooling, which CI runs under coverage.
+- [`regression-test.sh`][regression-test] -- the harness: provision a test dataset, process it through one Docker image tag, and write per-version results and logs for diffing.
+- [`corpus_common.py`][corpus-common] -- shared library: log parsing, deterministic issue classification, and the clip and metadata-surgery helpers.
+- [`catalog_corpus.py`][catalog-corpus] -- derive a machine-readable issue catalog (`catalog.json`) for a collection from a processing run.
+- [`reduce_corpus.py`][reduce-corpus] -- build and validate a reduced collection: shrink each sample while proving every issue survives.
+- [`locate_issue.py`][locate-issue] -- find where a decode signature lives in a file, and optionally record the located window into the external rules file.
+- [`audit_physical.py`][audit-physical] -- physical-error-shape coverage audit of the reduced collection.
+- [`reduction-rules.example.json`][reduction-rules-example] -- synthetic example of the external rules schema.
+- [`synthetic/`][synthetic] -- the synthetic-targeting library: build small, fully synthetic fixtures that reproduce specific detections without any copyrighted media (see below).
+- [`pyproject.toml`][pyproject] -- ruff and mypy configuration for the Python tooling.
+- [`tests/`][tests] -- the `unittest` suite for the pure helpers in the Python tooling, which CI runs under coverage.
 
 ## The collection
 
@@ -47,7 +47,9 @@ sudo ./regression-test.sh [quick|full] [tag] [corpus] [plugin...]
 - `corpus` selects `full` (default) or `reduced`.
 - `plugin` names optional example plugins to build and run after processing, to confirm a plugin loads and runs against the processed dataset.
 
-The harness tests a published image tag. To test a build before any image carries it, run it inside the image as [OPERATIONS.md](../OPERATIONS.md) "Test an unreleased build in the image" describes.
+The harness tests a published image tag. To test a build before any image carries it, run it inside the image as [OPERATIONS.md][operations] "Test an unreleased build in the image" describes.
+
+Setting `REGRESSION_COVERAGE_TOOL` to the absolute path of a host directory holding `dotnet-coverage.dll` runs the process and plugin runs under `dotnet-coverage collect`. Each run writes a Cobertura report beside its log, `coverage_process.xml` and `coverage_custom_<plugin>.xml`, and each harness invocation first removes the reports an earlier one left. The image's sources are under `/Builder`, and each plugin is built with a path map to the same root. So [codecov.yml][codecov]'s `fixes` rule maps every report. The version directory's name, less any `-reduced` suffix, is the release tag of the build that ran, so `git rev-parse <version>^{commit}` gives the run's commit. `sudo` resets the environment, so pass the variable through `sudo env REGRESSION_COVERAGE_TOOL=<dir> ./regression-test.sh ...`.
 
 Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
 
@@ -97,7 +99,7 @@ python3 locate_issue.py --catalog /path/to/full/catalog.json --full --write-rule
 python3 reduce_corpus.py --catalog /path/to/full/catalog.json --mode generate --out /path/to/reduced
 ```
 
-The rules schema has a `regions` map (issue-localized cut windows) and an `accept` map (relaxed-acceptance overrides), both keyed by source basename; see [`reduction-rules.example.json`](reduction-rules.example.json). If the rules file is absent, every file is head-clipped, no relaxed acceptance applies, and the tool says so.
+The rules schema has a `regions` map (issue-localized cut windows) and an `accept` map (relaxed-acceptance overrides), both keyed by source basename. See [`reduction-rules.example.json`][reduction-rules-example]. If the rules file is absent, every file is head-clipped, no relaxed acceptance applies, and the tool says so.
 
 ## Physical-shape coverage audit
 
@@ -105,7 +107,7 @@ The reduction gate compares broad signature classes, and a class can lump severa
 
 ## Synthetic file generation
 
-The corpus is built from real troublesome media. Many issues are *structural*, though (track layout, flags, tags, language, container, HDR, closed captions), and depend on nothing copyrighted. Those can be reproduced by **fully synthetic** files, ffmpeg `lavfi` video/audio (`testsrc`, `testsrc2`, `sine`) plus a targeted mux. A fixture can then be regenerated anywhere with no media to ship. The [`synthetic/`](synthetic/) library is the start of this.
+The corpus is built from real troublesome media. Many issues are *structural*, though (track layout, flags, tags, language, container, HDR, closed captions), and depend on nothing copyrighted. Those can be reproduced by **fully synthetic** files, ffmpeg `lavfi` video/audio (`testsrc`, `testsrc2`, `sine`) plus a targeted mux. A fixture can then be regenerated anywhere with no media to ship. The [`synthetic/`][synthetic] library is the start of this.
 
 ### Objectives
 
@@ -117,12 +119,12 @@ Synthetic generation is a *targeted* tool, not a wholesale replacement for the r
 
 ### Components
 
-- [`synthetic/synthesize.py`](synthetic/synthesize.py) -- generation primitives (HDR10 base, SDR video, audio, subtitles) and builders that target a specific detection set, plus a small CLI.
-- [`synthetic/inject_cc_sei.py`](synthetic/inject_cc_sei.py) -- insert CEA-608 closed-caption SEI into an HEVC stream (no common tool does this: ffmpeg `-a53cc` is libx264 only, libx265 drops captions), preserving any HDR SEI. Importable, or a standalone CLI.
-- [`synthetic/inject_hdr10plus_sei.py`](synthetic/inject_hdr10plus_sei.py) -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
-- [`synthetic/hevc_nal.py`](synthetic/hevc_nal.py) -- shared HEVC helpers (bit packing, wrapping a T.35 payload into a prefix-SEI NAL, inserting a SEI before every VCL NAL) used by both injectors.
-- [`synthetic/expected-results.json`](synthetic/expected-results.json) -- the expected process result of every file in the integration run, see *CI integration run* below.
-- [`integration-test.sh`](integration-test.sh) and [`check_results.py`](check_results.py) -- the integration run and its result check.
+- [`synthetic/synthesize.py`][synthetic-synthesize] -- generation primitives (HDR10 base, SDR video, audio, subtitles) and builders that target a specific detection set, plus a small CLI.
+- [`synthetic/inject_cc_sei.py`][synthetic-inject-cc-sei] -- insert CEA-608 closed-caption SEI into an HEVC stream, preserving any HDR SEI. No common tool does this, since ffmpeg `-a53cc` is libx264 only and libx265 drops captions. Importable, or a standalone CLI.
+- [`synthetic/inject_hdr10plus_sei.py`][synthetic-inject-hdr10plus-sei] -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
+- [`synthetic/hevc_nal.py`][synthetic-hevc-nal] -- shared HEVC helpers used by both injectors. They pack bits, wrap a T.35 payload into a prefix-SEI NAL, and insert a SEI before every VCL NAL.
+- [`synthetic/expected-results.json`][synthetic-expected-results] -- the expected process result of every file in the integration run, see *CI integration run* below.
+- [`integration-test.sh`][integration-test] and [`check_results.py`][check-results] -- the integration run and its result check.
 
 Requires `ffmpeg` (with libx265), `ffprobe`, and `mkvmerge` on `PATH`. Examples:
 
@@ -169,7 +171,7 @@ Add a builder function that constructs the target with the primitives, register 
 
 ### CI integration run
 
-The `integration` CI job runs [`integration-test.sh`](integration-test.sh) against an image built from the pull request tree. It generates the corpus in a throwaway container from that image with `python3` added, and adds the [Matroska test files](https://github.com/ietf-wg-cellar/matroska-test-files) at a pinned commit. It then runs the image's `/Test/test.sh` under `dotnet-coverage` with every optional processing step on. [`check_results.py`](check_results.py) compares each file's result, new name, `Modified` flag, `State` flags, and failed operation with [`synthetic/expected-results.json`](synthetic/expected-results.json), and any difference fails the job. Codecov receives the coverage under the `integration` flag. Run it locally against an image built per [OPERATIONS.md](../OPERATIONS.md) "Test a tool version the image does not carry":
+The `integration` CI job runs [`integration-test.sh`][integration-test] against an image built from the pull request tree. It generates the corpus in a throwaway container from that image with `python3` added, and adds the [Matroska test files][matroska-test-files-link] at a pinned commit. It then runs the image's `/Test/test.sh` under `dotnet-coverage` with every optional processing step on. [`check_results.py`][check-results] compares each file's result, new name, `Modified` flag, `State` flags, and failed operation with [`synthetic/expected-results.json`][synthetic-expected-results], and any difference fails the job. Codecov receives the coverage under the `integration` flag. Run it locally against an image built per [OPERATIONS.md][operations] "Test a tool version the image does not carry":
 
 ```shell
 dotnet tool restore
@@ -213,7 +215,7 @@ The working loop when the collection changes:
 
 ## Python tooling
 
-The Python utilities are standalone and stdlib-only (subprocess, json, argparse, pathlib, re). They are linted with ruff, type-checked with mypy, and tested with the `unittest` suite under [`tests/`](tests/). The configuration is in [`pyproject.toml`](pyproject.toml). Run them via `uvx`, which needs no install:
+The Python utilities are standalone and stdlib-only (subprocess, json, argparse, pathlib, re). They are linted with ruff, type-checked with mypy, and tested with the `unittest` suite under [`tests/`][tests]. The configuration is in [`pyproject.toml`][pyproject]. Run them via `uvx`, which needs no install:
 
 ```shell
 uvx ruff@latest check .
@@ -223,3 +225,30 @@ uvx coverage@latest run -m unittest discover -s tests
 ```
 
 These run the latest tools and are available as VSCode tasks. CI runs the same latest tools through the hub's reusable validator. Python source is LF, matching the repository's default line-ending convention.
+
+<!-- Repo -->
+
+[audit-physical]: audit_physical.py
+[catalog-corpus]: catalog_corpus.py
+[check-results]: check_results.py
+[codecov]: ../codecov.yml
+[corpus-common]: corpus_common.py
+[governance]: ../GOVERNANCE.md
+[integration-test]: integration-test.sh
+[locate-issue]: locate_issue.py
+[operations]: ../OPERATIONS.md
+[pyproject]: pyproject.toml
+[reduce-corpus]: reduce_corpus.py
+[reduction-rules-example]: reduction-rules.example.json
+[regression-test]: regression-test.sh
+[synthetic]: synthetic/
+[synthetic-expected-results]: synthetic/expected-results.json
+[synthetic-hevc-nal]: synthetic/hevc_nal.py
+[synthetic-inject-cc-sei]: synthetic/inject_cc_sei.py
+[synthetic-inject-hdr10plus-sei]: synthetic/inject_hdr10plus_sei.py
+[synthetic-synthesize]: synthetic/synthesize.py
+[tests]: tests/
+
+<!-- External -->
+
+[matroska-test-files-link]: https://github.com/ietf-wg-cellar/matroska-test-files
