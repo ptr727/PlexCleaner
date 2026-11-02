@@ -179,7 +179,8 @@ AOT-safe parser in `MediaInfoXmlParser.cs`, avoiding `XmlSerializer` (not AOT-co
 
 - **GenericXmlToJson()**: Converts any XML file to JSON format
   - Used by the sidecar v4 to v5 upgrade, which converts the stored MediaInfo XML to JSON
-  - Preserves all elements and attributes
+  - Preserves every element below the root with its attributes, except namespace and `xsi` attributes
+  - Does not write the root element's own attributes
   - Handles attributes: prefix with `@` for elements with children, no prefix for leaf elements
   - Detects arrays: elements appearing multiple times become JSON arrays
   - Two-pass algorithm: collect children to detect arrays, then write JSON
