@@ -1407,7 +1407,7 @@ public class ProcessFile
         }
         if (idetInfo == null)
         {
-            // Unreliable counts, set no scan state and leave the decode errors to verify and repair
+            // Counts from a mostly undecodable stream are unreliable, record no verdict or scan state
             return true;
         }
 
