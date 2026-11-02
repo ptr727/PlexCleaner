@@ -540,7 +540,9 @@ public partial class FfMpeg
             Command command = GetBuilder()
                 // Leave loglevel at default to get idet output, do not use -loglevel error
                 // Counting can report stream errors, keep going, do not use -xerror
-                .GlobalOptions(options => options.HideBanner().NoStats().AbortOnEmptyOutput())
+                .GlobalOptions(options =>
+                    options.HideBanner().NoStats().MaxErrorRate("1").AbortOnEmptyOutput()
+                )
                 .InputOptions(options => options.Default().InputFile(fileName).QuickScan())
                 .OutputOptions(options =>
                     options.NoAudio().NoSubtitles().NoData().VideoFilter("idet").NullOutput()
