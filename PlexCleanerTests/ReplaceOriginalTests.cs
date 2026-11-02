@@ -455,6 +455,12 @@ public sealed class ReplaceOriginalTests : IDisposable
         {
             _ = File.ReadAllText(propEditLog).Should().Contain("name.tmp1");
         }
+        if (change == "undefined")
+        {
+            _ = File.ReadAllText(propEditLog)
+                .Should()
+                .Contain($"--edit track:@{video.Number} --set language={video.LanguageAny}");
+        }
     }
 
     [Fact]
