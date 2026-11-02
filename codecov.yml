@@ -20,6 +20,7 @@ flag_management:
     carryforward: false
   individual_flags:
     - name: integration
+      carryforward: true
     - name: regression
       carryforward: true
     - name: windows

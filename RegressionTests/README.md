@@ -105,7 +105,7 @@ The reduction gate compares broad signature classes, and a class can lump severa
 
 ## Synthetic file generation
 
-The corpus is built from real troublesome media, but many issues are *structural* (track layout, flags, tags, language, container, HDR, closed captions) and depend on nothing copyrighted. Those can be reproduced by **fully synthetic** files -- ffmpeg `lavfi` video/audio (`testsrc2`, `sine`) plus a targeted mux -- so a fixture can be regenerated anywhere with no media to ship. The [`synthetic/`](synthetic/) library is the start of this.
+The corpus is built from real troublesome media. Many issues are *structural*, though (track layout, flags, tags, language, container, HDR, closed captions), and depend on nothing copyrighted. Those can be reproduced by **fully synthetic** files, ffmpeg `lavfi` video/audio (`testsrc`, `testsrc2`, `sine`) plus a targeted mux. A fixture can then be regenerated anywhere with no media to ship. The [`synthetic/`](synthetic/) library is the start of this.
 
 ### Objectives
 
@@ -121,6 +121,8 @@ Synthetic generation is a *targeted* tool, not a wholesale replacement for the r
 - [`synthetic/inject_cc_sei.py`](synthetic/inject_cc_sei.py) -- insert CEA-608 closed-caption SEI into an HEVC stream (no common tool does this: ffmpeg `-a53cc` is libx264 only, libx265 drops captions), preserving any HDR SEI. Importable, or a standalone CLI.
 - [`synthetic/inject_hdr10plus_sei.py`](synthetic/inject_hdr10plus_sei.py) -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
 - [`synthetic/hevc_nal.py`](synthetic/hevc_nal.py) -- shared HEVC helpers (bit packing, wrapping a T.35 payload into a prefix-SEI NAL, inserting a SEI before every VCL NAL) used by both injectors.
+- [`synthetic/expected-results.json`](synthetic/expected-results.json) -- the expected process result of every file in the integration run, see *CI integration run* below.
+- [`integration-test.sh`](integration-test.sh) and [`check_results.py`](check_results.py) -- the integration run and its result check.
 
 Requires `ffmpeg` (with libx265), `ffprobe`, and `mkvmerge` on `PATH`. Examples:
 
@@ -132,6 +134,7 @@ python3 synthetic/synthesize.py dts-timebase -o dts-timebase.mkv     # healthy V
 python3 synthetic/synthesize.py dts-duplicate-pts -o dts-dup.mkv     # one repeated frame timestamp, fails verify
 python3 synthetic/synthesize.py dts-mixed -o dts-mixed.mkv           # audio DTS break plus post-decode video break
 python3 synthetic/synthesize.py dts-audio-tagged -o dts-audio.mkv  # audio DTS break under a tag and an attachment, repaired losslessly
+python3 synthetic/synthesize.py --corpus corpus                       # every corpus target, named by CORPUS_NAMES
 ```
 
 ### Targeting methodology
@@ -149,11 +152,35 @@ Pick the detections a fixture must reproduce, build a candidate, then **validate
 - **Verify DTS time base** -- `dts-timebase` muxes a 23.976 cadence followed by a denser 29.97 cadence under a 23.976 default duration. Every timestamp increases at 1 ms precision, so verify passes it. A verify that encodes in the 1/framerate time base instead rounds the dense frames onto the same tick and reports a false non-monotonic DTS.
 - **Verify DTS duplicate PTS** -- `dts-duplicate-pts` repeats one frame timestamp. Verify reports the repeat at native precision. The demuxer derives a DTS from the repeated timestamp, so the repeat is demux-visible and takes the full repair ladder.
 - **Verify DTS mixed** -- `dts-mixed` swaps two B-frame video timestamps and steps one AAC packet timestamp back, using the unsorted mkvmerge v4 timestamps format. The demuxer derives video DTS from the sorted timestamps, so only the audio break is demux-visible, while the decoded video display order runs backward. The lossless `setts` tier repairs the audio but leaves the video failing verify, so the repair stops after the remux and marks the file `RepairFailed`. The v2 timestamps format cannot build this fixture, because mkvmerge sorts v2 timestamps and so removes both the swap and the step back.
+- **Progressive SDR source** -- ffmpeg `idet` reads small `testsrc2` frames as interlaced, with both field orders outnumbering the progressive frames. A deinterlace re-encode then hides the path a fixture targets, so the SDR primitives use `testsrc`, which `idet` reads as progressive. The 4K HDR base keeps `testsrc2`, which `idet` reads as progressive at that size.
+- **Containers and names** -- `container-mp4` is remuxed by its extension. `container-renamed` is an MP4 under an MKV name, which only the mkvmerge container check finds. `uppercase-extension` is renamed, and `unwanted-extension` is deleted.
+- **Cover art** -- `cover-art` attaches a JPEG, which ffprobe reports as a cover art video track, and the attachment removal clears it.
+- **Language tags** -- `language-tags` carries an undefined audio language and a subtitle with only the legacy ISO 639-2 tag.
+- **Interlaced** -- `interlaced` weaves 59.94 progressive frames into 29.97 top-field-first frames, which `idet` detects and processing deinterlaces.
+- **Re-encode** -- `reencode` carries MPEG-2 video and MP2 audio, both on the re-encode lists.
+- **Closed captions on SDR** -- `sdr-cc` injects the A53 CC SEI into an SDR HEVC stream, which processing removes.
+- **Bitrate exceeded** -- `bitrate-exceeded` is lossless H.264 of per-frame noise, above the integration settings' 100 Mbps maximum.
+- **Seek index** -- `no-cues` is written with `mkvmerge --no-cues`, so its SeekHead names no Cues and processing remuxes it.
 - **Verify DTS audio tagged** -- `dts-audio-tagged` steps one AAC packet timestamp back under a global tag and an attachment, with healthy video. The lossless `setts` tier repairs the whole file. Its MkvMerge pass drops the tag, the attachment, and the tags FfMpeg writes, like every other rewrite. The regression gate compares only the media streams, since the attachment stream is gone after the pass.
 
 ### Extending the library
 
-Add a builder function that constructs the target with the primitives, register it in `TARGETS`, and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit copyrighted media or media filenames. Candidate next steps: interlaced, cover-art, and container-specific (AVI / WMV / MPEG-2) targets, and per-frame-varying HDR10+ metadata.
+Add a builder function that constructs the target with the primitives, register it in `TARGETS`, and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit copyrighted media or media filenames. A target joins the integration run through `CORPUS_NAMES`, which also names its file, and its expected result is recorded as below. Candidate next steps: AVI and WMV container targets, and per-frame-varying HDR10+ metadata.
+
+### CI integration run
+
+The `integration` CI job runs [`integration-test.sh`](integration-test.sh) against an image built from the pull request tree. It generates the corpus in a throwaway container from that image with `python3` added, and adds the [Matroska test files](https://github.com/ietf-wg-cellar/matroska-test-files) at a pinned commit. It then runs the image's `/Test/test.sh` under `dotnet-coverage` with every optional processing step on. [`check_results.py`](check_results.py) compares each file's result, its new name, and its `State` flags with [`synthetic/expected-results.json`](synthetic/expected-results.json), and any difference fails the job. Codecov receives the coverage under the `integration` flag. Run it locally against an image built per [OPERATIONS.md](../OPERATIONS.md) "Test a tool version the image does not carry":
+
+```shell
+dotnet tool restore
+./RegressionTests/integration-test.sh plexcleaner:local /tmp/integration
+```
+
+A changed result fails the run until it is recorded. Confirm in the run's log that the change is intended. Then record it from the run's results file, and commit the expected file with the change:
+
+```shell
+python3 RegressionTests/check_results.py --write --expected RegressionTests/synthetic/expected-results.json --results /tmp/integration/out/Results.json
+```
 
 ### Toward xUnit coverage generation
 

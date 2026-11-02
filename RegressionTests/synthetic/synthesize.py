@@ -40,6 +40,9 @@ FFMPEG = "ffmpeg"
 FFPROBE = "ffprobe"
 MKVMERGE = "mkvmerge"
 
+# The ffmpeg idet filter reads small testsrc2 frames as interlaced, so a progressive SDR clip uses testsrc.
+SDR_SOURCE = "testsrc"
+
 # x265 params for a synthetic HDR10 (SMPTE ST 2086) stream: BT.2020 / PQ + mastering-display + MaxCLL
 HDR10_X265 = (
     "colorprim=bt2020:transfer=smpte2084:colormatrix=bt2020nc:"
@@ -89,7 +92,7 @@ def gen_sdr_video(
     limit = ["-frames:v", str(frames)] if frames else []
     run(
         [FFMPEG, "-y", "-f", "lavfi",
-         "-i", f"testsrc2=size={width}x{height}:duration={seconds}:rate={rate}", *limit,
+         "-i", f"{SDR_SOURCE}=size={width}x{height}:duration={seconds}:rate={rate}", *limit,
          "-c:v", "libx264", "-preset", preset, "-pix_fmt", "yuv420p", str(out)]
     )  # fmt: skip
 
@@ -273,6 +276,136 @@ def build_dts_audio_tagged(out: Path) -> None:
         _build_dts_av(out, swap_video=False, extra=extra)
 
 
+def _gen_sdr_av(out: Path, extra: list[str] | None = None) -> None:
+    """Encode a small SDR H.264 + AAC clip straight into the container ``out``'s extension names."""
+    run(
+        [FFMPEG, "-y", "-f", "lavfi", "-i", f"{SDR_SOURCE}=size=320x240:duration=4:rate=24",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=4",
+         "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+         "-c:a", "aac", "-b:a", "128k", *(extra or []), str(out)]
+    )  # fmt: skip
+
+
+def build_container_mp4(out: Path) -> None:
+    """An MP4 container, which the ReMux extension list remuxes to MKV by its extension."""
+    _gen_sdr_av(out)
+
+
+def build_container_renamed(out: Path) -> None:
+    """An MP4 container under an MKV name, which only the mkvmerge container check finds."""
+    with tempfile.TemporaryDirectory() as td:
+        mp4 = Path(td) / "renamed.mp4"
+        _gen_sdr_av(mp4)
+        out.write_bytes(mp4.read_bytes())
+
+
+def build_uppercase_extension(out: Path) -> None:
+    """A healthy MKV whose extension is uppercase, which processing renames."""
+    _gen_sdr_av(out, ["-f", "matroska"])
+
+
+def build_unwanted_extension(out: Path) -> None:
+    """A non-media file outside the ignore masks, which processing deletes as an unwanted extension."""
+    out.write_text("Synthetic unwanted file\n", encoding="utf-8")
+
+
+def build_cover_art(out: Path) -> None:
+    """A healthy MKV carrying a JPEG cover art attachment."""
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        clip, cover = work / "clip.mkv", work / "cover.jpg"
+        _gen_sdr_av(clip)
+        run([FFMPEG, "-y", "-f", "lavfi", "-i", "testsrc2=size=320x240", "-frames:v", "1", str(cover)])  # fmt: skip
+        run(
+            [MKVMERGE, "-o", str(out), "--attachment-mime-type", "image/jpeg",
+             "--attachment-name", "cover.jpg", "--attach-file", str(cover), str(clip)]
+        )  # fmt: skip
+
+
+def build_language_tags(out: Path) -> None:
+    """Tracks whose language needs setting: an undefined audio and a subtitle with no IETF tag.
+
+    The audio is ``und``, which SetUnknownLanguage replaces with the default language.
+    The subtitle carries only the legacy ISO 639-2 tag, which reads as an IETF tag to set.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        clip, sub = work / "clip.mkv", work / "en.srt"
+        _gen_sdr_av(clip)
+        write_srt(sub, "Hello World")
+        run(
+            [MKVMERGE, "-o", str(out), "--language", "0:en", "--language", "1:und", str(clip),
+             "--disable-language-ietf", "--language", "0:eng", str(sub)]
+        )  # fmt: skip
+
+
+def build_title_flags(out: Path) -> None:
+    """Subtitle and audio tracks whose titles imply SDH, commentary, and forced flags that are not set."""
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        clip, aud, sub = work / "clip.mkv", work / "aud.m4a", work / "en.srt"
+        _gen_sdr_av(clip)
+        gen_audio(aud, seconds=4)
+        write_srt(sub, "Hello World")
+        run(
+            [MKVMERGE, "-o", str(out), "--language", "0:en", "--language", "1:en", str(clip),
+             "--language", "0:en", "--track-name", "0:Commentary", str(aud),
+             "--language", "0:en", "--track-name", "0:English SDH", str(sub),
+             "--language", "0:en", "--track-name", "0:Forced", str(sub)]
+        )  # fmt: skip
+
+
+def build_interlaced(out: Path) -> None:
+    """True interlaced H.264, 59.94 fields woven into 29.97 top-field-first frames that idet detects."""
+    run(
+        [FFMPEG, "-y", "-f", "lavfi", "-i", "testsrc2=size=720x480:duration=4:rate=60000/1001",
+         "-vf", "tinterlace=interleave_top,setfield=tff", "-flags", "+ilme+ildct", "-top", "1",
+         "-c:v", "libx264", "-preset", "ultrafast", "-x264-params", "tff=1", "-pix_fmt", "yuv420p",
+         "-metadata:s:v:0", "language=eng", str(out)]
+    )  # fmt: skip
+
+
+def build_reencode(out: Path) -> None:
+    """MPEG-2 video and MP2 audio, both formats on the re-encode lists."""
+    run(
+        [FFMPEG, "-y", "-f", "lavfi", "-i", f"{SDR_SOURCE}=size=320x240:duration=4:rate=24",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=4",
+         "-c:v", "mpeg2video", "-c:a", "mp2", "-metadata:s:v:0", "language=eng",
+         "-metadata:s:a:0", "language=eng", str(out)]
+    )  # fmt: skip
+
+
+def build_sdr_cc(out: Path) -> None:
+    """SDR HEVC carrying CEA-608 closed captions, which processing removes without an HDR concern."""
+    with tempfile.TemporaryDirectory() as td:
+        work = Path(td)
+        annexb, ccb = work / "base.hevc", work / "cc.hevc"
+        run(
+            [FFMPEG, "-y", "-f", "lavfi", "-i", f"{SDR_SOURCE}=size=320x240:duration=4:rate=24",
+             "-c:v", "libx265", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+             "-x265-params", "repeat-headers=1:log-level=error", "-f", "hevc", str(annexb)]
+        )  # fmt: skip
+        ccb.write_bytes(insert_before_vcl(annexb.read_bytes(), build_cc_sei()))
+        run([MKVMERGE, "-o", str(out), "--default-duration", "0:24fps", "--language", "0:en", str(ccb)])  # fmt: skip
+
+
+def build_bitrate_exceeded(out: Path) -> None:
+    """Lossless H.264 of per-frame random noise, well above the 100 Mbps the coverage settings allow."""
+    run(
+        [FFMPEG, "-y", "-f", "lavfi", "-i", "nullsrc=size=800x600:duration=3:rate=30",
+         "-vf", "geq=random(1)*255:128:128", "-c:v", "libx264", "-preset", "ultrafast", "-qp", "0",
+         "-pix_fmt", "yuv420p", "-metadata:s:v:0", "language=eng", str(out)]
+    )  # fmt: skip
+
+
+def build_no_cues(out: Path) -> None:
+    """A healthy MKV written without a Cues element, so its seek index is unusable."""
+    with tempfile.TemporaryDirectory() as td:
+        clip = Path(td) / "clip.mkv"
+        _gen_sdr_av(clip)
+        run([MKVMERGE, "-o", str(out), "--no-cues", str(clip)])
+
+
 TARGETS: dict[str, Callable[[Path], None]] = {
     "hdr10-base": gen_hdr10_base,
     "hdr10-multitrack": build_hdr10_multitrack,
@@ -282,14 +415,56 @@ TARGETS: dict[str, Callable[[Path], None]] = {
     "dts-duplicate-pts": build_dts_duplicate_pts,
     "dts-mixed": build_dts_mixed,
     "dts-audio-tagged": build_dts_audio_tagged,
+    "container-mp4": build_container_mp4,
+    "container-renamed": build_container_renamed,
+    "uppercase-extension": build_uppercase_extension,
+    "unwanted-extension": build_unwanted_extension,
+    "cover-art": build_cover_art,
+    "language-tags": build_language_tags,
+    "title-flags": build_title_flags,
+    "interlaced": build_interlaced,
+    "reencode": build_reencode,
+    "sdr-cc": build_sdr_cc,
+    "bitrate-exceeded": build_bitrate_exceeded,
+    "no-cues": build_no_cues,
 }
+
+# The file name each target takes in a corpus, its extension being part of what a target tests.
+CORPUS_NAMES: dict[str, str] = {
+    target: f"{target}.mkv" for target in TARGETS if target != "hdr10-base"
+} | {
+    "container-mp4": "container-mp4.mp4",
+    "uppercase-extension": "uppercase-extension.MKV",
+    "unwanted-extension": "unwanted-extension.txt",
+}
+
+
+def build_corpus(out_dir: Path) -> None:
+    """Build every corpus target into ``out_dir`` under its corpus name."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for target, name in sorted(CORPUS_NAMES.items()):
+        TARGETS[target](out_dir / name)
+        print(f"built {target} -> {out_dir / name}")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("target", choices=sorted(TARGETS), help="which synthetic fixture to build")
-    ap.add_argument("-o", "--out", required=True, type=Path, help="output file")
+    group = ap.add_mutually_exclusive_group()
+    group.add_argument(
+        "target", nargs="?", choices=sorted(TARGETS), help="which synthetic fixture to build"
+    )
+    group.add_argument("--corpus", type=Path, help="build every corpus target into this directory")
+    ap.add_argument("-o", "--out", type=Path, help="output file, required with a target")
     args = ap.parse_args()
+    if args.corpus is not None:
+        if args.out is not None:
+            ap.error("--out applies to a single target, not to --corpus")
+        build_corpus(args.corpus)
+        return
+    if args.target is None:
+        ap.error("give a target or --corpus")
+    if args.out is None:
+        ap.error("a target requires --out")
     TARGETS[args.target](args.out)
     print(f"built {args.target} -> {args.out}")
 

@@ -67,7 +67,7 @@ The regression harness under [RegressionTests/](./RegressionTests/) processes a 
 
 ### Measure code coverage
 
-[Codecov](https://app.codecov.io/gh/ptr727/PlexCleaner) merges the coverage of several runs. CI's validator uploads the .NET unit tests with no flag, and the `RegressionTests/` Python tests under a `python-<version>` flag. [codecov.yml](./codecov.yml) declares a flag for each further run. It reserves `integration` for a CI run of the Docker test commands in the image. The `regression` and `windows` flags are host-specific runs, and it carries them forward between their sporadic uploads. Those runs need the media collection and a Windows workstation, so their scripts and uploads live in the private HomeAutomation-Config repository rather than here.
+[Codecov](https://app.codecov.io/gh/ptr727/PlexCleaner) merges the coverage of several runs. CI's validator uploads the .NET unit tests with no flag, and the `RegressionTests/` Python tests under a `python-<version>` flag. [codecov.yml](./codecov.yml) declares a flag for each further run. The `integration` flag is the CI integration job, which runs the image's test commands over a synthetic corpus and checks each file's result. [RegressionTests/README.md](./RegressionTests/README.md) "CI integration run" describes it. The `regression` and `windows` flags are host-specific runs. It carries each of these flags forward, since none runs on every commit. Those runs need the media collection and a Windows workstation, so their scripts and uploads live in the private HomeAutomation-Config repository rather than here.
 
 Measure the unit tests the way CI does. The reports land under `.artifacts/coverage`, which git ignores. Each run adds a report, so clear the directory first to keep an older commit's report out of the merge:
 
@@ -90,7 +90,7 @@ docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE
   collect --output-format cobertura --output /coverage/image.xml /Test/test.sh
 ```
 
-To measure a branch, use a local image built per [Test a tool version the image does not carry](#test-a-tool-version-the-image-does-not-carry) in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout into a report the merge reads, then merge the reports with the pinned ReportGenerator:
+[RegressionTests/integration-test.sh](./RegressionTests/integration-test.sh) runs the same `dotnet-coverage collect` over the integration job's media and checks the results. To measure a branch, use a local image built per [Test a tool version the image does not carry](#test-a-tool-version-the-image-does-not-carry) in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout into a report the merge reads, then merge the reports with the pinned ReportGenerator:
 
 ```sh
 sed "s#filename=\"/Builder/#filename=\"$PWD/#" ./.artifacts/coverage/image.xml > ./.artifacts/coverage/image.cobertura.xml
