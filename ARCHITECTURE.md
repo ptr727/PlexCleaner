@@ -189,7 +189,7 @@ AOT-safe parser in `MediaInfoXmlParser.cs`, avoiding `XmlSerializer` (not AOT-co
 
 Parser design patterns:
 
-- Forward-only `XmlReader` with depth tracking for streaming
+- Forward-only `XmlReader` with depth tracking
 - Recursive `ElementData` tree for generic XML-to-JSON conversion
 - Namespace filtering (skip `xmlns`, `xsi` attributes)
 - Special handling for MediaInfo's mixed attribute/text content format
