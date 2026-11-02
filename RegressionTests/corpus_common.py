@@ -57,7 +57,7 @@ BENIGN_NOISE = re.compile(
     r"Cannot load lib|libnvidia|libcuda|Using the demultiplexer|Using the muxer for|"
     r"Using the encoder|Using the decoder|Press \[q\]|configuration:|built with|"
     r"deprecated pixel format|"
-    r"\bframe=\s*\d+\b.*\bspeed=",
+    r"^frame=\s*\d+\s.*\bspeed=",
     re.IGNORECASE,
 )
 
