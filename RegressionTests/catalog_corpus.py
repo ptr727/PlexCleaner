@@ -23,6 +23,7 @@ from corpus_common import (
     classify_signature,
     find_run,
     parse_log,
+    state_flags,
     stem_of,
 )
 
@@ -40,7 +41,7 @@ def build(run):
         if Path(name).suffix.lower() not in MEDIA_EXTS:
             continue
         stem = stem_of(name)
-        state = {s.strip() for s in (r.get("State") or "").split(",") if s.strip()}
+        state = state_flags(r.get("State"))
         lg = log.get(stem, {"detections": set(), "errors": set(), "tracks": []})
         sig = classify_signature(lg["errors"])
         buckets = buckets_for(state, lg["detections"], sig, stem in err_files)

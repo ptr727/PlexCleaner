@@ -1,0 +1,378 @@
+{
+  "bitrate-exceeded.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "bitrate-exceeded.mkv",
+    "Result": true,
+    "State": [
+      "BitrateExceeded",
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "Verified"
+    ]
+  },
+  "container-mp4.mp4": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "container-mp4.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "FileReNamed",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "container-renamed.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "container-renamed.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "cover-art.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "cover-art.mkv",
+    "Result": true,
+    "State": [
+      "ClearedTags",
+      "RemovedAttachments",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "dts-audio-tagged.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "dts-audio-tagged.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "RemovedAttachments",
+      "Repaired",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "dts-duplicate-pts.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "dts-duplicate-pts.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "Repaired",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "dts-mixed.mkv": {
+    "FailedOperation": "VerifyAndRepair",
+    "Modified": true,
+    "NewFileName": "dts-mixed.mkv",
+    "Result": false,
+    "State": [
+      "ClearedDefaultFlags",
+      "PostDecodeTimestamps",
+      "RepairFailed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "VerifyFailed"
+    ]
+  },
+  "dts-timebase.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "dts-timebase.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "hdr10-cc.mkv": {
+    "FailedOperation": "RemoveClosedCaptions",
+    "Modified": false,
+    "NewFileName": "hdr10-cc.mkv",
+    "Result": false,
+    "State": [
+      "FileDeleted"
+    ]
+  },
+  "hdr10-multitrack.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "hdr10-multitrack.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetFlags",
+      "Verified"
+    ]
+  },
+  "hdr10plus-cc.mkv": {
+    "FailedOperation": "RemoveClosedCaptions",
+    "Modified": false,
+    "NewFileName": "hdr10plus-cc.mkv",
+    "Result": false,
+    "State": [
+      "FileDeleted"
+    ]
+  },
+  "interlaced.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "interlaced.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "DeInterlaced",
+      "ReMuxed",
+      "ScannedCaptions",
+      "Verified"
+    ]
+  },
+  "language-tags.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "language-tags.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "no-cues.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "no-cues.mkv",
+    "Result": true,
+    "State": [
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "reencode.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "reencode.mkv",
+    "Result": true,
+    "State": [
+      "ClearedTags",
+      "ReEncoded",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "Verified"
+    ]
+  },
+  "sdr-cc.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "sdr-cc.mkv",
+    "Result": true,
+    "State": [
+      "ClearedCaptions",
+      "ClearedDefaultFlags",
+      "ReMuxed",
+      "ScannedInterlace",
+      "Verified"
+    ]
+  },
+  "test1.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "test1.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "ReEncoded",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "test2.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "test2.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "test3.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "test3.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "test4.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "test4.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ReEncoded",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "test5.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "test5.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetFlags",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "test6.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "test6.mkv",
+    "Result": true,
+    "State": [
+      "ClearedTags",
+      "ReEncoded",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "test7.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "test7.mkv",
+    "Result": true,
+    "State": [
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "test8.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "test8.mkv",
+    "Result": true,
+    "State": [
+      "ClearedTags",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  },
+  "title-flags.mkv": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "title-flags.mkv",
+    "Result": true,
+    "State": [
+      "ClearedDefaultFlags",
+      "ClearedTags",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetFlags",
+      "Verified"
+    ]
+  },
+  "unwanted-extension.txt": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "unwanted-extension.txt",
+    "Result": true,
+    "State": [
+      "FileDeleted"
+    ]
+  },
+  "uppercase-extension.MKV": {
+    "FailedOperation": null,
+    "Modified": true,
+    "NewFileName": "uppercase-extension.mkv",
+    "Result": true,
+    "State": [
+      "ClearedTags",
+      "FileReNamed",
+      "ReMuxed",
+      "ScannedCaptions",
+      "ScannedInterlace",
+      "SetLanguage",
+      "Verified"
+    ]
+  }
+}

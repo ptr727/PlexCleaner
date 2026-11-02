@@ -15,6 +15,7 @@ permissions: {}
 jobs:
 
   # The repo builds one combined release target, executable plus Docker image, so one entry lists its paths (D1.1).
+  # The integration entry adds the paths only the integration run reads (D1.7).
   changes:
     name: Detect changed targets job
     runs-on: ubuntu-latest
@@ -23,6 +24,7 @@ jobs:
       pull-requests: read
     outputs:
       release: ${{ steps.filter.outputs.release }}
+      integration: ${{ steps.filter.outputs.integration }}
     steps:
       - name: Checkout code step
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,6 +46,27 @@ jobs:
               - 'Directory.Packages.props'
               - 'global.json'
               - 'version.json'
+            integration:
+              - 'PlexCleaner/**'
+              - 'PlexCleanerTests/**'
+              - 'Plugins/**'
+              - 'Samples/**'
+              - 'Docker/Dockerfile'
+              - 'Docker/*.sh'
+              - 'Docker/PlexCleaner.coverage.json'
+              - '.dockerignore'
+              - '.editorconfig'
+              - 'Directory.Build.props'
+              - 'Directory.Packages.props'
+              - 'global.json'
+              - 'version.json'
+              - '.config/dotnet-tools.json'
+              - '.github/actions/integration-coverage/**'
+              - 'codecov.yml'
+              - 'RegressionTests/check_results.py'
+              - 'RegressionTests/corpus_common.py'
+              - 'RegressionTests/integration-test.sh'
+              - 'RegressionTests/synthetic/**'
 
   validate:
     name: Validate sources job
@@ -81,12 +104,28 @@ jobs:
       # On a pull_request event github.ref_name is the PR ref, so the logical branch reads base_ref first.
       branch: ${{ github.base_ref || github.ref_name }}
 
+  # Builds the image this pull request ships and runs its test commands under coverage (D1.7).
+  integration:
+    name: Integration coverage job
+    needs: [changes]
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.integration == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code step
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Run integration coverage step
+        uses: ./.github/actions/integration-coverage
+        with:
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+
   # Single required status check, its name bound to the ruleset context (D1.5).
-  # A skipped smoke-build, an unchanged target, passes, and a failure or cancellation blocks.
+  # A skipped smoke-build or integration, an unchanged target, passes, and a failure or cancellation blocks.
   check-workflow-status:
     name: Check pull request workflow status job
     runs-on: ubuntu-latest
-    needs: [changes, validate, smoke-build]
+    needs: [changes, validate, smoke-build, integration]
     if: always()
     steps:
       - name: Check workflow results step
@@ -100,7 +139,11 @@ jobs:
               exit 1
             fi
           done
-          if [[ "${{ needs.smoke-build.result }}" != "success" && "${{ needs.smoke-build.result }}" != "skipped" ]]; then
-            echo "::error::Job 'smoke-build' did not succeed (${{ needs.smoke-build.result }})."
-            exit 1
-          fi
+          for result in "smoke-build:${{ needs.smoke-build.result }}" "integration:${{ needs.integration.result }}"; do
+            name="${result%%:*}"
+            value="${result#*:}"
+            if [[ "$value" != "success" && "$value" != "skipped" ]]; then
+              echo "::error::Job '$name' did not succeed ($value)."
+              exit 1
+            fi
+          done
