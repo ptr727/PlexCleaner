@@ -39,7 +39,7 @@ Usage: regression-test.sh [quick|full] [tag] [full|reduced] [plugin...]
 Runs as root, since it clones and rolls back ZFS datasets.
 
 Environment:
-  REGRESSION_COVERAGE_TOOL  host directory holding dotnet-coverage.dll, which runs
+  REGRESSION_COVERAGE_TOOL  absolute host directory holding dotnet-coverage.dll, which runs
                             the process and plugin runs under coverage collection,
                             each writing a Cobertura coverage_<run>.xml beside its log
 EOF
@@ -417,8 +417,8 @@ for Plugin in "${Plugins[@]}"; do
 done
 
 CoverageTool="${REGRESSION_COVERAGE_TOOL-}"
-if [[ -n "$CoverageTool" && ! -f "$CoverageTool/dotnet-coverage.dll" ]]; then
-    echo "regression-test.sh: REGRESSION_COVERAGE_TOOL holds no dotnet-coverage.dll: '$CoverageTool'" >&2
+if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet-coverage.dll") ]]; then
+    echo "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'" >&2
     exit 2
 fi
 
