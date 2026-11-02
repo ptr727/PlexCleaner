@@ -23,6 +23,7 @@ public sealed class ReplaceOriginalTests : IDisposable
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
     private readonly MediaToolInfo _mediaInfoInfo = Tools.MediaInfo.Info;
+    private readonly bool _autoRepair = Program.Config.VerifyOptions.AutoRepair;
 
     public ReplaceOriginalTests()
     {
@@ -45,7 +46,110 @@ public sealed class ReplaceOriginalTests : IDisposable
         Program.Config.ProcessOptions.UseSidecarFiles = _useSidecarFiles;
         Program.Config.ProcessOptions.ReEncodeAudioFormats = _reEncodeAudioFormats;
         Program.Config.ProcessOptions.ReMuxExtensions = _reMuxExtensions;
+        Program.Config.VerifyOptions.AutoRepair = _autoRepair;
         Directory.Delete(_directory, true);
+    }
+
+    // The rewrite output answers its identify with the sample tracks changed the way HandBrake writes them
+    private void WriteRewriteIdentify(string output, string type)
+    {
+        string json = Path.Combine(_directory, "identify-" + output + ".json");
+        JsonNode identify = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.json"))
+        )!;
+        JsonArray tracks = identify["tracks"]!.AsArray();
+        JsonNode track = tracks.First(item => item!["type"]!.GetValue<string>() == type)!;
+        if (type == "video")
+        {
+            track["properties"]!["language"] = "und";
+        }
+        else
+        {
+            _ = tracks.Remove(track);
+        }
+        File.WriteAllText(json, identify.ToJsonString());
+        FakeTools.WriteScript(
+            Tools.MkvMerge.GetToolPath(),
+            $"case \"$*\" in *--identify*{output}*) cat \"{json}\"; exit 0 ;; esac\n"
+                + FakeTools.SampleIdentifyCase(_directory)
+                + "for a; do case $a in *.tmp*) echo mkvmerge > \"$a\" ;; esac; done\n"
+        );
+    }
+
+    [Theory]
+    [InlineData("video", true)]
+    [InlineData("audio", false)]
+    public void DeInterlace_HandBrakeOutput_RestoresUndefinedVideoRefusesDroppedAudio(
+        string type,
+        bool success
+    )
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile(VerifiedState);
+        string mediaFile = processFile.FileInfo.FullName;
+        byte[] original = File.ReadAllBytes(mediaFile);
+        VideoProps video = processFile.MkvMergeProps.Video[0];
+        string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", 0);
+        FakeTools.WriteSampleToolData(_directory);
+        WriteRewriteIdentify("name.tmp9", type);
+        processFile.FfProbeProps.Video[0].Interlaced = true;
+
+        bool modified = false;
+        _ = processFile.DeInterlace(false, ref modified).Should().Be(success);
+
+        _ = modified.Should().Be(success);
+        if (success)
+        {
+            _ = File.ReadAllText(propEditLog)
+                .Should()
+                .Contain($" --edit track:@{video.Number} --set language={video.LanguageAny} ");
+            _ = File.ReadAllText(mediaFile).Should().StartWith("mkvmerge");
+        }
+        else
+        {
+            _ = File.Exists(propEditLog).Should().BeFalse();
+            _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
+            _ = processFile.State.Should().Be(VerifiedState);
+        }
+        _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_UndecodableAudio_HandBrakeDropsTrack_KeepsOriginal()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.VerifyOptions.AutoRepair = true;
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        ProcessFile processFile = CreateProcessFile();
+        string mediaFile = processFile.FileInfo.FullName;
+        byte[] original = File.ReadAllBytes(mediaFile);
+        string propEditLog = WriteFakeTools("*.tmp8", 0);
+        FakeTools.WriteSampleToolData(_directory);
+        WriteRewriteIdentify("name.tmp12", "audio");
+        string handBrake = Tools.HandBrake.GetToolPath();
+        FakeTools.WriteScript(
+            handBrake,
+            "for a; do case $a in *.tmp8) echo handbrake > \"$a\" ;; esac; done\necho ran > \"$0.log\"\n"
+        );
+
+        // Encrypted audio has no decoder, so FfMpeg fails every verify and re-encode
+        FakeTools.WriteScript(
+            Tools.FfMpeg.GetToolPath(),
+            "echo '[aist#0:1/none @ 0x0] Decoding requested, but no decoder found for: none' >&2\nexit 234\n"
+        );
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
+
+        _ = modified.Should().BeFalse();
+        _ = processFile
+            .State.Should()
+            .Be(SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.RepairFailed);
+        _ = File.Exists(handBrake + ".log").Should().BeTrue();
+        _ = File.Exists(propEditLog).Should().BeFalse();
+        _ = File.ReadAllBytes(mediaFile).Should().Equal(original);
+        _ = Directory.GetFiles(_directory, "name.tmp*").Should().BeEmpty();
     }
 
     private const SidecarFile.StatesType VerifiedState =
