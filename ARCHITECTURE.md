@@ -184,7 +184,7 @@ AOT-safe parser in `MediaInfoXmlParser.cs`, avoiding `XmlSerializer` (not AOT-co
   - Handles attributes: prefix with `@` for elements with children, no prefix for leaf elements
   - Detects arrays: elements appearing multiple times become JSON arrays
   - Two-pass algorithm: collect children to detect arrays, then write JSON
-  - Uses `XmlReader` and `Utf8JsonWriter` for streaming efficiency
+  - Reads with `XmlReader` into an in-memory `ElementData` tree, then writes it with `Utf8JsonWriter`
   - Special handling for MediaInfo's mixed attribute/text content format (creatingLibrary)
 
 Parser design patterns:
