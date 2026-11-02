@@ -1065,7 +1065,6 @@ The third-party tools, libraries, and actions this project depends on.
 | [RFC 5646 language tags][rfc5646-link] | Language tag standard. |
 | [Serilog][serilog-link] | Structured logging library for .NET. |
 | [Utf8JsonAsyncStreamReader][utf8jsonasync-link] | Streaming JSON reader for .NET. |
-| [Xml2CSharp][xmltocsharp-link] | XML to C# class generator. |
 | [xUnit.Net][xunit-link] | Test framework for .NET. |
 
 ## Sample Media Files
@@ -1161,5 +1160,4 @@ Licensed under the [MIT License][license]\
 [visualstudio-link]: https://visualstudio.microsoft.com/downloads/
 [vscode-link]: https://code.visualstudio.com/download
 [winget-cli-issue-link]: https://github.com/microsoft/winget-cli/issues/3437
-[xmltocsharp-link]: https://xmltocsharp.azurewebsites.net/
 [xunit-link]: https://xunit.net/
