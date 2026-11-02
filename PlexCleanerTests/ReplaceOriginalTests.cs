@@ -403,11 +403,22 @@ public sealed class ReplaceOriginalTests : IDisposable
     [InlineData("type", false)]
     [InlineData("language", false)]
     [InlineData("dropped", false)]
+    [InlineData("undefined", true)]
     public void RestoreLanguageTags_EditsOnlyWhenTracksMatch(string change, bool success)
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         ProcessFile processFile = CreateProcessFile();
         string propEditLog = WriteFakeTools("*.tmp1", 0);
+        if (change == "undefined")
+        {
+            string identify = Path.Combine(_directory, "MkvMergeInfoData.json");
+            JsonNode json = JsonNode.Parse(File.ReadAllText(identify))!;
+            JsonNode videoTrack = json["tracks"]!
+                .AsArray()
+                .First(track => track!["type"]!.GetValue<string>() == "video")!;
+            videoTrack["properties"]!["language"] = "und";
+            File.WriteAllText(identify, json.ToJsonString());
+        }
         string tempName = Path.ChangeExtension(processFile.FileInfo.FullName, ".tmp1");
         File.WriteAllText(tempName, "ffmpeg");
         MediaProps languageProps = processFile.MkvMergeProps;

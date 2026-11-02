@@ -31,6 +31,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - A track that needs more than one repair, such as a language remux and track flags, is repaired and reported for each.
   - An FFmpeg or HandBrake rewrite of an MKV file restores the IETF language tags those tools drop.
     - The rewrite fails before it replaces the original when its track count, or any track's number, type, or language, no longer matches.
+    - A track the rewrite writes as `und`, as HandBrake writes the video track, gets its language back rather than failing a deinterlace or re-encode.
     - Every HandBrake run keeps the original subtitle tracks unchanged, so the HandBrake fallback of a re-encode repair no longer converts them to ASS.
     - A HandBrake rewrite drops closed captions embedded in the video stream, as a deinterlace already did. It logs a warning when the video carries them, whatever `RemoveClosedCaptions` says.
   - PlexCleaner overwrites or deletes a file with a `.tmp*` extension beside a media file, so those names are reserved.
