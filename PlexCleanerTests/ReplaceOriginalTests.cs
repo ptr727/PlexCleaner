@@ -87,7 +87,6 @@ public sealed class ReplaceOriginalTests : IDisposable
         byte[] original = File.ReadAllBytes(mediaFile);
         VideoProps video = processFile.MkvMergeProps.Video[0];
         string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", 0);
-        FakeTools.WriteSampleToolData(_directory);
         WriteRewriteIdentify(
             "name.tmp9",
             identify =>
@@ -134,7 +133,6 @@ public sealed class ReplaceOriginalTests : IDisposable
         string mediaFile = processFile.FileInfo.FullName;
         byte[] original = File.ReadAllBytes(mediaFile);
         string propEditLog = WriteFakeTools("*.tmp8", 0);
-        FakeTools.WriteSampleToolData(_directory);
         WriteRewriteIdentify("name.tmp12", identify => Drop(identify, "audio"));
         string handBrake = Tools.HandBrake.GetToolPath();
         FakeTools.WriteScript(
