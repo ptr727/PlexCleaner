@@ -92,8 +92,24 @@ internal static class FakeTools
             )
         )!;
 
+    // A test reads the sample identify, changes what it tests, and writes it where its fake answers from
+    public static string WriteChangedIdentify(
+        string directory,
+        string name,
+        Action<JsonNode> change
+    )
+    {
+        string json = Path.Combine(directory, name);
+        JsonNode identify = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(directory, "MkvMergeInfoData.json"))
+        )!;
+        change(identify);
+        File.WriteAllText(json, identify.ToJsonString());
+        return json;
+    }
+
     // The tools return the stored sample data, so a media refresh after a replace can run
-    public static void WriteSampleToolData(string directory)
+    public static void WriteSampleToolData(string directory, string identifyCase = "")
     {
         JsonNode stored = ReadSampleSidecar();
         foreach (string key in new[] { "MediaInfoData", "FfProbeInfoData" })
@@ -115,7 +131,8 @@ internal static class FakeTools
         // A remux writes its tool name into each temp output
         WriteScript(
             Tools.MkvMerge.GetToolPath(),
-            SampleIdentifyCase(directory)
+            identifyCase
+                + SampleIdentifyCase(directory)
                 + "for a; do case $a in *.tmp*) echo mkvmerge > \"$a\" ;; esac; done\n"
         );
     }
