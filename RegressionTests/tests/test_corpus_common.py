@@ -46,6 +46,10 @@ class ExtractErrorsTests(unittest.TestCase):
     def test_benign_noise_dropped(self) -> None:
         self.assertEqual(cc.extract_errors('"Cannot load libcuda.so | real"'), {"real"})
 
+    def test_progress_line_dropped(self) -> None:
+        after = '"real | frame=  318 fps= 76 q=-0.0 Lsize=N/A time=00:00:10.77 speed=2.56x"'
+        self.assertEqual(cc.extract_errors(after), {"real"})
+
 
 class ErrorShapeTests(unittest.TestCase):
     def test_strips_context_and_numbers(self) -> None:
