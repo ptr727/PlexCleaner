@@ -418,7 +418,7 @@ flowchart TD
 
 `IsMediaAndToolsCurrent()` is false when the media changed, or when a tool changed with `SidecarUpdateOnToolChange` on. With the option off, a tool upgrade alone never reruns the tools, and the sidecar keeps the tool versions it recorded until they rerun. A rename onto a name that has a sidecar keeps `FileReNamed` and the flags the renaming step set. `SidecarFile.Open()` adds them to the stored state. When the media differs from that sidecar, `Open()` drops the verify results, `SidecarFile.VerifyStates`, from the flags it adds.
 
-`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. An idet scan past FFmpeg's decode error rate sets no flag, because its counts cover only the frames that decoded. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
+`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. An idet scan past FFmpeg's decode error rate sets no flag, because its counts cover only the frames that decoded. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
 
 ### Remux and Container Steps
 
@@ -632,7 +632,7 @@ flowchart TD
   F2 -->|no| F3{"Process command, and the state has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
   F3 -->|yes| AOK
   F3 -->|no| F4["FfMpeg idet scan"]
-  F4 -->|"scan fails or no result"| FAIL(["Fail"])
+  F4 -->|"scan or parse fails"| FAIL(["Fail"])
   F4 -->|"decode error rate exceeded"| FSKIP["Warn, skip detection, no state set"]
   FSKIP --> AOK
   F4 -->|progressive| F5["Sets ScannedInterlace and saves state"]
