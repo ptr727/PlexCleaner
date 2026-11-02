@@ -50,18 +50,6 @@ public sealed class ReplaceOriginalTests : IDisposable
         Directory.Delete(_directory, true);
     }
 
-    // Each test reads the sample identify, changes what it tests, and writes it where its fake answers from
-    private string WriteChangedIdentify(string name, Action<JsonNode> change)
-    {
-        string json = Path.Combine(_directory, name);
-        JsonNode identify = JsonNode.Parse(
-            File.ReadAllText(Path.Combine(_directory, "MkvMergeInfoData.json"))
-        )!;
-        change(identify);
-        File.WriteAllText(json, identify.ToJsonString());
-        return json;
-    }
-
     private static JsonNode FirstTrack(JsonNode identify, string type) =>
         identify["tracks"]!.AsArray().First(track => track!["type"]!.GetValue<string>() == type)!;
 
@@ -74,12 +62,14 @@ public sealed class ReplaceOriginalTests : IDisposable
     // Only the rewrite output answers with the changed tracks, every other identify with the sample
     private void WriteRewriteIdentify(string output, Action<JsonNode> change)
     {
-        string json = WriteChangedIdentify("identify-" + output + ".json", change);
-        FakeTools.WriteScript(
-            Tools.MkvMerge.GetToolPath(),
+        string json = FakeTools.WriteChangedIdentify(
+            _directory,
+            "identify-" + output + ".json",
+            change
+        );
+        FakeTools.WriteSampleToolData(
+            _directory,
             $"case \"$*\" in *--identify*{output}*) cat \"{json}\"; exit 0 ;; esac\n"
-                + FakeTools.SampleIdentifyCase(_directory)
-                + "for a; do case $a in *.tmp*) echo mkvmerge > \"$a\" ;; esac; done\n"
         );
     }
 
@@ -536,7 +526,8 @@ public sealed class ReplaceOriginalTests : IDisposable
         string propEditLog = WriteFakeTools("*.tmp1", 0);
         if (change.StartsWith("undefined", StringComparison.Ordinal))
         {
-            _ = WriteChangedIdentify(
+            _ = FakeTools.WriteChangedIdentify(
+                _directory,
                 "MkvMergeInfoData.json",
                 identify => SetUndefined(identify, change["undefined".Length..])
             );
@@ -703,7 +694,8 @@ public sealed class ReplaceOriginalTests : IDisposable
         // The input identifies as the given container, the FfMpeg output as the sample Matroska tracks
         // Only the input's audio track carries en-GB, so the restored tag shows which list was read
         string identify = FakeTools.SampleIdentifyCase(_directory);
-        string inputJson = WriteChangedIdentify(
+        string inputJson = FakeTools.WriteChangedIdentify(
+            _directory,
             "InputInfoData.json",
             inputInfo =>
             {
