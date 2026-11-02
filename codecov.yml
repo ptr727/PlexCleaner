@@ -14,3 +14,16 @@ coverage:
 
 # No PR comment, since the advisory statuses already report the trend.
 comment: false
+
+flag_management:
+  default_rules:
+    carryforward: false
+  individual_flags:
+    - name: integration
+    - name: regression
+      carryforward: true
+    - name: windows
+      carryforward: true
+
+fixes:
+  - "/Builder/::"

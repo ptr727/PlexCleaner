@@ -65,6 +65,42 @@ docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/test" \
 
 The regression harness under [RegressionTests/](./RegressionTests/) processes a curated collection of troublesome media through a given image tag on a ZFS clone and compares the results across versions down to the per-file processing decision. The collection and its media-specific reduction rules live with the media on a server and are never committed, so this runs on the host that holds them. [RegressionTests/README.md](./RegressionTests/README.md) is the procedure.
 
+### Measure code coverage
+
+[Codecov](https://app.codecov.io/gh/ptr727/PlexCleaner) merges the coverage of several runs, each uploading under its own flag. The CI unit tests upload with no flag. The `integration` flag is a CI run of the Docker test commands in the image. The `regression` and `windows` flags are host-specific runs, and [codecov.yml](./codecov.yml) carries them forward between their sporadic uploads. Those runs need the media collection and a Windows workstation, so their scripts and uploads live in the private HomeAutomation-Config repository rather than here.
+
+Measure the unit tests the way CI does. The reports land under `.artifacts/coverage`, which git ignores:
+
+```sh
+dotnet tool restore
+dotnet test --project PlexCleanerTests/PlexCleanerTests.csproj --coverage --coverage-output-format cobertura --results-directory ./.artifacts/coverage
+```
+
+Measure the real-tool paths in the image with `dotnet-coverage`, pinned in [.config/dotnet-tools.json](./.config/dotnet-tools.json). The image has no SDK, so mount the restored tool and run it on the image's runtime. [Docker/PlexCleaner.coverage.json](./Docker/PlexCleaner.coverage.json) is the default settings with every optional processing step turned on. `test.sh` runs the Debug build, whose PDB sits beside it. The settings are copied first, since `RegisterInvalidFiles` writes to the file it reads:
+
+```sh
+version="$(jq -r '.tools["dotnet-coverage"].version' .config/dotnet-tools.json)"
+tool="$(dirname "$(find "${NUGET_PACKAGES:-$HOME/.nuget/packages}/dotnet-coverage/$version" -name dotnet-coverage.dll)")"
+cp ./Docker/PlexCleaner.coverage.json ./.artifacts/coverage/PlexCleaner.json
+docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE_TELEMETRY_OPTOUT=1 \
+  --volume "$tool:/dotnet-coverage:ro" --volume "$PWD/.artifacts/coverage:/coverage" \
+  --volume "$PWD/.artifacts/coverage/PlexCleaner.json:/Test/PlexCleaner.json" \
+  --entrypoint dotnet docker.io/ptr727/plexcleaner:develop /dotnet-coverage/dotnet-coverage.dll \
+  collect --output-format cobertura --output /coverage/image.cobertura.xml /Test/test.sh
+```
+
+To measure a branch, use a local image built per the runbook above in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout, then merge the reports with the pinned ReportGenerator:
+
+```sh
+sed -i "s#filename=\"/Builder/#filename=\"$PWD/#" ./.artifacts/coverage/image.cobertura.xml
+dotnet reportgenerator "-reports:./.artifacts/coverage/*.cobertura.xml" "-targetdir:./.artifacts/coverage/report" \
+  "-reporttypes:Html;TextSummary" "-filefilters:+**/PlexCleaner/*;+**/Plugins/*;-**/.artifacts/*"
+```
+
+The file filter keeps the project sources and drops the source-generated files under `.artifacts/obj`, which Codecov also drops. The merged rate still reads higher than Codecov's. ReportGenerator counts a line with partly covered branches as covered, while Codecov counts it as a partial, which lowers its rate. Codecov's total also holds the Python coverage of `RegressionTests/`. A comparison holds only when every report comes from the same commit. A published image's `--version` ends in its commit's short SHA, and a local image is the checkout it was built from.
+
+On Windows, run the `win-x64` folder of the release archive under `dotnet-coverage collect`. It is framework-dependent with its PDB beside it, not a single-file executable, so it instruments as shipped. A `develop` prerelease carries the Debug build, a `main` release carries the Release build, and `PlexCleaner.exe --version` names the commit.
+
 ## Backup and Recovery
 
 The repository is the record, and GitHub holds it. Nothing here keeps state outside git, and a published release or image is re-creatable from its tag by dispatching the publisher on that commit's branch. The regression media collection is the one asset the repository does not hold, and it is backed up with the media it sits beside rather than by anything here.

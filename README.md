@@ -29,6 +29,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 **Summary:**
 
 - Removed code that nothing called, as the first step toward broader test coverage, with no change in processing behavior.
+- Documented how to measure code coverage locally and in the Docker image.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
