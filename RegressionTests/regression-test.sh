@@ -37,6 +37,11 @@ Usage: regression-test.sh [quick|full] [tag] [full|reduced] [plugin...]
   corpus   full or reduced corpus subdirectory of the test clone to process (default full)
   plugin   registry plugin names to run after processing (default MatroskaHeaderCleanup)
 Runs as root, since it clones and rolls back ZFS datasets.
+
+Environment:
+  REGRESSION_COVERAGE_TOOL  host directory holding dotnet-coverage.dll, which runs
+                            the process and plugin runs under coverage collection,
+                            each writing a Cobertura coverage_<run>.xml beside its log
 EOF
 }
 
@@ -110,6 +115,25 @@ DockerCommon=(
     --user "$USER_NONROOT_ID:$USERS_GROUP_ID"
     --env TZ=America/Los_Angeles
 )
+
+# SetLaunch Tag Report
+# Set Launch to the image and the PlexCleaner command, under dotnet-coverage writing Report when coverage is on.
+SetLaunch() {
+    local Tag="$1"
+    local Report="$2"
+    Launch=("$Image:$Tag" "$PlexCleanerApp")
+    if [[ -n "$CoverageTool" ]]; then
+        Launch=(
+            --volume "$CoverageTool:/dotnet-coverage:ro"
+            --env HOME=/tmp
+            --env DOTNET_COVERAGE_TELEMETRY_OPTOUT=1
+            --entrypoint dotnet
+            "$Image:$Tag"
+            /dotnet-coverage/dotnet-coverage.dll collect --output-format cobertura --output "$Report"
+            "$PlexCleanerApp"
+        )
+    fi
+}
 
 # Provision the test dataset as a zero-copy clone of the newest corpus snapshot.
 # Where the clone already originates from the newest snapshot, the run rolls it back to its @backup.
@@ -197,12 +221,13 @@ RunProcess() {
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
     echo "Running PlexCleaner process on $Image:$Tag ($Mode)"
+    local -a Launch
+    SetLaunch "$Tag" "$ConfigDir/coverage_process.xml"
     docker run \
         "${DockerCommon[@]}" \
         --volume "$HostMedia:$MediaPath:rw" \
         --volume "$HostConfig:$ConfigPath:rw" \
-        "$Image:$Tag" \
-        "$PlexCleanerApp" process \
+        "${Launch[@]}" process \
         --settingsfile="$ConfigDir/$Settings" \
         --logfile="$ConfigDir/PlexCleaner_process.log" \
         "${LogOptions[@]}" \
@@ -236,7 +261,8 @@ BuildPlugin() {
     git -C "$PluginBuildDir" checkout --force "$Version" || return 1
 
     # Build the plugin (Debug matches the image binary under /PlexCleaner/Debug)
-    dotnet build "$PluginBuildDir/$Project" --configuration Debug || return 1
+    # The path map gives its PDB the image build's /Builder source root, so a coverage report names one tree.
+    dotnet build "$PluginBuildDir/$Project" --configuration Debug "-p:PathMap=$PluginBuildDir=/Builder" || return 1
 
     # Copy the built assembly into the version directory for the custom run
     local Built
@@ -246,6 +272,8 @@ BuildPlugin() {
         return 1
     fi
     cp "$Built" "$VersionDir/$Dll"
+    # Coverage reads the plugin's lines from its PDB.
+    cp "${Built%.dll}.pdb" "$VersionDir/${Dll%.dll}.pdb" || return 1
 }
 
 # RunPlugin Tag Version Dll
@@ -259,12 +287,13 @@ RunPlugin() {
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
     echo "Running PlexCleaner custom plugin $Dll on $Image:$Tag"
+    local -a Launch
+    SetLaunch "$Tag" "$ConfigDir/coverage_custom_${Dll%.dll}.xml"
     docker run \
         "${DockerCommon[@]}" \
         --volume "$HostMedia:$MediaPath:rw" \
         --volume "$HostConfig:$ConfigPath:rw" \
-        "$Image:$Tag" \
-        "$PlexCleanerApp" custom \
+        "${Launch[@]}" custom \
         --settingsfile="$ConfigDir/$Settings" \
         --logfile="$ConfigDir/PlexCleaner_custom_${Dll%.dll}.log" \
         "${LogOptions[@]}" \
@@ -384,6 +413,12 @@ for Plugin in "${Plugins[@]}"; do
         UnknownArgument "$Plugin"
     fi
 done
+
+CoverageTool="${REGRESSION_COVERAGE_TOOL-}"
+if [[ -n "$CoverageTool" && ! -f "$CoverageTool/dotnet-coverage.dll" ]]; then
+    echo "regression-test.sh: REGRESSION_COVERAGE_TOOL holds no dotnet-coverage.dll: '$CoverageTool'" >&2
+    exit 2
+fi
 
 if [[ "$(id -u)" -ne 0 ]]; then
     echo "This script must be run as root" >&2

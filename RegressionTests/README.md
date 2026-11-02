@@ -49,6 +49,8 @@ sudo ./regression-test.sh [quick|full] [tag] [corpus] [plugin...]
 
 The harness tests a published image tag. To test a build before any image carries it, run it inside the image as [OPERATIONS.md](../OPERATIONS.md) "Test an unreleased build in the image" describes.
 
+Setting `REGRESSION_COVERAGE_TOOL` to a host directory holding `dotnet-coverage.dll` runs the process and plugin runs under `dotnet-coverage collect`. Each run writes a Cobertura report beside its log, `coverage_process.xml` and `coverage_custom_<plugin>.xml`. The image's sources are under `/Builder`, and each plugin is built with a path map to the same root. So [codecov.yml](../codecov.yml)'s `fixes` rule maps every report. The run's commit is the `-g<sha>` suffix of the version directory's name. `sudo` resets the environment, so pass the variable through `sudo env REGRESSION_COVERAGE_TOOL=<dir> ./regression-test.sh ...`.
+
 Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
 
 ### Full-file scanning
