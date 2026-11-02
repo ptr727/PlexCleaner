@@ -1,10 +1,10 @@
 """
 corpus_common.py - shared parsing + deterministic classification for the corpus tooling.
 
-Single source of truth so catalog_corpus.py and reduce_corpus.py never drift. Parses a
-PlexCleaner process log (attributing detections/errors to files by thread affinity + line
-filename) and classifies a file's State/detections/decode-signatures into a curated stable
-bucket set.
+Single source of truth so catalog_corpus.py, reduce_corpus.py, and check_results.py never drift.
+Parses a PlexCleaner process log, attributing detections and errors to files by thread affinity
+and line filename. Classifies a file's State, detections, and decode signatures into a curated
+stable bucket set.
 
 Robust to BOTH failure-log formats: a logging change inserted {Operation} before ExitCode and
 appended {FileName} after the error, so a fixed regex tied to the old shape would silently drop

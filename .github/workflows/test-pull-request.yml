@@ -63,6 +63,7 @@ jobs:
               - '.config/dotnet-tools.json'
               - '.github/actions/integration-coverage/**'
               - 'RegressionTests/check_results.py'
+              - 'RegressionTests/corpus_common.py'
               - 'RegressionTests/integration-test.sh'
               - 'RegressionTests/synthetic/**'
 

@@ -407,7 +407,7 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   [`RegressionTests/synthetic/expected-results.json`](./RegressionTests/synthetic/expected-results.json). The
   Cobertura report uploads to Codecov under the `integration` flag, best-effort like the validator's uploads.
   The `integration` entry lists the `release` paths plus the coverage settings and the .NET tool manifest.
-  It also lists the action, the script, its result check, and the synthetic library. The aggregator passes a skipped run, and
+  It also lists the action, the script, its result check and the module it imports, and the synthetic library. The aggregator passes a skipped run, and
   `codecov.yml` carries the flag forward across the commits that skip it. In the publisher the job runs on
   `github.sha` once `plan` resolves `publish`, and `publish` needs it to succeed. It is repo-local, since the
   hub validator's hook receives no Codecov token and the hub release task cannot load an image. *Prevents
