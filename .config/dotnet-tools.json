@@ -22,6 +22,20 @@
         "dotnet-outdated"
       ],
       "rollForward": false
+    },
+    "dotnet-coverage": {
+      "version": "18.12.0",
+      "commands": [
+        "dotnet-coverage"
+      ],
+      "rollForward": false
+    },
+    "dotnet-reportgenerator-globaltool": {
+      "version": "5.5.11",
+      "commands": [
+        "reportgenerator"
+      ],
+      "rollForward": false
     }
   }
 }

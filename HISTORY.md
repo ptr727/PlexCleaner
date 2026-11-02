@@ -9,6 +9,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - The MediaInfo XML parser that built typed XML schema objects, and those schema types. The sidecar v4 to v5 upgrade keeps its generic XML to JSON conversion.
     - An unused tool execution path that streamed standard output, and unused tool command-line builder options.
     - An unused media props self-test method.
+  - Documented how to measure code coverage locally and in the Docker image, with a settings file that turns on every optional processing step.
 - Version 3.23:
   - Added a minimum version for every media tool, and PlexCleaner exits with an error at startup when an installed tool is older.
     - The minimums are FFmpeg 8.0, HandBrake 1.10.0, MediaInfo 25.07, MKVToolNix 94.0, and 7-Zip 25.01.
