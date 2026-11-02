@@ -406,7 +406,7 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   `dotnet-coverage`. The script fails the job when any file's process result differs from
   [`RegressionTests/synthetic/expected-results.json`](./RegressionTests/synthetic/expected-results.json). The
   Cobertura report uploads to Codecov under the `integration` flag, best-effort like the validator's uploads.
-  The `integration` entry lists the `release` paths plus the coverage settings and the .NET tool manifest.
+  The `integration` entry lists the `release` paths plus the coverage settings, the .NET tool manifest, and `codecov.yml`.
   It also lists the action, the script, its result check and the module it imports, and the synthetic library. The aggregator passes a skipped run, and
   `codecov.yml` carries the flag forward across the commits that skip it. In the publisher the job runs on
   `github.sha` once `plan` resolves `publish`, and `publish` needs it to succeed. It is repo-local, since the
@@ -629,7 +629,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 
 | # | Input | Expected output | Exercises |
 | --- | --- | --- | --- |
-| S1 | PR touching `PlexCleaner/**` | `changes` marks `release` and `integration`, so `validate`, `smoke-build`, and `integration` run. Both targets compile/pack, with **no push, no uploads, no release**. `validate-release` self-skips (smoke). `integration` checks every file's result and uploads its coverage. The aggregator succeeds and no artifacts dangle | D0.1, D1.1, D1.3, D1.7, D2.2 |
+| S1 | PR touching `PlexCleaner/**` | `changes` marks `release` and `integration`, so `validate`, `smoke-build`, and `integration` run. Both targets compile/pack, with **no push, no artifact uploads, no release**. `validate-release` self-skips (smoke). `integration` checks every file's result and uploads its coverage. The aggregator succeeds and no artifacts dangle | D0.1, D1.1, D1.3, D1.7, D2.2 |
 | S2 | PR changing only docs | `changes` marks nothing, so `smoke-build` and `integration` skip. `validate` runs markdownlint, cspell on README.md and HISTORY.md, and the prose gate. The aggregator passes the skips and nothing publishes | D1.4, D1.5 |
 | S3 | PR changing only `.github/workflows/**` | `changes` marks nothing, so `smoke-build` and `integration` skip. `validate` runs at the PR's own pin and its `lint` job runs actionlint. The aggregator succeeds | D1.4, D6.1 |
 | S4 | weekly `schedule` | builds + publishes `main` only: stable release + refreshed `latest` (multi-arch) + `PlexCleaner.7z`; `target_commitish` = main's SHA; develop is not touched; no dangling artifacts | D4.1, D4.2, D4.4 |

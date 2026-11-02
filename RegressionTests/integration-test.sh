@@ -43,13 +43,6 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Pinned, so the expected results do not move with the upstream repository.
 matroska_commit=e6965e5ca666322ed93e2748a10a4f132309e005
 
-if [[ -e "$work" ]]; then
-    echo "integration-test.sh: $work exists, give a new directory" >&2
-    exit 2
-fi
-mkdir -p "$work/media" "$work/out"
-work="$(cd "$work" && pwd)"
-
 version="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["tools"]["dotnet-coverage"]["version"])' "$repo/.config/dotnet-tools.json")"
 tool_dir="${NUGET_PACKAGES:-$HOME/.nuget/packages}/dotnet-coverage/$version"
 tool_dll=""
@@ -60,6 +53,13 @@ if [[ -z "$tool_dll" ]]; then
     echo "integration-test.sh: dotnet-coverage $version is not restored, run: dotnet tool restore" >&2
     exit 1
 fi
+
+if [[ -e "$work" ]]; then
+    echo "integration-test.sh: $work exists, give a new directory" >&2
+    exit 2
+fi
+mkdir -p "$work/media" "$work/out"
+work="$(cd "$work" && pwd)"
 
 # The image has no python3, so a root throwaway container adds it, then returns the media to the caller.
 docker run --rm --env OWNER="$(id -u):$(id -g)" --env MATROSKA_COMMIT="$matroska_commit" \
