@@ -46,6 +46,14 @@ class ExtractErrorsTests(unittest.TestCase):
     def test_benign_noise_dropped(self) -> None:
         self.assertEqual(cc.extract_errors('"Cannot load libcuda.so | real"'), {"real"})
 
+    def test_progress_line_dropped(self) -> None:
+        after = '"real | frame=  318 fps= 76 q=-0.0 Lsize=N/A time=00:00:10.77 speed=2.56x"'
+        self.assertEqual(cc.extract_errors(after), {"real"})
+
+    def test_error_naming_progress_fields_kept(self) -> None:
+        after = '"[h264 @ 0x1] bad slice frame=12 speed=3"'
+        self.assertEqual(cc.extract_errors(after), {"[h264 @ 0xADDR] bad slice frame=12 speed=3"})
+
 
 class ErrorShapeTests(unittest.TestCase):
     def test_strips_context_and_numbers(self) -> None:
