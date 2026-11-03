@@ -107,25 +107,6 @@ public partial class MkvMerge
 
         public OutputOptions OutputFile(string option) => Add("--output").Add($"\"{option}\"");
 
-        public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
-            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
-                ? this
-                : Add("--split")
-                    .Add($"parts:{(int)timeStart.TotalSeconds}s-{(int)timeStop.TotalSeconds}s");
-
-        public OutputOptions SeekStart(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero
-                ? this
-                : Add("--split").Add($"parts:{(int)timeSpan.TotalSeconds}s-");
-
-        public OutputOptions SeekStop(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero
-                ? this
-                : Add("--split").Add($"parts:-{(int)timeSpan.TotalSeconds}s");
-
-        public OutputOptions TestSnippets() =>
-            Program.Options.TestSnippets ? SeekStop(Program.SnippetTimeSpan) : this;
-
         public OutputOptions Add(string option) => Add(option, false);
 
         public OutputOptions Add(string option, bool escape)

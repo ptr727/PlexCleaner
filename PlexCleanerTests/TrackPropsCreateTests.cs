@@ -1,9 +1,11 @@
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
 
+[Collection("Sequential")]
 public class TrackPropsCreateTests
 {
     private const string MkvContainer = "matroska";
@@ -86,6 +88,34 @@ public class TrackPropsCreateTests
         _ = props.Language.Should().Be("eng");
         _ = props.HasErrors.Should().BeTrue();
         _ = props.Actions.Should().Be(TrackProps.ActionsType.ReMux);
+    }
+
+    [Theory]
+    [InlineData("", "")]
+    [InlineData("und", "und")]
+    public void MkvMerge_Ietf_Language_Without_An_Iso_Equivalent_Needs_ReMux(
+        string language,
+        string expectedLanguage
+    )
+    {
+        MkvToolJsonSchema.Track track = NewMkvTrack("SubRip/SRT", "S_TEXT/UTF8");
+        track.Properties.Language = language;
+        track.Properties.LanguageIetf = "pcm";
+        SubtitleProps props = NewTrack(MediaTool.ToolType.MkvMerge, MkvContainer);
+        bool created = false;
+
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() => created = props.Create(track));
+
+        _ = created.Should().BeTrue();
+        _ = props.Language.Should().Be(expectedLanguage);
+        _ = props.HasErrors.Should().BeTrue();
+        _ = props.Actions.Should().Be(TrackProps.ActionsType.ReMux);
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Error)
+            .Should()
+            .ContainSingle(message =>
+                message.Contains("Failed to lookup ISO639 tag from IETF tag")
+            );
     }
 
     [Fact]
