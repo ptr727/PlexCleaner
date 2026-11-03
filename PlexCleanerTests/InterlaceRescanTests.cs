@@ -26,6 +26,7 @@ public sealed class InterlaceRescanTests : IDisposable
     private readonly bool _useSidecarFiles = Program.Config.ProcessOptions.UseSidecarFiles;
     private readonly bool _deInterlace = Program.Config.ProcessOptions.DeInterlace;
     private readonly bool _autoRepair = Program.Config.VerifyOptions.AutoRepair;
+    private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
     private readonly int _maximumBitrate = Program.Config.VerifyOptions.MaximumBitrate;
     private readonly bool _quickScan = Program.Options.QuickScan;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
@@ -59,25 +60,20 @@ public sealed class InterlaceRescanTests : IDisposable
         Program.Config.ProcessOptions.UseSidecarFiles = _useSidecarFiles;
         Program.Config.ProcessOptions.DeInterlace = _deInterlace;
         Program.Config.VerifyOptions.AutoRepair = _autoRepair;
+        Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
         Program.Config.VerifyOptions.MaximumBitrate = _maximumBitrate;
         Program.Options.QuickScan = _quickScan;
         Directory.Delete(_directory, true);
     }
 
-    [Theory]
-    [InlineData(true, true, true)]
-    [InlineData(true, true, false)]
-    [InlineData(true, false, true)]
-    [InlineData(false, true, false)]
-    public void DeInterlaceAfterRepair_Repair_RescansOnlyASkippedScan(
-        bool skipped,
-        bool reEncode,
-        bool rescanInterlaced
-    )
+    private (
+        string FfMpeg,
+        string HandBrake,
+        string Sidecar,
+        string Snapshot,
+        int RescanStep
+    ) WriteTools(string mediaFile, bool skipped, bool reEncode, string rescanIdet)
     {
-        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
-        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
-        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
         FakeTools.WriteSampleToolData(_directory);
         string mkvMerge = Tools.MkvMerge.GetToolPath();
         FakeTools.WriteScript(
@@ -126,13 +122,38 @@ public sealed class InterlaceRescanTests : IDisposable
             ;;
             {{repair}}
             {{rescanStep}})
-            {{(rescanInterlaced ? InterlacedIdet : ProgressiveIdet)}}
+            {{rescanIdet}}
             ;;
             esac
             exit 0
 
             """
         );
+
+        return (ffMpeg, handBrake, sidecar, snapshot, rescanStep);
+    }
+
+    [Theory]
+    [InlineData(true, true, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, false)]
+    public void DeInterlaceAfterRepair_Repair_RescansOnlyASkippedScan(
+        bool skipped,
+        bool reEncode,
+        bool rescanInterlaced
+    )
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        (string ffMpeg, string handBrake, string sidecar, string snapshot, int rescanStep) =
+            WriteTools(
+                mediaFile,
+                skipped,
+                reEncode,
+                rescanInterlaced ? InterlacedIdet : ProgressiveIdet
+            );
 
         bool modified = false;
         ProcessFile processFile = new(mediaFile);
@@ -170,5 +191,37 @@ public sealed class InterlaceRescanTests : IDisposable
             .Be(processFile.State);
         _ = ToolErrorScope.Count.Should().Be(0);
         _ = modified.Should().BeTrue();
+    }
+
+    [Fact]
+    public void DeleteFailedFile_RescanAfterRepairFails_KeepsRepairedFile()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        Program.Config.VerifyOptions.DeleteInvalidFiles = true;
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        (_, string handBrake, string sidecar, _, _) = WriteTools(
+            mediaFile,
+            skipped: true,
+            reEncode: true,
+            "echo 'no idet output' >&2"
+        );
+
+        bool modified = false;
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+        _ = processFile.DeInterlace(true, ref modified).Should().BeTrue();
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
+        _ = processFile.DeInterlaceAfterRepair(ref modified).Should().BeFalse();
+
+        _ = processFile
+            .DeleteFailedFile(nameof(ProcessFile.DeInterlaceAfterRepair))
+            .Should()
+            .BeFalse();
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = File.Exists(handBrake + ".log").Should().BeFalse();
+        SidecarFile.StatesType saved = (SidecarFile.StatesType)FakeTools.ReadSidecarState(sidecar);
+        _ = saved.HasFlag(SidecarFile.StatesType.Repaired).Should().BeTrue();
+        _ = saved.HasFlag(SidecarFile.StatesType.Verified).Should().BeFalse();
     }
 }

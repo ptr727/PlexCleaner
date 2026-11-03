@@ -34,6 +34,7 @@ public class ProcessFile
     // An interlace scan skipped for undecodable video runs once more after a repair fixes the file
     private bool _interlaceScanSkipped;
     private bool _interlaceRescan;
+    private bool _interlaceRescanFailed;
 
     // Null until a step's first call reads what an earlier run left, a later call follows this run
     private bool? _coverArtRemains;
@@ -1619,6 +1620,7 @@ public class ProcessFile
         }
         if (!DeInterlace(true, ref modified))
         {
+            _interlaceRescanFailed = true;
             return false;
         }
         if (State.HasFlag(SidecarFile.StatesType.DeInterlaced) || _bitrateToolError)
@@ -1975,6 +1977,7 @@ public class ProcessFile
         : Program.IsCancelledError() ? "Cancelled"
         : _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
             ? nameof(SidecarFile.StatesType.PostDecodeTimestamps)
+        : _interlaceRescanFailed ? "Interlace rescan after repair"
         : null;
 
     public bool DeleteFailedFile(string failedOperation)
