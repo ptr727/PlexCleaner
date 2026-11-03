@@ -31,6 +31,11 @@ public class ProcessFile
     // A rename blocked by an existing file says nothing about the media
     private bool _renameCollision;
 
+    // An interlace scan skipped for undecodable video runs once more after a repair fixes the file
+    private bool _interlaceScanSkipped;
+    private bool _interlaceRescan;
+    private bool _interlaceRescanFailed;
+
     // Null until a step's first call reads what an earlier run left, a later call follows this run
     private bool? _coverArtRemains;
     private bool? _trackFlagsDoNotStick;
@@ -1387,6 +1392,7 @@ public class ProcessFile
 
         if (
             conditional
+            && !_interlaceRescan
             && (
                 State.HasFlag(SidecarFile.StatesType.ScannedInterlace)
                 || State.HasFlag(SidecarFile.StatesType.Verified)
@@ -1400,6 +1406,7 @@ public class ProcessFile
         }
 
         // Count the frame types using the idet filter
+        _interlaceRescan = false;
         if (!GetIdetInfo(out idetInfo))
         {
             // Error, an idet execution or parse failure is unexpected, abort the file so the bug surfaces
@@ -1408,6 +1415,7 @@ public class ProcessFile
         if (idetInfo == null)
         {
             // Counts from a mostly undecodable stream are unreliable, record no verdict or scan state
+            _interlaceScanSkipped = true;
             return true;
         }
 
@@ -1601,6 +1609,26 @@ public class ProcessFile
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         _sidecarFile.State &= ~SidecarFile.VerifyStates;
         return Refresh(true);
+    }
+
+    public bool DeInterlaceAfterRepair(ref bool modified)
+    {
+        // Verified stays unsaved while the rescan is pending, so an interrupted rescan scans again next run
+        if (!_interlaceRescan)
+        {
+            return true;
+        }
+        if (!DeInterlace(true, ref modified))
+        {
+            _interlaceRescanFailed = true;
+            return false;
+        }
+        if (State.HasFlag(SidecarFile.StatesType.DeInterlaced) || _bitrateToolError)
+        {
+            return true;
+        }
+        _sidecarFile.State |= SidecarFile.StatesType.Verified;
+        return SaveState();
     }
 
     public bool RemoveClosedCaptions(bool conditional, ref bool modified)
@@ -1949,6 +1977,7 @@ public class ProcessFile
         : Program.IsCancelledError() ? "Cancelled"
         : _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
             ? nameof(SidecarFile.StatesType.PostDecodeTimestamps)
+        : _interlaceRescanFailed ? "Interlace rescan after repair"
         : null;
 
     public bool DeleteFailedFile(string failedOperation)
@@ -2113,7 +2142,10 @@ public class ProcessFile
 
     private bool SetRepairedState(bool reEncoded, ref bool modified)
     {
-        _sidecarFile.State |= SidecarFile.StatesType.Verified;
+        _interlaceRescan = _interlaceScanSkipped;
+        _sidecarFile.State = _interlaceRescan
+            ? _sidecarFile.State & ~SidecarFile.StatesType.Verified
+            : _sidecarFile.State | SidecarFile.StatesType.Verified;
         _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State |= SidecarFile.StatesType.Repaired;
         _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;

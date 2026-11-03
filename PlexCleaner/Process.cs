@@ -330,6 +330,12 @@ public static class Process
                 // Split so the reported operation names the actual failing step
                 if (modified)
                 {
+                    operation = nameof(processFile.DeInterlaceAfterRepair);
+                    if (!processFile.DeInterlaceAfterRepair(ref modified) || Program.IsCancelled())
+                    {
+                        result = false;
+                        break;
+                    }
                     operation = nameof(processFile.RemoveCoverArt);
                     if (!processFile.RemoveCoverArt(ref modified) || Program.IsCancelled())
                     {
