@@ -162,7 +162,7 @@ Critical performance feature - DO NOT break compatibility:
 
 **Processing logic:**
 
-- Files must "settle" (no changes for `MonitorWaitTime` seconds) before processing
+- Files must "settle" (no changes for `SettleTime`, 60 seconds by default) before processing
 - Files must be readable (not being written) before processing
 - Cleanup: deletes empty folders when `DeleteEmptyFolders` is on, see [Run Flow][run-flow]
 - Pre-process: Optional initial scan of all monitored folders on startup
@@ -908,7 +908,7 @@ For formatter, EditorConfig, pre-commit hooks, line endings, and charset details
 
 ### Async and Concurrency
 
-- Main loop: Uses `WaitForCancel()` polling pattern instead of async/await
+- Main loop: `MonitorFolders` polls the token it is passed, linked with `Program.CancelToken()`, between processing cycles instead of using async/await. Processing itself observes the program token.
 - Tool execution: Synchronous wrappers around CliWrap async operations
 - Parallel processing: PLINQ with `AsParallel()`, `WithDegreeOfParallelism()`
 - Lock-based synchronization: `Lock` instances for collection access
