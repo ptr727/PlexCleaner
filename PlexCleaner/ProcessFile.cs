@@ -31,7 +31,7 @@ public class ProcessFile
     // A rename blocked by an existing file says nothing about the media
     private bool _renameCollision;
 
-    // A re-encode repair can make video the interlace scan skipped as undecodable scannable again
+    // A repair can make video the interlace scan skipped as undecodable scannable again
     private bool _interlaceScanSkipped;
     private bool _interlaceRescan;
 
