@@ -1419,7 +1419,24 @@ public class ProcessFile
         }
 
         // Idet result
-        if (!idetInfo.IsInterlaced())
+        bool interlaced = idetInfo.IsInterlaced();
+        Log.Information(
+            "Interlace scan counts : Interlaced: {Interlaced}, Multi: TFF: {MultiTff}, BFF: {MultiBff}, Progressive: {MultiProgressive}, Undetermined: {MultiUndetermined}, Single: TFF: {SingleTff}, BFF: {SingleBff}, Progressive: {SingleProgressive}, Undetermined: {SingleUndetermined}, Repeated: Neither: {RepeatedNeither}, Top: {RepeatedTop}, Bottom: {RepeatedBottom} : {FileName}",
+            interlaced,
+            idetInfo.MultiFrame.Tff,
+            idetInfo.MultiFrame.Bff,
+            idetInfo.MultiFrame.Progressive,
+            idetInfo.MultiFrame.Undetermined,
+            idetInfo.SingleFrame.Tff,
+            idetInfo.SingleFrame.Bff,
+            idetInfo.SingleFrame.Progressive,
+            idetInfo.SingleFrame.Undetermined,
+            idetInfo.RepeatedFields.Neither,
+            idetInfo.RepeatedFields.Top,
+            idetInfo.RepeatedFields.Bottom,
+            FileInfo.FullName
+        );
+        if (!interlaced)
         {
             // Not interlaced, clear the idet info so the caller does not treat it as a detection
             idetInfo = null;

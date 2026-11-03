@@ -248,39 +248,6 @@ public abstract partial class MediaTool
         return false;
     }
 
-    // Overload for the streaming exec paths, which return the captured stderr directly.
-    protected bool LogFailedResult(
-        int exitCode,
-        string errorOutput,
-        string fileName,
-        [CallerMemberName] string operation = ""
-    )
-    {
-        string summary = CleanForLog(Summarize(errorOutput.Trim()));
-        if (string.IsNullOrEmpty(summary))
-        {
-            Log.Error(
-                "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
-                GetToolType(),
-                operation,
-                exitCode,
-                fileName
-            );
-        }
-        else
-        {
-            Log.Error(
-                "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {Error} : {FileName}",
-                GetToolType(),
-                operation,
-                exitCode,
-                summary,
-                fileName
-            );
-        }
-        return false;
-    }
-
     // Join lines with " | " and drop other control characters so multi-line tool output stays a single structured log value; printable Unicode (e.g. media titles) is preserved
     protected static string CleanForLog(string text)
     {

@@ -647,9 +647,6 @@ public class SidecarFile
         }
     }
 
-    public static bool IsSidecarFile(string sidecarName) =>
-        IsSidecarExtension(Path.GetExtension(sidecarName));
-
     public static bool IsSidecarFile(FileInfo sidecarFileInfo) =>
         IsSidecarExtension(sidecarFileInfo.Extension);
 
@@ -668,9 +665,6 @@ public class SidecarFile
 
     public static string GetSidecarName(FileInfo mkvFileInfo) =>
         Path.ChangeExtension(mkvFileInfo.FullName, SidecarExtension);
-
-    public static string GetMkvName(string sidecarName) =>
-        Path.ChangeExtension(sidecarName, MkvExtension);
 
     public static string GetMkvName(FileInfo sidecarFileInfo) =>
         Path.ChangeExtension(sidecarFileInfo.FullName, MkvExtension);

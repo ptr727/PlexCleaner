@@ -925,8 +925,18 @@ Serilog log levels describe the **nature** of an event, applied uniformly across
 - **Warning** - the **trigger**: the orchestration layer inspected the file, interpreted the result, and has **decided to modify the media** (or detected a noteworthy non-fatal condition - unknown codec, cover art, language fallback, non-convergent repair, an interruption). Emitted **once**, at the decision point, *before* the modification. This is the event that elevates the per-file log from Warning to Information (see `PerFileLogLevel`), so `--loglevel Warning` shows every file that gets changed and why.
   - A "modification" is a write to the **media file**, including in-place metadata edits (MkvPropEdit flags/language/title) and container remuxes/renames. Sidecar cache writes and the results file are bookkeeping, not media modifications - they are Debug/Information, not Warnings.
   - **The media-manipulation code itself does not emit Warning.** Doing a remux or re-encode is that code's job, not a warning. Only the decision to run it is the Warning. Do not sprinkle Warnings through `Convert`, the media-tool wrappers, or the worker methods.
-- **Information** - the high-level narrative of what the app is doing, readable end to end at the default level with no low-level mechanics: startup (banner, settings, tool versions), discovery (`Discovered N files`), batch lifecycle (`Starting {Command}, processing N files`, progress, `Completed`, the run summary), the per-file entry, read-only outcomes of note (skips), a worker **doing its job** (e.g. `Convert.ReMux` logging `Remux using MkvMerge`), and the intended output of read-only commands (`getmediainfo` / `getsidecarinfo` / `gettagmap` dumps).
-- **Debug** - troubleshooting detail; *how* the work is done: raw tool invocations and command lines (`Executing MkvMerge : GetMediaPropsJson : args`, which carry the operation so a per-method "doing X" line is not needed), read/probe mechanics (`Reading media info from sidecar`, temp files, packet probes), per-track structural dumps during normal processing, inspection sub-steps (verify, bitrate, idet counting), and sidecar cache bookkeeping.
+- **Information** - the high-level narrative of what the app is doing, readable end to end at the default level with no low-level mechanics. It covers the following:
+  - startup (banner, settings, tool versions), discovery (`Discovered N files`), and the per-file entry.
+  - batch lifecycle (`Starting {Command}, processing N files`, progress, `Completed`, the run summary).
+  - read-only outcomes of note, such as skips, and each interlace scan's verdict and idet counts.
+  - a worker **doing its job**, such as `Convert.ReMux` logging `Remux using MkvMerge`.
+  - the intended output of read-only commands (`getmediainfo` / `getsidecarinfo` / `gettagmap` dumps).
+- **Debug** - troubleshooting detail, *how* the work is done. It covers the following:
+  - raw tool invocations and command lines, such as `Executing MkvMerge : GetMediaPropsJson : args`.
+    - Each carries its operation, so a per-method "doing X" line is not needed.
+  - read and probe mechanics (`Reading media info from sidecar`, temp files, packet probes).
+  - per-track structural dumps during normal processing.
+  - inspection sub-steps (verify, bitrate, the idet tool run), and sidecar cache bookkeeping.
 - **Verbose** - very granular: filesystem-watcher events, per-packet/byte-level progress.
 
 The elevation trigger (Warning) must be preserved: keep exactly one decision-Warning per media modification, with the action at Information and the underlying tool at Debug.
