@@ -344,8 +344,8 @@ RunRegressionTests() {
         echo "Version label '$Version' from $ImageRef is not a plain directory name" >&2
         exit 1
     fi
-    if [[ "$Channel" == "local" && "$Version" == "1.0.0.0" ]]; then
-        echo "Local image $ImageRef carries the default version label, rebuild it with --build-arg LABEL_VERSION" >&2
+    if [[ "$Channel" == "local" && ! "$Version" =~ ^[0-9a-f]{7,40}$ ]]; then
+        echo "Local image $ImageRef label '$Version' is not a commit hash, rebuild it with --build-arg LABEL_VERSION=<commit>" >&2
         exit 1
     fi
     echo "Build version for $ImageRef is $Version"
