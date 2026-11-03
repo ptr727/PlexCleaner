@@ -61,6 +61,7 @@ def build(run):
                 "verify_errors": sorted(lg["errors"]),
                 "decode_subtypes": sorted(sig),
                 "tracks": lg["tracks"],
+                "idet": lg.get("idet"),
             }
         )
     entries.sort(key=lambda e: e["file"])

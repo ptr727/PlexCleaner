@@ -116,6 +116,35 @@ class ParseLogTests(unittest.TestCase):
         self.assertEqual(a["tracks"], [{"type": "Video", "format": "HEVC", "interlaced": True}])
         self.assertEqual(a["errors"], {"bad thing", "other"})
         self.assertEqual(result["B"]["errors"], {"<silent-nonzero-exit>"})
+        self.assertIsNone(a["idet"])
+
+    def test_parse_idet_counts(self) -> None:
+        counts = (
+            "Interlace scan counts : Interlaced: False, "
+            "Multi: TFF: 47, BFF: 42, Progressive: 7, Undetermined: 0, "
+            "Single: TFF: 40, BFF: 38, Progressive: 15, Undetermined: 3, "
+            "Repeated: Neither: 96, Top: 0, Bottom: 0"
+        )
+        lines = [
+            '10:00:00 [INF] <1> ProcessFiles : Before : "/media/A.mkv"',
+            f'10:00:01 [INF] <2> {counts} : "/media/B.mkv"',
+            f"10:00:02 [INF] <1> {counts.replace('False', 'True')}",
+        ]
+        with tempfile.TemporaryDirectory() as d:
+            log = Path(d) / "run.log"
+            log.write_text("\n".join(lines), encoding="utf-8")
+            result = cc.parse_log(log)
+        self.assertEqual(
+            result["B"]["idet"],
+            {
+                "interlaced": False,
+                "multi": {"tff": 47, "bff": 42, "progressive": 7, "undetermined": 0},
+                "single": {"tff": 40, "bff": 38, "progressive": 15, "undetermined": 3},
+                "repeated": {"neither": 96, "top": 0, "bottom": 0},
+            },
+        )
+        self.assertTrue(result["A"]["idet"]["interlaced"])
+        self.assertEqual(result["A"]["detections"], set())
 
 
 class FindRunTests(unittest.TestCase):
