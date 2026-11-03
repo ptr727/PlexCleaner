@@ -340,6 +340,10 @@ RunRegressionTests() {
         echo "Could not read the version label from $ImageRef" >&2
         exit 1
     fi
+    if [[ ! "$Version" =~ ^[0-9A-Za-z][0-9A-Za-z._+-]*$ ]]; then
+        echo "Version label '$Version' from $ImageRef is not a plain directory name" >&2
+        exit 1
+    fi
     if [[ "$Channel" == "local" && "$Version" == "1.0.0.0" ]]; then
         echo "Local image $ImageRef carries the default version label, rebuild it with --build-arg LABEL_VERSION" >&2
         exit 1
@@ -404,7 +408,10 @@ Tag="${2-develop}"
 # A Docker tag cannot hold a colon, so one marks a local image, unless it names the published repository.
 Tag="${Tag#docker.io/}"
 Tag="${Tag#"${Image#docker.io/}:"}"
-if [[ "$Tag" == *:* ]]; then
+if [[ "$Tag" == "${Image#docker.io/}@"* ]]; then
+    ImageRef="docker.io/$Tag"
+    Channel="${Tag#*@}"
+elif [[ "$Tag" == *:* ]]; then
     ImageRef="$Tag"
     Channel="local"
 else
