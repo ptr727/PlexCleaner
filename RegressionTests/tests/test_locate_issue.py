@@ -20,6 +20,14 @@ class LocateIssueTests(unittest.TestCase):
         self.assertEqual(args[args.index("-i") + 1], "/in.mkv")
         self.assertEqual(args[-2:], ["null", "-"])
 
+    def test_region_window(self) -> None:
+        self.assertEqual(locate_issue.region_window(205.7, 40, False), (165, 245))
+        self.assertEqual(locate_issue.region_window(205.7, 40, True), (190, 245))
+        self.assertEqual(locate_issue.region_window(205.7, 10, True), (195, 215))
+        self.assertEqual(locate_issue.region_window(5, 40, True), (0, 45))
+        start, _ = locate_issue.region_window(205, 40, True)
+        self.assertLess(205 - start, locate_issue.SNIPPET_SECONDS)
+
     def test_write_region_merges(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             rules = Path(d) / "rules.json"

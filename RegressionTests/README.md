@@ -99,6 +99,8 @@ python3 locate_issue.py --catalog /path/to/full/catalog.json --full --write-rule
 python3 reduce_corpus.py --catalog /path/to/full/catalog.json --mode generate --out /path/to/reduced
 ```
 
+Reduce processes each clip with `--testsnippets`, so a repair re-encodes only the clip's first 30 seconds. A repair copies a subtitle defect through rather than fixing it. So a window for a source that ends `RepairFailed` starts less than 30 seconds before the defect, and the repaired snippet fails verify again. A window for a source that repairs clean starts further back, so the snippet stays clear of the defect. `locate_issue.py --write-rules` picks the lead from the catalog's state the same way.
+
 The rules schema has a `regions` map (issue-localized cut windows) and an `accept` map (relaxed-acceptance overrides), both keyed by source basename. See [`reduction-rules.example.json`][reduction-rules-example]. If the rules file is absent, every file is head-clipped, no relaxed acceptance applies, and the tool says so.
 
 ## Physical-shape coverage audit

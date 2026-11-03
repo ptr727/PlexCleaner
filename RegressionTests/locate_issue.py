@@ -31,6 +31,8 @@ SUBTYPE_NEEDLES: dict[str, list[str]] = {}
 for _needle, _label in DECODE_SIGNATURES:
     SUBTYPE_NEEDLES.setdefault(_label, []).append(_needle)
 
+SNIPPET_SECONDS = 30
+
 TIME_RE = re.compile(r"time=(\d+):(\d\d):(\d\d(?:\.\d+)?)")
 
 
@@ -141,6 +143,19 @@ def full_decode_locate(src: Path, needles: list[str]) -> float | None:
     return hit
 
 
+def region_window(t: float, pad: int, repair_failed: bool) -> tuple[int, int]:
+    """Return the [start, end] window around a defect located at ``t`` seconds.
+
+    Reduce processes a clip with ``--testsnippets``, so its repair re-encodes only the first
+    ``SNIPPET_SECONDS``, which matches PlexCleaner's ``Program.SnippetTimeSpan``.
+    A repair copies a subtitle defect through rather than fixing it.
+    A source that ends ``RepairFailed`` needs the defect inside that snippet to fail again.
+    Any other source leads by ``pad``, so the snippet stays clear of the defect and repairs clean.
+    """
+    lead = min(pad, SNIPPET_SECONDS // 2) if repair_failed else pad
+    return max(0, int(t) - lead), int(t) + pad
+
+
 def write_region(rules_path: Path, name: str, start: int, end: int, note: str) -> None:
     """Merge a region window for name into the external rules file (create if absent)."""
     data = json.loads(rules_path.read_text()) if rules_path.exists() else {}
@@ -191,10 +206,8 @@ def main() -> None:
             loc = f"~{t:.0f}s ({t / 60:.1f}m)" if t is not None else "NOT FOUND in full decode"
             print(f"{name[:52]:52} {','.join(subs)[:28]:28} {loc}")
             if rules_path is not None and t is not None:
-                start = max(0, int(t) - args.pad)
-                write_region(
-                    rules_path, name, start, int(t) + args.pad, f"decode signature at ~{int(t)}s"
-                )
+                start, end = region_window(t, args.pad, "RepairFailed" in e["state"])
+                write_region(rules_path, name, start, end, f"decode signature at ~{int(t)}s")
         return
 
     print(f"{'FILE':52} {'SUBTYPES':30} {'HEAD':>6}  RESULT")
