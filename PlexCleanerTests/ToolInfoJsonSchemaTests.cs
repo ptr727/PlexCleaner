@@ -15,15 +15,7 @@ public class ToolInfoJsonSchemaTests
         {
             LastCheck = new DateTime(2024, 8, 11, 12, 0, 0, DateTimeKind.Utc),
         };
-        schema.Tools.Add(
-            new MediaToolInfo(new SevenZip.Tool())
-            {
-                FileName = "7za.exe",
-                Size = 1024,
-                Url = "https://example.com/7z2408-extra.7z",
-                Version = "24.08",
-            }
-        );
+        schema.Tools.Add(MediaToolInfoTests.NewToolInfo());
         return schema;
     }
 
@@ -59,7 +51,11 @@ public class ToolInfoJsonSchemaTests
     {
         ToolInfoJsonSchema schema = NewSchema();
 
-        _ = schema.GetToolInfo(new SevenZip.Tool())!.Version.Should().Be("24.08");
+        _ = schema
+            .GetToolInfo(new SevenZip.Tool())
+            .Should()
+            .NotBeNull()
+            .And.BeEquivalentTo(MediaToolInfoTests.NewToolInfo());
         _ = schema.GetToolInfo(new FfMpeg.Tool()).Should().BeNull();
     }
 

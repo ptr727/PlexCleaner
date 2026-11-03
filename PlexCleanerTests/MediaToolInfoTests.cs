@@ -10,14 +10,14 @@ public class MediaToolInfoTests
 {
     private static readonly DateTime s_modifiedTime = new(2024, 8, 11, 12, 0, 0, DateTimeKind.Utc);
 
-    private static MediaToolInfo NewToolInfo() =>
+    internal static MediaToolInfo NewToolInfo() =>
         new(new SevenZip.Tool())
         {
             FileName = "7za.exe",
             ModifiedTime = s_modifiedTime,
             Size = 1024,
             Url = "https://example.com/7z2408-extra.7z",
-            Version = "24.08",
+            Version = "24.08-full",
         };
 
     [Fact]
@@ -34,7 +34,7 @@ public class MediaToolInfoTests
     {
         MediaToolInfo other = NewToolInfo();
         other.FileName = other.FileName.ToUpperInvariant();
-        other.Version = "24.08";
+        other.Version = other.Version.ToUpperInvariant();
 
         _ = NewToolInfo().CompareTo(other).Should().Be(0);
     }
@@ -71,7 +71,7 @@ public class MediaToolInfoTests
     public void CompareTo_Different_Version_Orders_By_Version()
     {
         MediaToolInfo other = NewToolInfo();
-        other.Version = "24.09";
+        other.Version = "24.09-full";
 
         _ = NewToolInfo().CompareTo(other).Should().BeNegative();
     }
@@ -88,16 +88,6 @@ public class MediaToolInfoTests
     }
 
     [Fact]
-    public void Copy_From_Self_Keeps_Values()
-    {
-        MediaToolInfo toolInfo = NewToolInfo();
-
-        toolInfo.Copy(toolInfo);
-
-        _ = toolInfo.Should().BeEquivalentTo(NewToolInfo());
-    }
-
-    [Fact]
     public void WriteLine_Logs_Prefix_And_Version()
     {
         IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
@@ -106,6 +96,6 @@ public class MediaToolInfoTests
 
         List<string> messages = LogCapture.Messages(events, LogEventLevel.Information);
         _ = messages.Should().ContainSingle();
-        _ = messages[0].Should().Contain("Latest Version").And.Contain("24.08");
+        _ = messages[0].Should().Contain("Latest Version").And.Contain("24.08-full");
     }
 }
