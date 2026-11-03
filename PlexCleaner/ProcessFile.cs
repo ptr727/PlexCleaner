@@ -1593,8 +1593,24 @@ public class ProcessFile
         return Refresh(true);
     }
 
-    public bool DeInterlaceAfterRepair(ref bool modified) =>
-        !_interlaceRescan || DeInterlace(true, ref modified);
+    public bool DeInterlaceAfterRepair(ref bool modified)
+    {
+        // Verified stays unsaved while the rescan is pending, so an interrupted rescan scans again next run
+        if (!_interlaceRescan)
+        {
+            return true;
+        }
+        if (!DeInterlace(true, ref modified))
+        {
+            return false;
+        }
+        if (State.HasFlag(SidecarFile.StatesType.DeInterlaced) || _bitrateToolError)
+        {
+            return true;
+        }
+        _sidecarFile.State |= SidecarFile.StatesType.Verified;
+        return SaveState();
+    }
 
     public bool RemoveClosedCaptions(bool conditional, ref bool modified)
     {
@@ -2121,9 +2137,9 @@ public class ProcessFile
         if (reEncoded)
         {
             _bitrateToolError = !VerifyBitrate();
-            _interlaceRescan = _interlaceScanSkipped;
         }
-        if (_bitrateToolError)
+        _interlaceRescan = _interlaceScanSkipped;
+        if (_bitrateToolError || _interlaceRescan)
         {
             _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
         }

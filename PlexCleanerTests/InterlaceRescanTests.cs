@@ -1,3 +1,4 @@
+using System.Globalization;
 using AwesomeAssertions;
 using PlexCleaner;
 using Xunit;
@@ -11,6 +12,12 @@ public sealed class InterlaceRescanTests : IDisposable
         echo '[Parsed_idet_0 @ 0] Repeated Fields: Neither: 318 Top: 0 Bottom: 0' >&2
         echo '[Parsed_idet_0 @ 0] Single frame detection: TFF: 300 BFF: 0 Progressive: 10 Undetermined: 8' >&2
         echo '[Parsed_idet_0 @ 0] Multi frame detection: TFF: 300 BFF: 0 Progressive: 10 Undetermined: 8' >&2
+        """;
+
+    private const string ProgressiveIdet = """
+        echo '[Parsed_idet_0 @ 0] Repeated Fields: Neither: 318 Top: 0 Bottom: 0' >&2
+        echo '[Parsed_idet_0 @ 0] Single frame detection: TFF: 0 BFF: 0 Progressive: 310 Undetermined: 8' >&2
+        echo '[Parsed_idet_0 @ 0] Multi frame detection: TFF: 0 BFF: 0 Progressive: 310 Undetermined: 8' >&2
         """;
 
     private readonly string _directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -58,9 +65,15 @@ public sealed class InterlaceRescanTests : IDisposable
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void DeInterlaceAfterRepair_ReEncodeRepair_RescansOnlyASkippedScan(bool skipped)
+    [InlineData(true, true, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, false)]
+    public void DeInterlaceAfterRepair_Repair_RescansOnlyASkippedScan(
+        bool skipped,
+        bool reEncode,
+        bool rescanInterlaced
+    )
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
@@ -79,12 +92,11 @@ public sealed class InterlaceRescanTests : IDisposable
             "echo \"$@\" > \"$0.log\"\nfor a; do case $a in *.tmp8) echo handbrake > \"$a\" ;; esac; done\n"
         );
 
-        // The first scan is skipped or progressive, verify and the remux tier fail, the re-encode verifies clean, and a rescan reads interlaced
-        string firstScan = skipped
-            ? InterlacedIdet + "\nexit 69"
-            : InterlacedIdet
-                .Replace("TFF: 300", "TFF: 0", StringComparison.Ordinal)
-                .Replace("Progressive: 10", "Progressive: 310", StringComparison.Ordinal);
+        // Verify fails, then the remux tier or the re-encode verifies clean, and a skipped first scan is scanned again
+        string repair = reEncode
+            ? "2|3) exit 1 ;;\n4) for a; do case $a in *.tmp12) echo ffmpeg > \"$a\" ;; esac; done ;;"
+            : "2) exit 1 ;;";
+        int rescanStep = reEncode ? 6 : 4;
         string ffMpeg = Tools.FfMpeg.GetToolPath();
         FakeTools.WriteScript(
             ffMpeg,
@@ -93,12 +105,11 @@ public sealed class InterlaceRescanTests : IDisposable
             echo $step > "$0.step"
             case $step in
             1)
-            {{firstScan}}
+            {{(skipped ? InterlacedIdet + "\nexit 69" : ProgressiveIdet)}}
             ;;
-            2|3) exit 1 ;;
-            4) for a; do case $a in *.tmp12) echo ffmpeg > "$a" ;; esac; done ;;
-            6)
-            {{InterlacedIdet}}
+            {{repair}}
+            {{rescanStep}})
+            {{(rescanInterlaced ? InterlacedIdet : ProgressiveIdet)}}
             ;;
             esac
             exit 0
@@ -111,15 +122,29 @@ public sealed class InterlaceRescanTests : IDisposable
         _ = processFile.GetMediaProps().Should().BeTrue();
         _ = processFile.DeInterlace(true, ref modified).Should().BeTrue();
         _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
+        string sidecar = SidecarFile.GetSidecarName(processFile.FileInfo);
+        SidecarFile.StatesType saved = (SidecarFile.StatesType)FakeTools.ReadSidecarState(sidecar);
+        _ = saved.HasFlag(SidecarFile.StatesType.Verified).Should().Be(!skipped);
         _ = processFile.DeInterlaceAfterRepair(ref modified).Should().BeTrue();
 
-        _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be(skipped ? "6" : "5");
-        _ = File.Exists(handBrake + ".log").Should().Be(skipped);
-        _ = processFile.State.HasFlag(SidecarFile.StatesType.DeInterlaced).Should().Be(skipped);
+        bool deInterlaced = skipped && rescanInterlaced;
+        _ = File.ReadAllText(ffMpeg + ".step")
+            .Trim()
+            .Should()
+            .Be((skipped ? rescanStep : rescanStep - 1).ToString(CultureInfo.InvariantCulture));
+        _ = File.Exists(handBrake + ".log").Should().Be(deInterlaced);
+        _ = processFile
+            .State.HasFlag(SidecarFile.StatesType.DeInterlaced)
+            .Should()
+            .Be(deInterlaced);
+        _ = processFile.State.HasFlag(SidecarFile.StatesType.Verified).Should().Be(!deInterlaced);
         _ = processFile
             .State.HasFlag(SidecarFile.StatesType.ScannedInterlace)
             .Should()
-            .Be(!skipped);
+            .Be(!deInterlaced);
+        _ = ((SidecarFile.StatesType)FakeTools.ReadSidecarState(sidecar))
+            .Should()
+            .Be(processFile.State);
         _ = ToolErrorScope.Count.Should().Be(0);
         _ = modified.Should().BeTrue();
     }
