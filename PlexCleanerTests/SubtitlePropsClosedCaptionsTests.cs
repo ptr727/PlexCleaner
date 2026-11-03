@@ -1,9 +1,11 @@
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
 
+[Collection("Sequential")]
 public class SubtitlePropsClosedCaptionsTests
 {
     private static MediaProps NewMediaProps(params long[] videoNumbers)
@@ -55,31 +57,43 @@ public class SubtitlePropsClosedCaptionsTests
         MediaProps mediaProps = NewMediaProps(256);
         SubtitleProps props = new(mediaProps);
 
-        _ = props.Create(NewCaptionTrack("CC", "A/53 / DTVCC Transport")).Should().BeFalse();
+        MediaInfoToolJsonSchema.Track track = NewCaptionTrack("CC", "A/53 / DTVCC Transport");
 
+        _ = props.Create(track).Should().BeFalse();
+
+        _ = track.Id.Should().Be("CC");
+        _ = track.CodecId.Should().BeEmpty();
         _ = mediaProps.Video[0].ClosedCaptions.Should().BeFalse();
     }
 
     [Theory]
-    [InlineData("SCTE 128 / DTVCC Transport")]
-    [InlineData("Final Cut")]
-    public void Separate_Or_Unknown_Captions_Are_Subtitle_Tracks(string muxingMode)
+    [InlineData("SCTE 128 / DTVCC Transport", 0)]
+    [InlineData("Final Cut", 1)]
+    public void Separate_Or_Unknown_Captions_Are_Subtitle_Tracks(string muxingMode, int warnings)
     {
         MediaProps mediaProps = NewMediaProps(256);
         SubtitleProps props = new(mediaProps);
+        bool created = false;
 
-        _ = props.Create(NewCaptionTrack("256-CC1", muxingMode)).Should().BeTrue();
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            created = props.Create(NewCaptionTrack("256-CC1", muxingMode))
+        );
 
+        _ = created.Should().BeTrue();
         _ = props.Format.Should().Be("EIA-608");
         _ = props.Codec.Should().Be(muxingMode);
         _ = props.Number.Should().Be(256);
         _ = mediaProps.Video[0].ClosedCaptions.Should().BeFalse();
+        _ = LogCapture.Messages(events, LogEventLevel.Warning).Should().HaveCount(warnings);
     }
 
     [Theory]
     [InlineData("", TrackProps.StateType.Remove)]
     [InlineData("zlib", TrackProps.StateType.None)]
-    public void VobSub_Without_MuxingMode_Is_Removed(string muxingMode, TrackProps.StateType state)
+    public void VobSub_Is_Removed_Only_Without_MuxingMode(
+        string muxingMode,
+        TrackProps.StateType state
+    )
     {
         MediaInfoToolJsonSchema.Track track = new()
         {

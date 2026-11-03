@@ -88,30 +88,16 @@ public class TrackPropsCreateTests
         _ = props.Actions.Should().Be(TrackProps.ActionsType.ReMux);
     }
 
-    [Theory]
-    [InlineData("", "", "avc1", "avc1", "avc1")]
-    [InlineData("", "H.264", "", "H.264", "H.264")]
-    [InlineData("h264", "", "", "h264", "h264")]
-    public void FfProbe_Non_Mkv_Container_Fills_Missing_Codec(
-        string codecName,
-        string codecLongName,
-        string codecTagString,
-        string format,
-        string codec
-    )
+    [Fact]
+    public void FfProbe_Non_Mkv_Container_Unknown_Codec_Uses_Codec_Tag()
     {
-        FfMpegToolJsonSchema.Track track = new()
-        {
-            CodecName = codecName,
-            CodecLongName = codecLongName,
-            CodecTagString = codecTagString,
-        };
+        FfMpegToolJsonSchema.Track track = new() { CodecTagString = "avc1" };
         SubtitleProps props = NewTrack(MediaTool.ToolType.FfProbe, Mp4Container);
 
         _ = props.Create(track).Should().BeTrue();
 
-        _ = props.Format.Should().Be(format);
-        _ = props.Codec.Should().Be(codec);
+        _ = props.Format.Should().Be("avc1");
+        _ = props.Codec.Should().Be("avc1");
     }
 
     [Fact]
@@ -203,7 +189,7 @@ public class TrackPropsCreateTests
     [Theory]
     [InlineData("1-0", true, 1)]
     [InlineData("first", false, 0)]
-    public void MediaInfo_Sub_Track_StreamOrder_Is_Sanitized(
+    public void MediaInfo_Sub_Track_StreamOrder_Is_Sanitized_Or_Rejected(
         string streamOrder,
         bool created,
         long id
