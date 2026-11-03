@@ -2139,7 +2139,10 @@ public class ProcessFile
 
     private bool SetRepairedState(bool reEncoded, ref bool modified)
     {
-        _sidecarFile.State |= SidecarFile.StatesType.Verified;
+        _interlaceRescan = _interlaceScanSkipped;
+        _sidecarFile.State = _interlaceRescan
+            ? _sidecarFile.State & ~SidecarFile.StatesType.Verified
+            : _sidecarFile.State | SidecarFile.StatesType.Verified;
         _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State |= SidecarFile.StatesType.Repaired;
         _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
@@ -2155,8 +2158,7 @@ public class ProcessFile
         {
             _bitrateToolError = !VerifyBitrate();
         }
-        _interlaceRescan = _interlaceScanSkipped;
-        if (_bitrateToolError || _interlaceRescan)
+        if (_bitrateToolError)
         {
             _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
         }

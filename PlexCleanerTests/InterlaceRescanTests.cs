@@ -86,6 +86,23 @@ public sealed class InterlaceRescanTests : IDisposable
                 + "for a; do case $a in *.tmp*) echo mkvmerge > \"$a\" ;; esac; done\n"
         );
         FakeTools.WriteScript(Tools.MkvPropEdit.GetToolPath(), "exit 0\n");
+
+        // Each bitrate packet scan snapshots the sidecar, the last one runs right after a re-encode repair saves it
+        Program.Config.VerifyOptions.MaximumBitrate = int.MaxValue;
+        string sidecar = SidecarFile.GetSidecarName(new FileInfo(mediaFile));
+        string snapshot = Path.Combine(_directory, "snapshot.json");
+        string packets = FakeTools.WritePackets(_directory, "packets", []);
+        string props = Path.Combine(_directory, "FfProbeInfoData.json");
+        FakeTools.WriteScript(
+            Tools.FfProbe.GetToolPath(),
+            $$"""
+            case "$*" in
+            *-show_packets*) cp "{{sidecar}}" "{{snapshot}}" ; cat "{{packets}}" ;;
+            *) cat "{{props}}" ;;
+            esac
+
+            """
+        );
         string handBrake = Tools.HandBrake.GetToolPath();
         FakeTools.WriteScript(
             handBrake,
@@ -122,9 +139,15 @@ public sealed class InterlaceRescanTests : IDisposable
         _ = processFile.GetMediaProps().Should().BeTrue();
         _ = processFile.DeInterlace(true, ref modified).Should().BeTrue();
         _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
-        string sidecar = SidecarFile.GetSidecarName(processFile.FileInfo);
         SidecarFile.StatesType saved = (SidecarFile.StatesType)FakeTools.ReadSidecarState(sidecar);
         _ = saved.HasFlag(SidecarFile.StatesType.Verified).Should().Be(!skipped);
+        if (reEncode)
+        {
+            SidecarFile.StatesType measured = (SidecarFile.StatesType)
+                FakeTools.ReadSidecarState(snapshot);
+            _ = measured.HasFlag(SidecarFile.StatesType.Repaired).Should().BeTrue();
+            _ = measured.HasFlag(SidecarFile.StatesType.Verified).Should().Be(!skipped);
+        }
         _ = processFile.DeInterlaceAfterRepair(ref modified).Should().BeTrue();
 
         bool deInterlaced = skipped && rescanInterlaced;
