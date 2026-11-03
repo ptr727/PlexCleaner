@@ -24,6 +24,10 @@ class ReduceCorpusTests(unittest.TestCase):
             self.assertEqual(reduce_corpus.load_regions(rules), {})
             rules.write_text(json.dumps({"regions": {"a": {"start": "5", "end": 9}}}))
             self.assertEqual(reduce_corpus.load_regions(rules), {"a": (5, 9)})
+            located = {"a": {"start": 1, "end": 2}, "b": {"start": 3, "end": 4}}
+            tuned = {"a": {"start": 5, "end": 9}}
+            rules.write_text(json.dumps({"regions": tuned, "located": located}))
+            self.assertEqual(reduce_corpus.load_regions(rules), {"a": (5, 9), "b": (3, 4)})
 
     def test_load_accept_validates(self) -> None:
         raw = {
@@ -57,6 +61,50 @@ class ReduceCorpusTests(unittest.TestCase):
             self.assertEqual(json.loads(source.read_text()), {"SchemaVersion": 4})
             reduce_corpus.stage_settings(settings_dir, workdir)
             self.assertEqual(json.loads(staged.read_text()), {"SchemaVersion": 4})
+
+    def test_mp4_track_names(self) -> None:
+        probe = {
+            "streams": [
+                {"index": 0, "tags": {"name": "Commentary"}},
+                {"index": 1, "tags": {"handler_name": "SoundHandler"}},
+                {"index": 2},
+                {"index": 3, "tags": {"name": "Signs"}},
+            ]
+        }
+        src = Path("/corpus/a b [x].mkv")
+        done = subprocess.CompletedProcess([], 0, json.dumps(probe))
+        with mock.patch.object(reduce_corpus.subprocess, "run", return_value=done) as fake:
+            self.assertEqual(reduce_corpus.mp4_track_names(src), {0: "Commentary", 3: "Signs"})
+        args = fake.call_args.args[0]
+        self.assertIn("/corpus:/source:ro", args)
+        self.assertEqual(args[-1], "/source/a b [x].mkv")
+        self.assertIn(reduce_corpus.IMAGE, args)
+
+    def test_mp4_track_names_failed(self) -> None:
+        done = subprocess.CompletedProcess([], 1, "")
+        with (
+            mock.patch.object(reduce_corpus.subprocess, "run", return_value=done),
+            mock.patch("sys.stderr"),
+        ):
+            self.assertEqual(reduce_corpus.mp4_track_names(Path("/corpus/a.mkv")), {})
+
+    def test_make_artificial_container_sets_titles(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "a.mkv"
+
+            def run(args: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+                out.write_bytes(b"clip")
+                return subprocess.CompletedProcess(args, 0, "")
+
+            with (
+                mock.patch.object(reduce_corpus, "mp4_track_names", return_value={2: "Signs"}),
+                mock.patch.object(reduce_corpus.subprocess, "run", side_effect=run) as fake,
+            ):
+                self.assertTrue(reduce_corpus.make_artificial_container(Path("/a.mkv"), out, 60))
+            args = fake.call_args.args[0]
+            title = args.index("-metadata:s:2")
+            self.assertEqual(args[title + 1], "title=Signs")
+            self.assertLess(title, args.index("-f"))
 
     def test_process_clip_mounts_staged_settings_writable(self) -> None:
         with tempfile.TemporaryDirectory() as d:

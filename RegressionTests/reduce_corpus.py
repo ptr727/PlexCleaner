@@ -13,8 +13,8 @@ Any miss -> the original is kept whole so no issue is ever lost.
 Cutting strategy per file:
 
 - default: head-clip ``[0, --seconds]`` (global properties + defects known to live in the head)
-- region overrides (from the external rules file, located by ``locate_issue.py``): issue-localized
-  windows for defects deep in the file
+- region overrides (from the external rules file, hand-tuned or located by ``locate_issue.py``):
+  issue-localized windows for defects deep in the file
 - the cutter ladder tries mkvmerge and ffmpeg cuts plus in-place IETF surgery, because the cutters
   have mirror-image side effects and only the prove-equivalence gate can pick the safe one
 - ``artificial-container``: last-resort rung that re-muxes the head with the MP4 muxer under the
@@ -70,7 +70,8 @@ def load_regions(path: Path) -> dict[str, Region]:
 
     The rules live WITH the media (never in source control, to keep private filenames out of the
     tree). Absent file -> no regions (head-clip everything); see ``reduction-rules.example.json``
-    for the schema and ``locate_issue.py`` for generating entries.
+    for the schema.
+    A hand-tuned ``regions`` entry wins over the ``located`` entry ``locate_issue.py`` writes.
     """
     if not path.exists():
         print(
@@ -79,7 +80,11 @@ def load_regions(path: Path) -> dict[str, Region]:
         )
         return {}
     data = json.loads(path.read_text())
-    return {name: (int(r["start"]), int(r["end"])) for name, r in data.get("regions", {}).items()}
+    located = {n: (int(r["start"]), int(r["end"])) for n, r in data.get("located", {}).items()}
+    tuned = {n: (int(r["start"]), int(r["end"])) for n, r in data.get("regions", {}).items()}
+    for name in sorted(tuned.keys() & located.keys()):
+        print(f"Hand-tuned region overrides the located one for {name}")
+    return located | tuned
 
 
 def load_accept(path: Path) -> dict[str, dict]:
@@ -172,6 +177,31 @@ def make_clip(
     return out.exists() and out.stat().st_size > 0
 
 
+def mp4_track_names(src: Path) -> dict[int, str]:
+    """Return each stream's MP4 track name by stream index, read with the image's ffprobe.
+
+    The MP4 muxer writes a track name only from a ``title`` tag, so a stream copy drops the names.
+    Read them with the image's ffprobe, since the host's may not read them at all.
+    A failed read returns no names, and the gate then rejects a clip missing them.
+    """
+    proc = subprocess.run(
+        ["docker", "run", "--rm", "--volume", f"{src.parent}:/source:ro", IMAGE,
+         "ffprobe", "-v", "error", "-show_entries", "stream=index:stream_tags=name",
+         "-of", "json", f"/source/{src.name}"],
+        check=False,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        errors="replace",
+    )  # fmt: skip
+    if proc.returncode != 0:
+        print(f"    ffprobe exit {proc.returncode}: no track names read", file=sys.stderr)
+        return {}
+    streams = json.loads(proc.stdout).get("streams", [])
+    return {s["index"]: s["tags"]["name"] for s in streams if s.get("tags", {}).get("name")}
+
+
 def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
     """Head-clip [0, seconds] with the MP4 muxer but keep the ``.mkv`` name.
 
@@ -179,14 +209,21 @@ def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
     Matroska, which PlexCleaner detects as a container mismatch and remuxes. For a genuine MKV this
     produces an unrelated file that the prove-equivalence gate rejects, so it is only ever reached
     as the last ladder rung, after the real MKV cutters have failed.
+
+    The source's MP4 track names are set as titles, since PlexCleaner reads a track name as a tag.
     """
     # escape the stem: corpus filenames contain glob metacharacters (e.g. brackets), which a raw
     # glob would read as character classes and mis-match, deleting the wrong files or none
     for p in out.parent.glob(glob.escape(out.stem) + ".*"):
         p.unlink()
+    titles = [
+        arg
+        for index, name in mp4_track_names(src).items()
+        for arg in (f"-metadata:s:{index}", f"title={name}")
+    ]
     proc = subprocess.run(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
-         "-t", str(seconds), "-map", "0", "-c", "copy", "-f", "mp4", str(out)],
+         "-t", str(seconds), "-map", "0", "-c", "copy", *titles, "-f", "mp4", str(out)],
         check=False,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,

@@ -92,14 +92,16 @@ Most defects live in the head of the file, so the default is a head clip. Defect
 Generate them from your own media on demand:
 
 ```shell
-# locate the decode signature and record a padded window into the rules file
+# locate the decode signature and record a padded window into the rules file's located map
 python3 locate_issue.py --catalog /path/to/full/catalog.json --full --write-rules /path/to/full/reduction-rules.json
 
 # build the reduced collection, reading those windows
 python3 reduce_corpus.py --catalog /path/to/full/catalog.json --mode generate --out /path/to/reduced
 ```
 
-The rules schema has a `regions` map (issue-localized cut windows) and an `accept` map (relaxed-acceptance overrides), both keyed by source basename. See [`reduction-rules.example.json`][reduction-rules-example]. If the rules file is absent, every file is head-clipped, no relaxed acceptance applies, and the tool says so.
+Reduce processes each clip with `--testsnippets`, so a repair re-encodes only the clip's first 30 seconds. A repair copies a subtitle defect through rather than fixing it. So a window for a source that ends `RepairFailed` starts less than 30 seconds before the defect, and the repaired snippet fails verify again. A window for a source that repairs clean starts more than 30 seconds before the defect, so the snippet stays clear of it. A defect less than that lead into the file starts its window at 0 instead, which can put it inside the snippet. `locate_issue.py --write-rules` picks the lead from the catalog's state the same way.
+
+The rules schema has three maps, each keyed by source basename. The `regions` map holds hand-tuned cut windows, which no tool writes. The `located` map holds the windows `locate_issue.py --write-rules` generates, which a later locate run replaces. A `regions` entry wins over a `located` one for the same file, and reduce says when it does. So tune a window by adding it to `regions`, where a locate run cannot overwrite it. The `accept` map holds relaxed-acceptance overrides. See [`reduction-rules.example.json`][reduction-rules-example]. If the rules file is absent, every file is head-clipped, no relaxed acceptance applies, and the tool says so.
 
 ## Physical-shape coverage audit
 
