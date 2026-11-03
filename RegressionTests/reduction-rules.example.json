@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "_comment": "Example media-specific reduction rules. The real file lives WITH the corpus (never in source control) so private filenames stay out of the repo. reduce_corpus.py reads 'regions' (issue-localized cut windows) and 'accept' (relaxed-acceptance overrides); locate_issue.py --write-rules generates region entries by locating a decode signature in the source. Keys are source basenames as they appear in the corpus catalog.json; the names below are synthetic placeholders.",
+  "_comment": "Example media-specific reduction rules. The real file lives WITH the corpus (never in source control) so private filenames stay out of the repo. reduce_corpus.py reads 'regions' (hand-tuned cut windows), 'located' (cut windows locate_issue.py --write-rules generates by locating a decode signature in the source), and 'accept' (relaxed-acceptance overrides). No tool writes 'regions', and a 'regions' entry wins over a 'located' one for the same file. Keys are source basenames as they appear in the corpus catalog.json; the names below are synthetic placeholders.",
   "regions": {
     "Example Show - S01E01.mkv": {
       "start": 540,
@@ -11,6 +11,13 @@
       "start": 1810,
       "end": 1890,
       "note": "interlaced-decode error near the 30m mark"
+    }
+  },
+  "located": {
+    "Example Documentary (2018).mkv": {
+      "start": 1265,
+      "end": 1345,
+      "note": "decode signature at ~1305s"
     }
   },
   "accept": {

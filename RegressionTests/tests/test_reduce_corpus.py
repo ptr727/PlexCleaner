@@ -24,6 +24,10 @@ class ReduceCorpusTests(unittest.TestCase):
             self.assertEqual(reduce_corpus.load_regions(rules), {})
             rules.write_text(json.dumps({"regions": {"a": {"start": "5", "end": 9}}}))
             self.assertEqual(reduce_corpus.load_regions(rules), {"a": (5, 9)})
+            located = {"a": {"start": 1, "end": 2}, "b": {"start": 3, "end": 4}}
+            tuned = {"a": {"start": 5, "end": 9}}
+            rules.write_text(json.dumps({"regions": tuned, "located": located}))
+            self.assertEqual(reduce_corpus.load_regions(rules), {"a": (5, 9), "b": (3, 4)})
 
     def test_load_accept_validates(self) -> None:
         raw = {

@@ -13,8 +13,8 @@ Any miss -> the original is kept whole so no issue is ever lost.
 Cutting strategy per file:
 
 - default: head-clip ``[0, --seconds]`` (global properties + defects known to live in the head)
-- region overrides (from the external rules file, located by ``locate_issue.py``): issue-localized
-  windows for defects deep in the file
+- region overrides (from the external rules file, hand-tuned or located by ``locate_issue.py``):
+  issue-localized windows for defects deep in the file
 - the cutter ladder tries mkvmerge and ffmpeg cuts plus in-place IETF surgery, because the cutters
   have mirror-image side effects and only the prove-equivalence gate can pick the safe one
 - ``artificial-container``: last-resort rung that re-muxes the head with the MP4 muxer under the
@@ -70,7 +70,8 @@ def load_regions(path: Path) -> dict[str, Region]:
 
     The rules live WITH the media (never in source control, to keep private filenames out of the
     tree). Absent file -> no regions (head-clip everything); see ``reduction-rules.example.json``
-    for the schema and ``locate_issue.py`` for generating entries.
+    for the schema.
+    A hand-tuned ``regions`` entry wins over the ``located`` entry ``locate_issue.py`` writes.
     """
     if not path.exists():
         print(
@@ -79,7 +80,11 @@ def load_regions(path: Path) -> dict[str, Region]:
         )
         return {}
     data = json.loads(path.read_text())
-    return {name: (int(r["start"]), int(r["end"])) for name, r in data.get("regions", {}).items()}
+    located = {n: (int(r["start"]), int(r["end"])) for n, r in data.get("located", {}).items()}
+    tuned = {n: (int(r["start"]), int(r["end"])) for n, r in data.get("regions", {}).items()}
+    for name in sorted(tuned.keys() & located.keys()):
+        print(f"Hand-tuned region overrides the located one for {name}")
+    return located | tuned
 
 
 def load_accept(path: Path) -> dict[str, dict]:
