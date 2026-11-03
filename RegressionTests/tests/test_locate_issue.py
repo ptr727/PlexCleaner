@@ -25,6 +25,7 @@ class LocateIssueTests(unittest.TestCase):
         self.assertEqual(locate_issue.region_window(205.7, 40, True), (190, 245))
         self.assertEqual(locate_issue.region_window(205.7, 10, True), (195, 215))
         self.assertEqual(locate_issue.region_window(5, 40, True), (0, 45))
+        self.assertEqual(locate_issue.region_window(205, 10, False), (174, 215))
         start, _ = locate_issue.region_window(205, 40, True)
         self.assertLess(205 - start, locate_issue.SNIPPET_SECONDS)
 

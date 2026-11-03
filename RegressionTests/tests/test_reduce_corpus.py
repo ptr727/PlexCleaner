@@ -76,16 +76,13 @@ class ReduceCorpusTests(unittest.TestCase):
         self.assertEqual(args[-1], "/source/a b [x].mkv")
         self.assertIn(reduce_corpus.IMAGE, args)
 
-    def test_mp4_track_names_unreadable(self) -> None:
-        for done in (
-            subprocess.CompletedProcess([], 1, ""),
-            subprocess.CompletedProcess([], 0, "not json"),
+    def test_mp4_track_names_failed(self) -> None:
+        done = subprocess.CompletedProcess([], 1, "")
+        with (
+            mock.patch.object(reduce_corpus.subprocess, "run", return_value=done),
+            mock.patch("sys.stderr"),
         ):
-            with (
-                mock.patch.object(reduce_corpus.subprocess, "run", return_value=done),
-                mock.patch("sys.stderr"),
-            ):
-                self.assertEqual(reduce_corpus.mp4_track_names(Path("/corpus/a.mkv")), {})
+            self.assertEqual(reduce_corpus.mp4_track_names(Path("/corpus/a.mkv")), {})
 
     def test_make_artificial_container_sets_titles(self) -> None:
         with tempfile.TemporaryDirectory() as d:

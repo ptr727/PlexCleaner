@@ -150,9 +150,11 @@ def region_window(t: float, pad: int, repair_failed: bool) -> tuple[int, int]:
     ``SNIPPET_SECONDS``, which matches PlexCleaner's ``Program.SnippetTimeSpan``.
     A repair copies a subtitle defect through rather than fixing it.
     A source that ends ``RepairFailed`` needs the defect inside that snippet to fail again.
-    Any other source leads by ``pad``, so the snippet stays clear of the defect and repairs clean.
+    Its lead is at most half the snippet, since a keyframe snap or a late stats time shifts it.
+    Any other source leads by more than the snippet, so the snippet stays clear and repairs clean.
+    A defect nearer the file start than the lead starts the window at 0.
     """
-    lead = min(pad, SNIPPET_SECONDS // 2) if repair_failed else pad
+    lead = min(pad, SNIPPET_SECONDS // 2) if repair_failed else max(pad, SNIPPET_SECONDS + 1)
     return max(0, int(t) - lead), int(t) + pad
 
 

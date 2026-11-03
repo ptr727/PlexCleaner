@@ -177,7 +177,7 @@ def mp4_track_names(src: Path) -> dict[int, str]:
 
     The MP4 muxer writes a track name only from a ``title`` tag, so a stream copy drops the names.
     Read them with the image's ffprobe, since the host's may not read them at all.
-    An unreadable source returns no names, and the gate then rejects a clip missing them.
+    A failed read returns no names, and the gate then rejects a clip missing them.
     """
     proc = subprocess.run(
         ["docker", "run", "--rm", "--volume", f"{src.parent}:/source:ro", IMAGE,
@@ -193,11 +193,7 @@ def mp4_track_names(src: Path) -> dict[int, str]:
     if proc.returncode != 0:
         print(f"    ffprobe exit {proc.returncode}: no track names read", file=sys.stderr)
         return {}
-    try:
-        streams = json.loads(proc.stdout).get("streams", [])
-    except json.JSONDecodeError:
-        print("    ffprobe output unreadable: no track names read", file=sys.stderr)
-        return {}
+    streams = json.loads(proc.stdout).get("streams", [])
     return {s["index"]: s["tags"]["name"] for s in streams if s.get("tags", {}).get("name")}
 
 
