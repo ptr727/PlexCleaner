@@ -14,7 +14,7 @@
 #   3. Create the version-named directory under this folder.
 #   4. Copy the live PlexCleaner.json settings into the directory as a durable record.
 #   5. Write buildinfo.json with the channel, version, image digest, and run timestamp.
-#   6. Build the requested plugins from the matching source tag into the directory.
+#   6. Build the requested plugins from the matching source tag into the directory, except for a local image.
 #   7. Run defaultsettings, provision the test dataset, run process, then run each plugin on the processed results.
 #
 # Settings file PlexCleaner.json is expected to use:
@@ -24,7 +24,7 @@
 # The image ships no plugin assembly, so the script builds each plugin from the matching source tag.
 # That keeps the plugin API equal to the running image's.
 # The build needs git and the .NET SDK on the host.
-# A missing tool or an unresolvable tag skips the plugin run with a warning.
+# A local image, a missing tool, or an unresolvable tag skips the plugin run with a warning.
 
 set -Eeuo pipefail
 
@@ -329,12 +329,7 @@ RunCreateSchema() {
 
 # RunRegressionTests
 RunRegressionTests() {
-    if [[ "$Channel" == "local" ]]; then
-        if ! docker image inspect "$ImageRef" >/dev/null; then
-            echo "Local image $ImageRef not found, build it per OPERATIONS.md first" >&2
-            exit 1
-        fi
-    else
+    if [[ "$Channel" != "local" ]]; then
         docker pull "$ImageRef"
     fi
 
@@ -406,7 +401,9 @@ RunRegressionTests() {
 
 Tag="${2-develop}"
 [[ -n "$Tag" ]] || UnknownArgument "$Tag"
-# A Docker tag cannot hold a colon, so one marks a local image reference.
+# A Docker tag cannot hold a colon, so one marks a local image, unless it names the published repository.
+Tag="${Tag#docker.io/}"
+Tag="${Tag#"${Image#docker.io/}:"}"
 if [[ "$Tag" == *:* ]]; then
     ImageRef="$Tag"
     Channel="local"
