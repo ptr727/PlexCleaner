@@ -100,7 +100,7 @@ dotnet reportgenerator "-reports:./.artifacts/coverage/*.cobertura.xml" "-target
 
 The file filter keeps the project sources and drops the source-generated files under `.artifacts/obj`, which Codecov also drops. Codecov's total also holds the Python coverage of `RegressionTests/`, so compare against its .NET files alone. The merged rate still reads higher than Codecov's .NET rate. ReportGenerator counts a line with partly covered branches as covered, while Codecov counts it as a partial, which lowers its rate. A comparison holds only when every report comes from the same commit. A published image's `--version` ends in its commit's short SHA, and a local image is the checkout it was built from.
 
-A carried-forward flag holds no data for a line changed or added since its upload. Codecov moves the flag's unchanged lines through the diff and drops the changed ones. So a commit's total measures changed code with that commit's own uploads alone. It reads as final only once every carried-forward flag is uploaded on that commit.
+A carried-forward flag holds no data for a line changed or added since its upload. Codecov moves the flag's unchanged lines through the diff and drops the changed ones. So a commit's total measures changed code with that commit's own uploads alone. Compare it with another total only where both commits uploaded every carried-forward flag.
 
 On Windows, run the `win-x64` folder of the release archive under `dotnet-coverage collect`. It is framework-dependent with its PDB beside it, not a single-file executable, so it instruments as shipped. A `develop` prerelease carries the Debug build, a `main` release carries the Release build, and `PlexCleaner.exe --version` names the commit.
 
