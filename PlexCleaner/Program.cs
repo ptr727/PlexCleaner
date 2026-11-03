@@ -315,7 +315,7 @@ public static class Program
 
         // Monitor and process changes in directories
         Monitor monitor = new();
-        if (!monitor.MonitorFolders(Options.MediaFiles))
+        if (!monitor.MonitorFolders(Options.MediaFiles, CancelToken()))
         {
             return MakeExitCode(ExitCode.Error);
         }
