@@ -59,6 +59,7 @@ IDET_RE = re.compile(
 #   old : Failed execution of FfMpeg : ExitCode: 183 : "e1 | e2 | e3"
 #   new : Failed execution of FfMpeg : Verify : ExitCode: 183 : "e1 | e2 | e3" : "/path/file.mkv"
 FAIL_RE = re.compile(r"Failed execution of (\w+)\b.*?ExitCode:\s*-?\d+\s*(?::\s*(.*))?$")
+LINE_FILE_RE = re.compile(r'"([^"]+\.[A-Za-z0-9]+)"\s*$')
 QUOTED_RE = re.compile(r'"([^"]*)"')
 # Environmental / informational stderr that is NOT a file-intrinsic issue - a reduced clip must not be
 # required to reproduce these (they depend on the host, not the media).
@@ -284,6 +285,12 @@ def extract_errors(after):
     return errs
 
 
+def line_target(msg, stem):
+    """The stem a log line names as its trailing quoted file, else the thread's current file."""
+    fn = LINE_FILE_RE.search(msg)
+    return stem_of(fn.group(1)) if fn else stem
+
+
 def idet_counts(m):
     """The interlace scan's verdict and counts, informational only, never part of the reduce gate."""
     n = {k: int(v) for k, v in m.groupdict().items() if k != "interlaced"}
@@ -321,15 +328,13 @@ def parse_log(path):
         stem = thread_file.get(tid)
         i = IDET_RE.search(msg)
         if i:
-            fn = re.search(r'"([^"]+\.[A-Za-z0-9]+)"\s*$', msg)
-            target = stem_of(fn.group(1)) if fn else stem
+            target = line_target(msg, stem)
             if target:
                 bucket(target)["idet"] = idet_counts(i)
             continue
         d = DETECT_RE.search(msg)
         if d:
-            fn = re.search(r'"([^"]+\.[A-Za-z0-9]+)"\s*$', msg)
-            target = stem_of(fn.group(1)) if fn else stem
+            target = line_target(msg, stem)
             if target:
                 bucket(target)["detections"].add(d.group(1).strip())
             continue

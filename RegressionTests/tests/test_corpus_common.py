@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -145,6 +146,32 @@ class ParseLogTests(unittest.TestCase):
         )
         self.assertTrue(result["A"]["idet"]["interlaced"])
         self.assertEqual(result["A"]["detections"], set())
+
+    def test_parse_idet_counts_from_application_template(self) -> None:
+        source = Path(__file__).resolve().parents[2] / "PlexCleaner" / "ProcessFile.cs"
+        template = re.search(r'"(Interlace scan counts : [^"]*)"', source.read_text())
+        assert template is not None
+        expected: dict[str, dict[str, int]] = {}
+
+        def fill(m: re.Match[str]) -> str:
+            name = m.group(1)
+            if name == "Interlaced":
+                return "True"
+            if name == "FileName":
+                return '"/media/T.mkv"'
+            parts = re.fullmatch(r"(Multi|Single|Repeated)(\w+)", name)
+            assert parts is not None, name
+            group, count = parts.groups()
+            value = sum(len(v) for v in expected.values()) + 1
+            expected.setdefault(group.lower(), {})[count.lower()] = value
+            return str(value)
+
+        line = re.sub(r"\{(\w+)\}", fill, template.group(1))
+        with tempfile.TemporaryDirectory() as d:
+            log = Path(d) / "run.log"
+            log.write_text(f"10:00:00 [INF] <1> {line}", encoding="utf-8")
+            result = cc.parse_log(log)
+        self.assertEqual(result["T"]["idet"], {"interlaced": True, **expected})
 
 
 class FindRunTests(unittest.TestCase):
