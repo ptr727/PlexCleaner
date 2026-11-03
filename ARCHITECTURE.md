@@ -350,27 +350,28 @@ flowchart TD
   end
   P23 --> G6{"A step from RemoveCoverArt() on modified the file?"}
   G6 -->|yes| CLEAN
-  G6 -->|no| P33
+  G6 -->|no| P34
   subgraph CLEAN["Cleanup re-run"]
-    P24["RemoveCoverArt(): ReMux"] --> P25["RemoveTags(): RemoveTags"]
-    P25 --> P26["RepairMetadataErrors(): AutoRepair"]
-    P26 --> P27["RepairMatroskaStructure(): Verify"]
-    P27 --> P28["RemoveClosedCaptions(): RemoveClosedCaptions"]
-    P28 --> P29["SetUnknownLanguageTracks(): SetUnknownLanguage"]
-    P29 --> P30["RemoveUnwantedLanguageTracks(): RemoveUnwantedLanguageTracks"]
-    P30 --> P31["RemoveDuplicateTracks(): RemoveDuplicateTracks"]
-    P31 --> P32["RepairDefaultFlags(): SetTrackFlags"]
+    P24["DeInterlaceAfterRepair(): DeInterlace"] --> P25["RemoveCoverArt(): ReMux"]
+    P25 --> P26["RemoveTags(): RemoveTags"]
+    P26 --> P27["RepairMetadataErrors(): AutoRepair"]
+    P27 --> P28["RepairMatroskaStructure(): Verify"]
+    P28 --> P29["RemoveClosedCaptions(): RemoveClosedCaptions"]
+    P29 --> P30["SetUnknownLanguageTracks(): SetUnknownLanguage"]
+    P30 --> P31["RemoveUnwantedLanguageTracks(): RemoveUnwantedLanguageTracks"]
+    P31 --> P32["RemoveDuplicateTracks(): RemoveDuplicateTracks"]
+    P32 --> P33["RepairDefaultFlags(): SetTrackFlags"]
   end
-  P32 --> P33["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
-  P33 --> P34["VerifyMediaInfo()"]
-  P34 --> OK(["Result true"])
+  P33 --> P34["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
+  P34 --> P35["VerifyMediaInfo()"]
+  P35 --> OK(["Result true"])
   P03 -.->|"false or cancel"| AB
   P06 -.->|false| AB
   P07 -.->|"false or cancel"| AB
   MAIN -.->|"any step false or cancel"| AB
   CLEAN -.->|"any step false or cancel"| AB
-  P33 -.->|"false or cancel"| AB
-  P34 -.->|false| AB
+  P34 -.->|"false or cancel"| AB
+  P35 -.->|false| AB
   THR["Any step throws while no cancel is requested"] -.-> AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
@@ -380,7 +381,7 @@ flowchart TD
 
 `ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`, and a file whose remux or rename target already held another file. A media delete that throws is logged, and the file counts as not deleted. When the sidecar delete that follows throws, it is logged, and the file still counts as deleted with `FileDeleted` set.
 
-After `VerifyAndRepair()`, when a step from `RemoveCoverArt()` on modified the file, the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
+After `VerifyAndRepair()`, when a step from `RemoveCoverArt()` on modified the file, `DeInterlaceAfterRepair()` runs first. It scans again only a file whose interlace scan was skipped and that the repair re-encoded, per "Deinterlace" below. Then the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path. `RemuxByExtension()` and `MakeExtensionLowercase()` fail the file before they write anything when another file holds the target name.
 
@@ -629,7 +630,7 @@ flowchart TD
   F1 -->|yes| FOUND
   F1 -->|no| F2{"--quickscan set?"}
   F2 -->|yes| AOK
-  F2 -->|no| F3{"Process command, and the state has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
+  F2 -->|no| F3{"Process command, no rescan pending, and the state has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
   F3 -->|yes| AOK
   F3 -->|no| F4["FfMpeg idet scan"]
   F4 -->|"scan or parse fails"| FAIL(["Fail"])
@@ -661,6 +662,8 @@ flowchart TD
 ```
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
+
+A scan skipped past the decode error rate leaves interlacing unknown. When verify then fails and the repair re-encodes the file, `DeInterlaceAfterRepair()` scans the now decodable file once, past the `Verified` skip. A re-encode keeps interlaced content interlaced, and `Verified` would otherwise keep the file from ever being scanned. The `process` command runs it first in the post-repair cleanup, so the cleanup steps also cover a HandBrake deinterlace. A deinterlace there clears the verify states, so the next run verifies the new media.
 
 Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes DC to D5 for its caller. The repair by re-encode uses it for its HandBrake fallback. HandBrake would convert the subtitles to ASS, so it encodes without them, and MkvMerge merges the original subtitle tracks back unchanged. MkvMerge merges back only tracks, so closed captions embedded in the video stream are lost. `ReportClosedCaptionsDropped()` logs a warning first when the video carries them, as [Docs/ClosedCaptions.md][closed-captions] describes.
 
@@ -870,7 +873,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RepairMetadataErrors()` | `SetLanguage`, `ReMuxed`, `SetFlags`, `VerifyFailed` | `Verified`, `Repaired` |
 | `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified`, `Repaired` |
 | `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | |
-| `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
+| `DeInterlace()`, `DeInterlaceAfterRepair()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
 | `SetUnknownLanguageTracks()` | `SetLanguage` | |
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |

@@ -31,6 +31,10 @@ public class ProcessFile
     // A rename blocked by an existing file says nothing about the media
     private bool _renameCollision;
 
+    // A re-encode repair can make video the interlace scan skipped as undecodable scannable again
+    private bool _interlaceScanSkipped;
+    private bool _interlaceRescan;
+
     // Null until a step's first call reads what an earlier run left, a later call follows this run
     private bool? _coverArtRemains;
     private bool? _trackFlagsDoNotStick;
@@ -1387,6 +1391,7 @@ public class ProcessFile
 
         if (
             conditional
+            && !_interlaceRescan
             && (
                 State.HasFlag(SidecarFile.StatesType.ScannedInterlace)
                 || State.HasFlag(SidecarFile.StatesType.Verified)
@@ -1400,6 +1405,7 @@ public class ProcessFile
         }
 
         // Count the frame types using the idet filter
+        _interlaceRescan = false;
         if (!GetIdetInfo(out idetInfo))
         {
             // Error, an idet execution or parse failure is unexpected, abort the file so the bug surfaces
@@ -1408,6 +1414,7 @@ public class ProcessFile
         if (idetInfo == null)
         {
             // Counts from a mostly undecodable stream are unreliable, record no verdict or scan state
+            _interlaceScanSkipped = true;
             return true;
         }
 
@@ -1585,6 +1592,9 @@ public class ProcessFile
         _sidecarFile.State &= ~SidecarFile.VerifyStates;
         return Refresh(true);
     }
+
+    public bool DeInterlaceAfterRepair(ref bool modified) =>
+        !_interlaceRescan || DeInterlace(true, ref modified);
 
     public bool RemoveClosedCaptions(bool conditional, ref bool modified)
     {
@@ -2111,6 +2121,7 @@ public class ProcessFile
         if (reEncoded)
         {
             _bitrateToolError = !VerifyBitrate();
+            _interlaceRescan = _interlaceScanSkipped;
         }
         if (_bitrateToolError)
         {
