@@ -208,7 +208,24 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             // Get the ISO tag from the IETF tag
             string isoLookup = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
 
-            if (!Language.Equals(isoLookup, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(isoLookup))
+            {
+                // Set track error and recommend ReMux
+                HasErrors = true;
+                Actions |= ActionsType.ReMux;
+
+                // Failed to lookup ISO tag from IETF tag
+                Log.Error(
+                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
+                    Parent.Parser,
+                    Type,
+                    Language,
+                    LanguageIetf,
+                    Actions,
+                    Parent.FileName
+                );
+            }
+            else if (!Language.Equals(isoLookup, StringComparison.OrdinalIgnoreCase))
             {
                 // Set track error and recommend ReMux
                 HasErrors = true;
@@ -259,16 +276,35 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             HasErrors = true;
             Actions |= ActionsType.ReMux;
 
-            Language = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
-            Log.Warning(
-                "{Parser} : {Type} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
-                Parent.Parser,
-                Type,
-                Language,
-                LanguageIetf,
-                Actions,
-                Parent.FileName
-            );
+            // Get the ISO tag from the IETF tag
+            string isoLookup = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
+
+            if (string.IsNullOrEmpty(isoLookup))
+            {
+                // Failed to lookup ISO from IETF
+                Log.Error(
+                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
+                    Parent.Parser,
+                    Type,
+                    LanguageIetf,
+                    Actions,
+                    Parent.FileName
+                );
+            }
+            else
+            {
+                // Set ISO from lookup
+                Language = isoLookup;
+                Log.Warning(
+                    "{Parser} : {Type} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
+                    Parent.Parser,
+                    Type,
+                    Language,
+                    LanguageIetf,
+                    Actions,
+                    Parent.FileName
+                );
+            }
         }
 
         // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
