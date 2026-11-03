@@ -16,6 +16,10 @@ public class Monitor
 
     public bool MonitorFolders(List<string> folders, CancellationToken cancelToken)
     {
+        using CancellationTokenSource stopSource = CancellationTokenSource.CreateLinkedTokenSource(
+            cancelToken,
+            Program.CancelToken()
+        );
         LogMonitorMessage();
 
         // Trim quotes around input paths
@@ -71,7 +75,7 @@ public class Monitor
         }
 
         // Wait for exit to be signaled
-        while (!cancelToken.WaitHandle.WaitOne(1000))
+        while (!stopSource.Token.WaitHandle.WaitOne(1000))
         {
             // Lock and process the list of folders
             List<string> watchList = [];

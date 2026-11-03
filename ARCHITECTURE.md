@@ -908,7 +908,7 @@ For formatter, EditorConfig, pre-commit hooks, line endings, and charset details
 
 ### Async and Concurrency
 
-- Main loop: `MonitorFolders` polls the cancellation token it is passed instead of using async/await
+- Main loop: `MonitorFolders` polls the token it is passed, linked with `Program.CancelToken()`, between processing cycles instead of using async/await, and processing itself observes the program token
 - Tool execution: Synchronous wrappers around CliWrap async operations
 - Parallel processing: PLINQ with `AsParallel()`, `WithDegreeOfParallelism()`
 - Lock-based synchronization: `Lock` instances for collection access
