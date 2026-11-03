@@ -14,7 +14,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Pull requests that change the application or the image run it, and a publish waits for it to pass.
     - Its coverage reports to Codecov under the `integration` flag.
   - A file whose video mostly fails to decode skips interlace detection with a warning, instead of failing at the interlace scan.
-  - Each interlace scan logs its verdict and idet frame counts at Information level, so processing a collection surveys its field orders.
+  - With `DeInterlace` on, each interlace scan logs its verdict and idet frame counts at Information level, so processing a collection surveys its field orders.
 - Version 3.23:
   - Added a minimum version for every media tool, and PlexCleaner exits with an error at startup when an installed tool is older.
     - The minimums are FFmpeg 8.0, HandBrake 1.10.0, MediaInfo 25.07, MKVToolNix 94.0, and 7-Zip 25.01.

@@ -42,7 +42,7 @@ def build(run):
             continue
         stem = stem_of(name)
         state = state_flags(r.get("State"))
-        lg = log.get(stem, {"detections": set(), "errors": set(), "tracks": []})
+        lg = log.get(stem, {"detections": set(), "errors": set(), "tracks": [], "idet": None})
         sig = classify_signature(lg["errors"])
         buckets = buckets_for(state, lg["detections"], sig, stem in err_files)
         # FileDeleted / consumed samples yield no derivable output; fall back to a marker bucket
@@ -61,7 +61,7 @@ def build(run):
                 "verify_errors": sorted(lg["errors"]),
                 "decode_subtypes": sorted(sig),
                 "tracks": lg["tracks"],
-                "idet": lg.get("idet"),
+                "idet": lg["idet"],
             }
         )
     entries.sort(key=lambda e: e["file"])

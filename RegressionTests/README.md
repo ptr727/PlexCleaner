@@ -61,7 +61,7 @@ The harness scans the whole file; it does not use `--quickscan`. Bounding the sc
 
 `catalog_corpus.py` turns a processing run into `catalog.json`: one entry per file recording its processing State, the detections it triggered, and the classified decode-error subtypes. This catalog is the ground truth the reduction proves against, and the artifact compared between versions.
 
-Each entry also records the interlace scan's verdict and idet counts, from PlexCleaner's `Interlace scan counts` log line, as a survey of the corpus's field orders. The field is `null` where no scan ran. It is informational, and the reduction ignores it, since a clip's counts always differ from its source's.
+Each entry also records the interlace scan's verdict and idet counts, from PlexCleaner's `Interlace scan counts` log line, as a survey of the corpus's field orders. The field is `null` where no scan ran, or where the scan exceeded FFmpeg's decode error rate. It is informational, and the reduction ignores it, since a cut clip's counts differ from its source's.
 
 Classification is deterministic and lives in `corpus_common.py`: raw ffmpeg error lines carry per-site coordinates (macroblock positions, picture numbers) and accumulate across every corrupt site, so they are normalized to a stable signature class before comparison.
 
