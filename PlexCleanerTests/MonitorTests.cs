@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AwesomeAssertions;
 using PlexCleaner;
 using Serilog.Events;
@@ -12,7 +13,6 @@ public sealed class MonitorTests : IDisposable
     private const string QueuedMessage = "Adding folder to processing queue";
     private const string UpdatedMessage = "Updating timestamp for folder in processing queue";
     private static readonly TimeSpan s_bound = TimeSpan.FromSeconds(30);
-    private static readonly TimeSpan s_twoLoopWakes = TimeSpan.FromSeconds(2.5);
 
     private readonly string _directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
     private readonly bool _deleteEmptyFolders = Program.Config.ProcessOptions.DeleteEmptyFolders;
@@ -53,19 +53,14 @@ public sealed class MonitorTests : IDisposable
         return folder;
     }
 
-    private static bool RunMonitorUntil(
-        Monitor monitor,
-        string folder,
-        Func<bool> condition,
-        TimeSpan bound
-    )
+    private static bool RunMonitorUntil(Monitor monitor, string folder, Func<bool> condition)
     {
         using CancellationTokenSource cancelSource = new();
         Task<bool> monitorTask = Task.Run(
             () => monitor.MonitorFolders([folder], cancelSource.Token),
             TestContext.Current.CancellationToken
         );
-        _ = SpinWait.SpinUntil(condition, bound);
+        _ = SpinWait.SpinUntil(condition, s_bound);
         cancelSource.Cancel();
         return monitorTask.GetAwaiter().GetResult();
     }
@@ -91,38 +86,48 @@ public sealed class MonitorTests : IDisposable
         string empty = NewEmptyFolder("media");
         Monitor monitor = new();
 
-        _ = RunMonitorUntil(monitor, _directory, () => !Directory.Exists(empty), s_bound)
-            .Should()
-            .BeTrue();
+        _ = RunMonitorUntil(monitor, _directory, () => !Directory.Exists(empty)).Should().BeTrue();
 
         _ = Directory.Exists(empty).Should().BeFalse();
     }
 
     [Fact]
-    public void Created_Folder_Is_Processed_Once_Settled()
+    public void Created_Folder_Is_Queued_And_Processed()
     {
         string empty = NewEmptyFolder("media");
         Monitor monitor = new() { SettleTime = TimeSpan.Zero };
 
         IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
-        {
             monitor.OnChanged(
                 Changed(WatcherChangeTypes.Created, Path.Combine(_directory, "media"))
-            );
-            _ = RunMonitorUntil(monitor, _directory, () => !Directory.Exists(empty), s_bound)
-                .Should()
-                .BeTrue();
-        });
+            )
+        );
 
-        _ = Directory.Exists(empty).Should().BeFalse();
         _ = LogCapture
             .Messages(events, LogEventLevel.Information)
             .Should()
             .ContainSingle(message => message.Contains(QueuedMessage));
+        _ = RunMonitorUntil(monitor, _directory, () => !Directory.Exists(empty)).Should().BeTrue();
+        _ = Directory.Exists(empty).Should().BeFalse();
     }
 
     [Fact]
-    public void Changed_File_Queues_Its_Folder_And_Updates_The_Timestamp()
+    public void Queued_Folder_Waits_For_The_Settle_Time()
+    {
+        string empty = NewEmptyFolder("media");
+        TimeSpan settleTime = TimeSpan.FromSeconds(3);
+        Monitor monitor = new() { SettleTime = settleTime };
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
+        monitor.OnChanged(Changed(WatcherChangeTypes.Created, Path.Combine(_directory, "media")));
+        _ = RunMonitorUntil(monitor, _directory, () => !Directory.Exists(empty)).Should().BeTrue();
+
+        _ = Directory.Exists(empty).Should().BeFalse();
+        _ = stopwatch.Elapsed.Should().BeGreaterThanOrEqualTo(settleTime);
+    }
+
+    [Fact]
+    public void Repeated_Change_Updates_Rather_Than_Requeues_The_Folder()
     {
         string media = Path.Combine(_directory, "media");
         _ = Directory.CreateDirectory(media);
@@ -208,18 +213,21 @@ public sealed class MonitorTests : IDisposable
     {
         string media = Path.Combine(_directory, "media");
         _ = Directory.CreateDirectory(media);
+        string empty = NewEmptyFolder("other");
         Monitor monitor = new() { SettleTime = TimeSpan.Zero };
+        monitor.OnChanged(Changed(WatcherChangeTypes.Created, media));
+        monitor.OnChanged(Changed(WatcherChangeTypes.Created, Path.Combine(_directory, "other")));
+        Directory.Delete(media);
 
+        _ = RunMonitorUntil(monitor, _directory, () => !Directory.Exists(empty)).Should().BeTrue();
+        _ = Directory.CreateDirectory(media);
         IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
-        {
-            monitor.OnChanged(Changed(WatcherChangeTypes.Created, media));
-            Directory.Delete(media);
-            _ = RunMonitorUntil(monitor, _directory, () => false, s_twoLoopWakes).Should().BeTrue();
-        });
+            monitor.OnChanged(Changed(WatcherChangeTypes.Created, media))
+        );
 
         _ = LogCapture
             .Messages(events, LogEventLevel.Information)
             .Should()
-            .ContainSingle(message => message.Contains("Folder deleted"));
+            .ContainSingle(message => message.Contains(QueuedMessage) && message.Contains(media));
     }
 }
