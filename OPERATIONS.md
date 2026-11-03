@@ -63,7 +63,7 @@ docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/test" \
 
 ### Run the regression tests
 
-The regression harness under [RegressionTests/](./RegressionTests/) processes a curated collection of troublesome media through a given image tag on a ZFS clone and compares the results across versions down to the per-file processing decision. The collection and its media-specific reduction rules live with the media on a server and are never committed, so this runs on the host that holds them. [RegressionTests/README.md](./RegressionTests/README.md) is the procedure.
+The regression harness under [RegressionTests/](./RegressionTests/) processes a curated collection of troublesome media through a given image on a ZFS clone. It compares the results across versions down to the per-file processing decision. The image is a published tag, or a local image built from a branch. The collection and its media-specific reduction rules live with the media on a server and are never committed. So this runs on the host that holds them. [RegressionTests/README.md](./RegressionTests/README.md) is the procedure.
 
 ### Measure code coverage
 

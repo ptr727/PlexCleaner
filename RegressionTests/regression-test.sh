@@ -9,7 +9,7 @@
 # Re-running the same build overwrites the files in that build's directory.
 #
 # The flow is:
-#   1. Pull the image.
+#   1. Pull the image, unless the tag names a local image.
 #   2. Read the build version from the image "version" label.
 #   3. Create the version-named directory under this folder.
 #   4. Copy the live PlexCleaner.json settings into the directory as a durable record.
@@ -33,7 +33,8 @@ Usage() {
 Usage: regression-test.sh [quick|full] [tag] [full|reduced] [plugin...]
   quick    full-file scan as in production, remux and re-encode to short testsnippets (default)
   full     also remux and re-encode the complete media (slowest)
-  tag      Docker image tag to test (default develop)
+  tag      Docker image tag to test (default develop),
+           or a local image reference holding a colon, such as plexcleaner:local, run without a pull
   corpus   full or reduced corpus subdirectory of the test clone to process (default full)
   plugin   registry plugin names to run after processing (default MatroskaHeaderCleanup)
 Runs as root, since it clones and rolls back ZFS datasets.
@@ -116,19 +117,18 @@ DockerCommon=(
     --env TZ=America/Los_Angeles
 )
 
-# SetLaunch Tag Report
+# SetLaunch Report
 # Set Launch to the image and the PlexCleaner command, under dotnet-coverage writing Report when coverage is on.
 SetLaunch() {
-    local Tag="$1"
-    local Report="$2"
-    Launch=("$Image:$Tag" "$PlexCleanerApp")
+    local Report="$1"
+    Launch=("$ImageRef" "$PlexCleanerApp")
     if [[ -n "$CoverageTool" ]]; then
         Launch=(
             --volume "$CoverageTool:/dotnet-coverage:ro"
             --env HOME=/tmp
             --env DOTNET_COVERAGE_TELEMETRY_OPTOUT=1
             --entrypoint dotnet
-            "$Image:$Tag"
+            "$ImageRef"
             /dotnet-coverage/dotnet-coverage.dll collect --output-format cobertura --output "$Report"
             "$PlexCleanerApp"
         )
@@ -177,30 +177,28 @@ RestoreDataset() {
     zfs rollback "$Snapshot"
 }
 
-# GetImageVersion Tag -> prints the build version from the image "version" label
+# GetImageVersion -> prints the build version from the image "version" label
 GetImageVersion() {
-    local Tag="$1"
-    docker image inspect "$Image:$Tag" --format '{{ index .Config.Labels "version" }}' | tr -d '\r'
+    docker image inspect "$ImageRef" --format '{{ index .Config.Labels "version" }}' | tr -d '\r'
 }
 
-# WriteBuildInfo Tag Version VersionDir
+# WriteBuildInfo Version VersionDir
 # Record the channel and run metadata, so results can be ordered later, such as the last develop build.
 WriteBuildInfo() {
-    local Tag="$1"
-    local Version="$2"
-    local VersionDir="$3"
+    local Version="$1"
+    local VersionDir="$2"
 
     local ImageId Digest Created Now
-    ImageId="$(docker image inspect "$Image:$Tag" --format '{{ .Id }}' | tr -d '\r')"
-    Digest="$(docker image inspect "$Image:$Tag" --format '{{ if .RepoDigests }}{{ index .RepoDigests 0 }}{{ end }}' | tr -d '\r')"
-    Created="$(docker image inspect "$Image:$Tag" --format '{{ .Created }}' | tr -d '\r')"
+    ImageId="$(docker image inspect "$ImageRef" --format '{{ .Id }}' | tr -d '\r')"
+    Digest="$(docker image inspect "$ImageRef" --format '{{ if .RepoDigests }}{{ index .RepoDigests 0 }}{{ end }}' | tr -d '\r')"
+    Created="$(docker image inspect "$ImageRef" --format '{{ .Created }}' | tr -d '\r')"
     Now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
     cat >"$VersionDir/buildinfo.json" <<EOF
 {
-  "Channel": "$Tag",
+  "Channel": "$Channel",
   "Version": "$Version",
-  "Image": "$Image:$Tag",
+  "Image": "$ImageRef",
   "ImageId": "$ImageId",
   "RepoDigest": "$Digest",
   "ImageCreated": "$Created",
@@ -211,18 +209,17 @@ WriteBuildInfo() {
 EOF
 }
 
-# RunProcess Tag Version
+# RunProcess Version
 # Process the dataset in place.
 # The caller restores before and after, so the processed results survive for the post-process plugin runs.
 RunProcess() {
-    local Tag="$1"
-    local Version="$2"
+    local Version="$1"
     local ConfigDir="$ConfigPath/$Version"
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
-    echo "Running PlexCleaner process on $Image:$Tag ($Mode)"
+    echo "Running PlexCleaner process on $ImageRef ($Mode)"
     local -a Launch
-    SetLaunch "$Tag" "$ConfigDir/coverage_process.xml"
+    SetLaunch "$ConfigDir/coverage_process.xml"
     docker run \
         "${DockerCommon[@]}" \
         --volume "$HostMedia:$MediaPath:rw" \
@@ -236,22 +233,21 @@ RunProcess() {
         "${ProcessOptions[@]}"
 }
 
-# BuildPlugin Tag Version VersionDir
+# BuildPlugin Version VersionDir Project Dll
 # Build the example plugin into the version directory from the git tag matching the image version label.
 # Return non-zero on any failure, which skips the plugin run.
 BuildPlugin() {
-    local Tag="$1"
-    local Version="$2"
-    local VersionDir="$3"
-    local Project="$4"
-    local Dll="$5"
+    local Version="$1"
+    local VersionDir="$2"
+    local Project="$3"
+    local Dll="$4"
 
     if ! command -v git >/dev/null || ! command -v dotnet >/dev/null; then
         echo "Skipping plugin build: git and the .NET SDK are required on the host" >&2
         return 1
     fi
 
-    echo "Building $Dll from $Image:$Tag at tag $Version"
+    echo "Building $Dll from $ImageRef at tag $Version"
 
     # Clone once, then fetch tags and check out the release tag matching the image version
     if [[ ! -d "$PluginBuildDir/.git" ]]; then
@@ -276,19 +272,18 @@ BuildPlugin() {
     cp "${Built%.dll}.pdb" "$VersionDir/${Dll%.dll}.pdb" || return 1
 }
 
-# RunPlugin Tag Version Dll
+# RunPlugin Version Dll
 # Run the custom command with one plugin against the already processed dataset, with no rollback.
 # Each plugin writes its own log, so plugin runs do not overwrite each other.
 RunPlugin() {
-    local Tag="$1"
-    local Version="$2"
-    local Dll="$3"
+    local Version="$1"
+    local Dll="$2"
     local ConfigDir="$ConfigPath/$Version"
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
-    echo "Running PlexCleaner custom plugin $Dll on $Image:$Tag"
+    echo "Running PlexCleaner custom plugin $Dll on $ImageRef"
     local -a Launch
-    SetLaunch "$Tag" "$ConfigDir/coverage_custom_${Dll%.dll}.xml"
+    SetLaunch "$ConfigDir/coverage_custom_${Dll%.dll}.xml"
     docker run \
         "${DockerCommon[@]}" \
         --volume "$HostMedia:$MediaPath:rw" \
@@ -302,52 +297,59 @@ RunPlugin() {
         --parallel --threadcount "$ThreadCount"
 }
 
-# RunDefaultSettings Tag Version
+# RunDefaultSettings Version
 RunDefaultSettings() {
-    local Tag="$1"
-    local Version="$2"
+    local Version="$1"
     local ConfigDir="$ConfigPath/$Version"
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
-    echo "Running PlexCleaner defaultsettings on $Image:$Tag"
+    echo "Running PlexCleaner defaultsettings on $ImageRef"
     docker run \
         "${DockerCommon[@]}" \
         --volume "$HostConfig:$ConfigPath:rw" \
-        "$Image:$Tag" \
+        "$ImageRef" \
         "$PlexCleanerApp" defaultsettings \
         --settingsfile="$ConfigDir/PlexCleaner.defaults.json"
 }
 
-# RunCreateSchema Tag Version
+# RunCreateSchema Version
 RunCreateSchema() {
-    local Tag="$1"
-    local Version="$2"
+    local Version="$1"
     local ConfigDir="$ConfigPath/$Version"
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
-    echo "Running PlexCleaner createschema on $Image:$Tag"
+    echo "Running PlexCleaner createschema on $ImageRef"
     docker run \
         "${DockerCommon[@]}" \
         --volume "$HostConfig:$ConfigPath:rw" \
-        "$Image:$Tag" \
+        "$ImageRef" \
         "$PlexCleanerApp" createschema \
         --schemafile="$ConfigDir/PlexCleaner.schema.json"
 }
 
-# RunRegressionTests Tag
+# RunRegressionTests
 RunRegressionTests() {
-    local Tag="$1"
-
-    docker pull "$Image:$Tag"
+    if [[ "$Channel" == "local" ]]; then
+        if ! docker image inspect "$ImageRef" >/dev/null; then
+            echo "Local image $ImageRef not found, build it per OPERATIONS.md first" >&2
+            exit 1
+        fi
+    else
+        docker pull "$ImageRef"
+    fi
 
     # Name the results directory after the image build version (used for source sync too)
     local Version
-    Version="$(GetImageVersion "$Tag")"
+    Version="$(GetImageVersion)"
     if [[ -z "$Version" ]]; then
-        echo "Could not read the version label from $Image:$Tag" >&2
+        echo "Could not read the version label from $ImageRef" >&2
         exit 1
     fi
-    echo "Build version for $Image:$Tag is $Version"
+    if [[ "$Channel" == "local" && "$Version" == "1.0.0.0" ]]; then
+        echo "Local image $ImageRef carries the default version label, rebuild it with --build-arg LABEL_VERSION" >&2
+        exit 1
+    fi
+    echo "Build version for $ImageRef is $Version"
 
     # Create the version directory, overwriting existing files on a re-run of the same build.
     # A reduced-corpus run gets its own results directory, so it never clobbers the full baseline.
@@ -360,7 +362,7 @@ RunRegressionTests() {
     # Copy the live settings into the version directory for a durable record of what was run
     cp "$HostConfig/$Settings" "$VersionDir/$Settings"
 
-    WriteBuildInfo "$Tag" "$Version" "$VersionDir"
+    WriteBuildInfo "$Version" "$VersionDir"
 
     # Version 3.20 and later append to the log file by default and support --logclear to clear on re-run.
     # Debug level logs each tool invocation with its command line, so a failure can be reproduced directly
@@ -372,7 +374,9 @@ RunRegressionTests() {
     for Plugin in "${Plugins[@]}"; do
         Entry="${PluginRegistry[$Plugin]}"
         read -r Project Dll <<<"$Entry"
-        if BuildPlugin "$Tag" "$Version" "$VersionDir" "$Project" "$Dll"; then
+        if [[ "$Channel" == "local" ]]; then
+            echo "Skipping plugin run, a local image has no release tag to build from: $Plugin" >&2
+        elif BuildPlugin "$Version" "$VersionDir" "$Project" "$Dll"; then
             BuiltPlugins+=("$Dll")
         else
             echo "Skipping plugin run, build failed: $Plugin" >&2
@@ -383,8 +387,8 @@ RunRegressionTests() {
     # Hand it to that user so the writes succeed regardless of the parent directory's ownership or ACLs.
     chown -R nonroot:users "$VersionDir"
 
-    RunDefaultSettings "$Tag" "$Version"
-    # RunCreateSchema "$Tag" "$Version"
+    RunDefaultSettings "$Version"
+    # RunCreateSchema "$Version"
 
     # Provision a pristine clone of the corpus, process it, then run each built plugin on the results.
     # This only confirms each plugin loads and runs, since per-plugin behavior is verified in isolation.
@@ -392,9 +396,9 @@ RunRegressionTests() {
     # Roll the clone back to its pristine @backup even if processing or a plugin aborts under set -e.
     # A failed run then never leaves the shared test dataset mutated, and the clean restore disarms the trap.
     trap 'RestoreDataset' EXIT
-    RunProcess "$Tag" "$Version"
+    RunProcess "$Version"
     for Dll in "${BuiltPlugins[@]}"; do
-        RunPlugin "$Tag" "$Version" "$Dll"
+        RunPlugin "$Version" "$Dll"
     done
     RestoreDataset
     trap - EXIT
@@ -402,6 +406,14 @@ RunRegressionTests() {
 
 Tag="${2-develop}"
 [[ -n "$Tag" ]] || UnknownArgument "$Tag"
+# A Docker tag cannot hold a colon, so one marks a local image reference.
+if [[ "$Tag" == *:* ]]; then
+    ImageRef="$Tag"
+    Channel="local"
+else
+    ImageRef="$Image:$Tag"
+    Channel="$Tag"
+fi
 Corpus="${3-full}"
 case "$Corpus" in
 full | reduced) ;;
@@ -429,6 +441,6 @@ fi
 
 set -x
 echo "Starting tests in $Mode mode"
-RunRegressionTests "$Tag"
+RunRegressionTests
 
 echo "Done with tests"
