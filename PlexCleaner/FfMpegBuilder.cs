@@ -29,8 +29,6 @@ public partial class FfMpeg
 
         public GlobalOptions NoStats() => Add("-nostats");
 
-        public GlobalOptions Progress() => Add("-progress").Add("pipe:1");
-
         public GlobalOptions ExitOnError() => Add("-xerror");
 
         public GlobalOptions AbortOn() => Add("-abort_on");
@@ -75,16 +73,6 @@ public partial class FfMpeg
         public InputOptions ProbeSize() => Add("-probesize");
 
         public InputOptions ProbeSize(string option) => ProbeSize().Add(option);
-
-        public InputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
-            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
-                ? this
-                : SeekStart(timeStart).SeekStop(timeStop);
-
-        public InputOptions SeekStart() => Add("-ss");
-
-        public InputOptions SeekStart(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero ? this : SeekStart().Add($"{(int)timeSpan.TotalSeconds}");
 
         public InputOptions SeekStop() => Add("-t");
 
@@ -133,8 +121,6 @@ public partial class FfMpeg
 
         public OutputOptions NoAudio() => Add("-an");
 
-        public OutputOptions NoVideo() => Add("-vn");
-
         public OutputOptions NoSubtitles() => Add("-sn");
 
         public OutputOptions NoData() => Add("-dn");
@@ -142,10 +128,6 @@ public partial class FfMpeg
         public OutputOptions Map() => Add("-map");
 
         public OutputOptions Map(string option) => Map().Add(option);
-
-        public OutputOptions MapMetadata() => Add("-map_metadata");
-
-        public OutputOptions MapMetadata(string option) => MapMetadata().Add(option);
 
         public OutputOptions MapAll() => Map("0");
 
@@ -195,21 +177,6 @@ public partial class FfMpeg
 
         public OutputOptions EncoderTimeBaseVideo(string option) =>
             EncoderTimeBaseVideo().Add(option);
-
-        public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
-            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
-                ? this
-                : SeekStart(timeStart).SeekStop(timeStop);
-
-        public OutputOptions SeekStart() => Add("-ss");
-
-        public OutputOptions SeekStart(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero ? this : SeekStart().Add($"{(int)timeSpan.TotalSeconds}");
-
-        public OutputOptions SeekStop() => Add("-t");
-
-        public OutputOptions SeekStop(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero ? this : SeekStop().Add($"{(int)timeSpan.TotalSeconds}");
 
         public OutputOptions NullOutput() => Format().Add("null").Add("-");
 

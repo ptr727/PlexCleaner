@@ -164,10 +164,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         Title = track.Properties.TrackName;
 
         // Set language
-        if (!SetLanguage(track))
-        {
-            return false;
-        }
+        SetLanguage(track);
 
         // Use uid, id, and number correctly in MkvMerge and MkvPropEdit
         // https://codeberg.org/mbunkus/mkvtoolnix/wiki/About-track-UIDs%2C-track-numbers-and-track-IDs
@@ -190,7 +187,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         return true;
     }
 
-    private bool SetLanguage(MkvToolJsonSchema.Track track)
+    private void SetLanguage(MkvToolJsonSchema.Track track)
     {
         // ISO 639-2B tag
         Language = track.Properties.Language;
@@ -211,24 +208,7 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             // Get the ISO tag from the IETF tag
             string isoLookup = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
 
-            if (string.IsNullOrEmpty(isoLookup))
-            {
-                // Set track error and recommend ReMux
-                HasErrors = true;
-                Actions |= ActionsType.ReMux;
-
-                // Failed to lookup ISO tag from IETF tag
-                Log.Error(
-                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    Language,
-                    LanguageIetf,
-                    Actions,
-                    Parent.FileName
-                );
-            }
-            else if (!Language.Equals(isoLookup, StringComparison.OrdinalIgnoreCase))
+            if (!Language.Equals(isoLookup, StringComparison.OrdinalIgnoreCase))
             {
                 // Set track error and recommend ReMux
                 HasErrors = true;
@@ -255,41 +235,19 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             // Get the IETF tag from the ISO tag
             string ietfLookup = PlexCleaner.Language.Lookup.GetIetfFromIso(Language);
 
-            if (string.IsNullOrEmpty(ietfLookup))
-            {
-                // Set track error and recommend remux
-                HasErrors = true;
-                Actions |= ActionsType.ReMux;
-
-                // Failed to lookup IETF tag from ISO tag
-                Log.Error(
-                    "{Parser} : {Type} : Failed to lookup IETF tag from ISO639 tag : ISO639: {Language}, Actions: {Actions} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    Language,
-                    Actions,
-                    Parent.FileName
-                );
-            }
-            else
-            {
-                // Set track error and recommend SetLanguage
-                // ReMux will conditionally check for SetIetfLanguageTags
-                HasErrors = true;
-                Actions |= ActionsType.SetLanguage;
-
-                // Set IETF tag from lookup tag
-                LanguageIetf = ietfLookup;
-                Log.Warning(
-                    "{Parser} : {Type} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    Language,
-                    LanguageIetf,
-                    Actions,
-                    Parent.FileName
-                );
-            }
+            // ReMux will conditionally check for SetIetfLanguageTags
+            HasErrors = true;
+            Actions |= ActionsType.SetLanguage;
+            LanguageIetf = ietfLookup;
+            Log.Warning(
+                "{Parser} : {Type} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
+                Parent.Parser,
+                Type,
+                Language,
+                LanguageIetf,
+                Actions,
+                Parent.FileName
+            );
         }
 
         // Language is not set but IETF language is set
@@ -301,35 +259,16 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             HasErrors = true;
             Actions |= ActionsType.ReMux;
 
-            // Get the ISO tag from the IETF tag
-            string isoLookup = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
-
-            if (string.IsNullOrEmpty(isoLookup))
-            {
-                // Failed to lookup ISO from IETF
-                Log.Error(
-                    "{Parser} : {Type} : Failed to lookup ISO639 tag from IETF tag : IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    LanguageIetf,
-                    Actions,
-                    Parent.FileName
-                );
-            }
-            else
-            {
-                // Set ISO from lookup
-                Language = isoLookup;
-                Log.Warning(
-                    "{Parser} : {Type} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
-                    Parent.Parser,
-                    Type,
-                    Language,
-                    LanguageIetf,
-                    Actions,
-                    Parent.FileName
-                );
-            }
+            Language = PlexCleaner.Language.Lookup.GetIsoFromIetf(LanguageIetf);
+            Log.Warning(
+                "{Parser} : {Type} : Setting ISO639 tag from IETF tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
+                Parent.Parser,
+                Type,
+                Language,
+                LanguageIetf,
+                Actions,
+                Parent.FileName
+            );
         }
 
         // If the "language" and "tag_language" fields are set FfProbe uses the tag language instead of the track language
@@ -356,8 +295,6 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
                 Parent.FileName
             );
         }
-
-        return true;
     }
 
     // Required
@@ -813,7 +750,4 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
     public static IEnumerable<FlagsType> GetFlags(FlagsType flagsType) =>
         Enum.GetValues<FlagsType>()
             .Where(enumValue => flagsType.HasFlag(enumValue) && enumValue != FlagsType.None);
-
-    public static IEnumerable<FlagsType> GetFlags() =>
-        Enum.GetValues<FlagsType>().Where(enumValue => enumValue != FlagsType.None);
 }
