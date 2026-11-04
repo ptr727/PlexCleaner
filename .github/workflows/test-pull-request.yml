@@ -47,7 +47,7 @@ jobs:
 
   validate:
     name: Validate sources job
-    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@ba3669ae254767ab181aaa2e1451d2d197dd38b6 # 2.0.1301
+    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@320713d9d491f578b5604a8d67b82478717d7b05 # 2.0.1319
     permissions:
       contents: read
     secrets:
@@ -62,7 +62,7 @@ jobs:
     name: Smoke build job
     needs: [changes]
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.release == 'true'
-    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@ba3669ae254767ab181aaa2e1451d2d197dd38b6 # 2.0.1301
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@320713d9d491f578b5604a8d67b82478717d7b05 # 2.0.1319
     permissions:
       contents: read
     secrets:
