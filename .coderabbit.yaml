@@ -3,3 +3,4 @@ reviews:
     enabled: true
     base_branches:
       - "^develop$"
+    auto_pause_after_reviewed_commits: 0
