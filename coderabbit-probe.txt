@@ -1,0 +1,1 @@
+A throwaway probe of the central CodeRabbit configuration. This pull request is closed unmerged.
