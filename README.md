@@ -158,7 +158,8 @@ PlexCleaner is optimized for processing large media libraries efficiently. Key p
 - To improve processing performance of large media collections, the media file attributes and processing state is cached in sidecar files. (`filename.mkv` -> `filename.PlexCleaner`)
 - Sidecar files allow re-processing of the same files to be very fast as the state will be read from the sidecar vs. re-computed from the media file.
 - The sidecar maintains a hash of small parts of the media file (timestamps are unreliable), and the media file will be reprocessed when a change in the media file is detected.
-- A failed file that is not deleted or registered is marked `ProcessFailed`. Later runs skip it until the media file changes or `createsidecar` recreates its sidecar.
+- A failed MKV file that is not deleted or registered is marked `ProcessFailed` in its sidecar. Later runs skip it until the media file changes or `createsidecar` recreates its sidecar.
+- The next run retries a file instead when a cancel or a tool failure left the run unproven. It also retries a file the media tools cannot read, since its sidecar needs their output.
 
 **Processing Operations:**
 
@@ -720,7 +721,7 @@ Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for complete con
   - `AutoRepair`
 - If verify or repair judges the media invalid, delete the file or add it to the ignore list, but not both.
   - `DeleteInvalidFiles`, `RegisterInvalidFiles`
-- Mark every other failed file `ProcessFailed`, so later runs skip it.
+- Mark other failed MKV files `ProcessFailed` in their sidecar, so later runs skip them.
 
 **8. Finalization:**
 

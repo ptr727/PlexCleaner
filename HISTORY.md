@@ -20,7 +20,8 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Media is judged invalid when verify or repair fails, the media tools cannot read the file, or neither MkvMerge nor FFmpeg can remux it.
     - A file that fails any other way is kept, such as one with no video track or one a tool fails to write.
     - A file an earlier version marked `VerifyFailed` is kept too.
-    - Every failed file that is not deleted or registered is marked `ProcessFailed`, and later runs skip it until the media file changes. Run `createsidecar` on a file to process it again.
+    - A failed MKV file that is not deleted or registered is marked `ProcessFailed` in its sidecar. Later runs skip it until the media file changes. Run `createsidecar` on a file to process it again.
+    - The next run retries a file when a cancel or a tool failure left the run unproven, or when the media tools cannot read it.
     - The results file records why each file was judged invalid, and `RegisterInvalidFiles` adds only those files to the `FileIgnoreList`.
 - Version 3.23:
   - Added a minimum version for every media tool, and PlexCleaner exits with an error at startup when an installed tool is older.
