@@ -14,7 +14,9 @@ The committed contents are code plus a synthetic example. No media and no media 
 
 ## Layout
 
-- [`regression-test.sh`][regression-test] -- the harness: provision a test dataset, process it through one Docker image tag, and write per-version results and logs for diffing.
+- [`regression-test.sh`][regression-test] -- the harness: provision a test dataset, process it through one Docker image, and write per-version results, logs, and run inputs.
+- [`check_results.py`][check-results] -- compare a run's per-file outcomes with a baseline run, or with the synthetic expected outcomes.
+- [`integration-test.sh`][integration-test] -- the CI integration run over the synthetic corpus.
 - [`corpus_common.py`][corpus-common] -- shared library: log parsing, deterministic issue classification, and the clip and metadata-surgery helpers.
 - [`catalog_corpus.py`][catalog-corpus] -- derive a machine-readable issue catalog (`catalog.json`) for a collection from a processing run.
 - [`reduce_corpus.py`][reduce-corpus] -- build and validate a reduced collection: shrink each sample while proving every issue survives.
@@ -47,7 +49,7 @@ sudo ./regression-test.sh [quick|full] [tag] [corpus] [plugin...]
 - `corpus` selects `full` (default) or `reduced`.
 - `plugin` names optional example plugins to build and run after processing, to confirm a plugin loads and runs against the processed dataset.
 
-A `tag` holding a colon names a local image instead, such as `plexcleaner:local`, which the harness runs without a pull. A reference naming the published repository runs as published, by its tag or its digest. That is how a branch is tested before any published image carries it. Commit the branch, then build the image from it per [OPERATIONS.md][operations] "Test a tool version the image does not carry", adding `--build-arg LABEL_VERSION=$(git rev-parse --short=10 HEAD)`. The build compiles the working tree, so an uncommitted edit would run under the label of a commit that lacks it. The label names the results directory, so the harness refuses a local label that is not a commit hash. That refuses the Dockerfile default `1.0.0.0`, and any published version, which always holds a dot. A local run records `local` as its channel, so a tool picking the newest `develop` run never picks it. It builds no plugin, since a plugin builds from the release tag its image version names.
+A `tag` holding a colon names a local image instead, such as `plexcleaner:local`, which the harness runs without a pull. A reference naming the published repository runs as published, by its tag or its digest. That is how a branch is tested before any published image carries it. Commit the branch, then build the image from it per [OPERATIONS.md][operations] "Test a tool version the image does not carry", adding `--build-arg LABEL_VERSION=$(git rev-parse --short=10 HEAD)`. The build compiles the working tree, so an uncommitted edit would run under the label of a commit that lacks it. The label names the results directory, so the harness refuses a local label that is not a commit hash. That refuses the Dockerfile default `1.0.0.0`, and any published version, which always holds a dot. A local run records `local` as its channel, and a digest reference records the digest. So a tool picking the newest `develop` run picks neither. It builds no plugin, since a plugin builds from the release tag its image version names.
 
 Setting `REGRESSION_COVERAGE_TOOL` to the absolute path of a host directory holding `dotnet-coverage.dll` runs the process and plugin runs under `dotnet-coverage collect`. Each run writes a Cobertura report beside its log, `coverage_process.xml` and `coverage_custom_<plugin>.xml`, and each harness invocation first removes the reports an earlier one left. The image's sources are under `/Builder`, and each plugin is built with a path map to the same root. So [codecov.yml][codecov]'s `fixes` rule maps every report. The version directory's name, less any `-reduced` suffix, is a published build's release tag or a local build's commit. So `git rev-parse <version>^{commit}` gives the run's commit. `sudo` resets the environment, so pass the variable through `sudo env REGRESSION_COVERAGE_TOOL=<dir> ./regression-test.sh ...`.
 
@@ -61,7 +63,7 @@ Each run writes `buildinfo.json` beside its results. It records the image and ev
 python3 check_results.py --baseline <baseline>/Results_process.json --results <candidate>/Results_process.json
 ```
 
-The comparison first checks the two runs' inputs. It reads each run's tool versions from the `<Tool> : Version:` lines at the start of its `PlexCleaner_process.log`. Any difference in an input other than the image refuses the comparison and names the mismatch. So a corpus refresh, a thread-count change, a settings change, or a tool update cannot pass for a code change. A field one run does not record is reported as unverifiable rather than compared. A plugin difference is only noted, since the plugins run after `Results_process.json` is written. Once the inputs match, it prints one line per file whose result, new name, `Modified` flag, `State` flags, or failed operation differs. It exits `0` when the runs match and `1` otherwise. Judge each difference as an intended effect of the change under test, a regression, or noise, since only the change's purpose decides that.
+The comparison first checks the two runs' inputs. It reads each run's tool versions from the `<Tool> : Version:` lines at the start of its `PlexCleaner_process.log`. Any difference in an input other than the image refuses the comparison and names the mismatch. So a corpus refresh, a thread-count change, a settings change, or a tool update cannot pass for a code change. An input one run does not record refuses it too, since that input cannot be shown to match. So a baseline run recorded before an input existed is run again. A plugin difference is only noted, since the plugins run after `Results_process.json` is written. Once the inputs match, it prints one line per file whose result, new name, `Modified` flag, `State` flags, failed operation, or invalid reason differs. It exits `0` when the runs match and `1` otherwise. Judge each difference as an intended effect of the change under test, a regression, or noise, since only the change's purpose decides that.
 
 ### Full-file scanning
 
@@ -223,9 +225,10 @@ Collection filenames follow a small set of conventions so the catalog stays read
 The working loop when the collection changes:
 
 1. Update the collection (add or adjust a sample).
-2. Regenerate the affected catalog with `catalog_corpus.py`.
-3. Rebuild and validate the reduced collection with `reduce_corpus.py`, and audit coverage with `audit_physical.py`.
-4. Snapshot the dataset so a run can clone from it.
+2. Snapshot the dataset, since the harness clones the newest snapshot rather than the live collection.
+3. Regenerate the affected catalog with `catalog_corpus.py`.
+4. Rebuild and validate the reduced collection with `reduce_corpus.py`, and audit coverage with `audit_physical.py`.
+5. Snapshot the dataset again, so a run clones the validated collection.
 
 ## Python tooling
 

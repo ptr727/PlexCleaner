@@ -42,6 +42,7 @@ def outcomes(results: dict[str, Any]) -> dict[str, Outcome]:
             "Modified": item["Modified"],
             "State": sorted(state_flags(item.get("State"))),
             "FailedOperation": item.get("FailedOperation"),
+            "InvalidReason": item.get("InvalidReason"),
         }
     return found
 
@@ -79,27 +80,25 @@ def run_inputs(run_dir: Path) -> dict[str, Any]:
     return inputs
 
 
-def input_checks(
-    baseline: dict[str, Any], results: dict[str, Any]
-) -> tuple[list[str], list[str], list[str]]:
-    """Compare two runs' inputs, returning the mismatches, the unverifiable fields, and notes."""
+def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """Compare two runs' inputs, returning the mismatches and the notes.
+
+    A plugin difference is only a note, since plugins run after Results_process.json is written.
+    """
     mismatches: list[str] = []
-    unverifiable: list[str] = []
     notes: list[str] = []
     for field in (*INPUT_FIELDS, "ToolVersions", "Plugins"):
         missing = [
             side for side, run in (("baseline", baseline), ("results", results)) if field not in run
         ]
         if missing:
-            unverifiable.append(f"{field}: not recorded by the {' or '.join(missing)} run")
+            found = f"{field}: not recorded by the {' or '.join(missing)} run"
         elif baseline[field] == results[field]:
             continue
-        # Plugins run after Results_process.json is written, so they cannot change what is compared.
-        elif field == "Plugins":
-            notes.append(f"{field}: baseline {baseline[field]}, results {results[field]}")
         else:
-            mismatches.append(f"{field}: baseline {baseline[field]}, results {results[field]}")
-    return mismatches, unverifiable, notes
+            found = f"{field}: baseline {baseline[field]}, results {results[field]}"
+        (notes if field == "Plugins" else mismatches).append(found)
+    return mismatches, notes
 
 
 def compare_runs(baseline: Path, results: Path) -> int:
@@ -110,11 +109,7 @@ def compare_runs(baseline: Path, results: Path) -> int:
                 f"::error::no {BUILD_INFO} beside {run}, so its inputs are unknown", file=sys.stderr
             )
             return 1
-    mismatches, unverifiable, notes = input_checks(
-        run_inputs(baseline.parent), run_inputs(results.parent)
-    )
-    for line in unverifiable:
-        print(f"::warning::unverifiable input {line}")
+    mismatches, notes = input_checks(run_inputs(baseline.parent), run_inputs(results.parent))
     for line in notes:
         print(f"note: {line}")
     if mismatches:

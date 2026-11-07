@@ -37,6 +37,7 @@ class OutcomesTests(unittest.TestCase):
                     "Modified": True,
                     "State": ["ReMuxed", "Verified"],
                     "FailedOperation": None,
+                    "InvalidReason": None,
                 }
             },
         )
@@ -47,6 +48,10 @@ class OutcomesTests(unittest.TestCase):
     def test_failed_operation(self) -> None:
         item = result("a.mkv", "FileDeleted", result_ok=False) | {"FailedOperation": "Verify"}
         self.assertEqual(cr.outcomes(results(item))["a.mkv"]["FailedOperation"], "Verify")
+
+    def test_invalid_reason(self) -> None:
+        item = result("a.mkv", "FileDeleted", result_ok=False) | {"InvalidReason": "Verify failed"}
+        self.assertEqual(cr.outcomes(results(item))["a.mkv"]["InvalidReason"], "Verify failed")
 
     def test_duplicate_name_refused(self) -> None:
         dup = results(result("a.mkv", "Verified"), result("a.mkv", "Verified"))
@@ -195,25 +200,31 @@ class BaselineTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("::error::input ToolVersions:", text)
 
-    def test_missing_field_is_unverifiable_not_refused(self) -> None:
+    def test_missing_field_refused(self) -> None:
         info = build_info()
         del info["CorpusSnapshot"]
         code, text = self.compare(self.write_run("older", info))
-        self.assertEqual(code, 0)
-        self.assertIn("unverifiable input CorpusSnapshot: not recorded by the results run", text)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::input CorpusSnapshot: not recorded by the results run", text)
+
+    def test_missing_tool_versions_refused(self) -> None:
+        candidate = self.write_run("nolog", build_info())
+        (candidate.parent / "PlexCleaner_process.log").unlink()
+        code, text = self.compare(candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::input ToolVersions: not recorded by the results run", text)
 
     def test_plugin_difference_is_noted_not_refused(self) -> None:
         code, text = self.compare(self.write_run("plugins", build_info(Plugins=["A"])))
         self.assertEqual(code, 0)
         self.assertIn("note: Plugins:", text)
 
-    def test_missing_plugins_is_unverifiable_not_noted(self) -> None:
+    def test_missing_plugins_is_noted_not_refused(self) -> None:
         info = build_info()
         del info["Plugins"]
         code, text = self.compare(self.write_run("noplugins", info))
         self.assertEqual(code, 0)
-        self.assertIn("unverifiable input Plugins: not recorded by the results run", text)
-        self.assertNotIn("note:", text)
+        self.assertIn("note: Plugins: not recorded by the results run", text)
 
     def test_missing_build_info_refused(self) -> None:
         code, text = self.compare(self.write_run("bare", None))
