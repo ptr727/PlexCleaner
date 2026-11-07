@@ -28,7 +28,7 @@ A change moves from a feature branch into `develop`, then from `develop` to `mai
 Each step keeps the version and the release notes correct:
 
 - Only the maintainer changes the `major.minor` version in [version.json](./version.json), and only for a functional change. Nerdbank.GitVersioning sets the patch number from git height, so a release needs no version edit.
-- A version bump changes the README "Release Notes" version in the same commit. It replaces the previous version's summary there, carrying forward the highlights of changes not yet released. It adds a new top entry to [HISTORY.md](./HISTORY.md). Notes for changes no stable release carries yet move from the previous entry into the new one, and an entry left empty is removed.
+- A version bump changes the README "Release Notes" version in the same commit. It replaces the previous version's summary there, carrying forward the highlights of changes no stable release carries yet. It adds a new top entry to [HISTORY.md](./HISTORY.md). Notes for changes no stable release carries yet move from the previous entry into the new one, and an entry left empty is removed.
 - A pull request with a notable change adds it to the current version's `HISTORY.md` entry. It also updates the README summary when the change is among that version's highlights.
 - Before promoting, confirm the README "Release Notes" version, the top `HISTORY.md` entry, and `version.json` name the same version.
 
