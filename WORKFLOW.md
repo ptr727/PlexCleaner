@@ -369,8 +369,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   Docker Hub login is **not** gated: smoke logs in too, for higher pull/cache-read rate limits, so it does
   require the Docker Hub secrets (present in both the Actions and Dependabot stores). Fork safety rests on
   GitHub giving a fork pull request run a read-only token and no secrets (D6.2).
-- **D1.4 Workflow-only and docs-only changes are not smoke-built.** Input: a pull request changing only
-  `.github/workflows/**`, or only documentation. Output: the filter marks nothing, so `smoke-build` skips and
+- **D1.4 Workflow-only and docs-only changes, `ARCHITECTURE.md` aside, are not smoke-built.** Input: a pull
+  request changing only `.github/workflows/**`, or only documentation other than `ARCHITECTURE.md`. Output: the filter marks nothing, so `smoke-build` skips and
   the aggregator passes the skip. The `release` entry reaches this by leaving workflow and doc paths out.
   The one doc it lists is `ARCHITECTURE.md`, which the Docker image copies and `ArchitectureDiagramTests` reads.
   *Implication: a hub-pin bump is not smoke-built on its pull request. The validator still runs actionlint
