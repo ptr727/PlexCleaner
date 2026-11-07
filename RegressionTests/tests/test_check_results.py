@@ -176,6 +176,7 @@ class BaselineTests(unittest.TestCase):
 
     def test_refuses_input_mismatch(self) -> None:
         cases = {
+            "Corpus": build_info(Corpus="full"),
             "CorpusSnapshot": build_info(CorpusSnapshot="pool/corpus@two"),
             "ProcessOptions": build_info(ProcessOptions=["--parallel", "--threadcount", "4"]),
             "SettingsSha256": build_info(SettingsSha256="bb"),
@@ -205,6 +206,14 @@ class BaselineTests(unittest.TestCase):
         code, text = self.compare(self.write_run("plugins", build_info(Plugins=["A"])))
         self.assertEqual(code, 0)
         self.assertIn("note: Plugins:", text)
+
+    def test_missing_plugins_is_unverifiable_not_noted(self) -> None:
+        info = build_info()
+        del info["Plugins"]
+        code, text = self.compare(self.write_run("noplugins", info))
+        self.assertEqual(code, 0)
+        self.assertIn("unverifiable input Plugins: not recorded by the results run", text)
+        self.assertNotIn("note:", text)
 
     def test_missing_build_info_refused(self) -> None:
         code, text = self.compare(self.write_run("bare", None))

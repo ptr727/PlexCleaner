@@ -364,7 +364,7 @@ RunRegressionTests() {
     [[ "$Corpus" == "reduced" ]] && VersionDir="$HostConfig/$Version-reduced"
     mkdir -p "$VersionDir"
     # A report from an earlier run of this build would otherwise pass for this run's.
-    rm -f -- "$VersionDir"/coverage_*.xml
+    rm -f -- "$VersionDir"/coverage_*.xml "$VersionDir/Results_process.json"
 
     # Copy the live settings into the version directory for a durable record of what was run
     cp "$HostConfig/$Settings" "$VersionDir/$Settings"

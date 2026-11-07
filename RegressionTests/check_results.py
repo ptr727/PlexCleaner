@@ -85,20 +85,20 @@ def input_checks(
     """Compare two runs' inputs, returning the mismatches, the unverifiable fields, and notes."""
     mismatches: list[str] = []
     unverifiable: list[str] = []
-    for field in (*INPUT_FIELDS, "ToolVersions"):
+    notes: list[str] = []
+    for field in (*INPUT_FIELDS, "ToolVersions", "Plugins"):
         missing = [
             side for side, run in (("baseline", baseline), ("results", results)) if field not in run
         ]
         if missing:
             unverifiable.append(f"{field}: not recorded by the {' or '.join(missing)} run")
-        elif baseline[field] != results[field]:
+        elif baseline[field] == results[field]:
+            continue
+        # Plugins run after Results_process.json is written, so they cannot change what is compared.
+        elif field == "Plugins":
+            notes.append(f"{field}: baseline {baseline[field]}, results {results[field]}")
+        else:
             mismatches.append(f"{field}: baseline {baseline[field]}, results {results[field]}")
-    notes: list[str] = []
-    # Plugins run after Results_process.json is written, so they cannot change what is compared.
-    if baseline.get("Plugins") != results.get("Plugins"):
-        notes.append(
-            f"Plugins: baseline {baseline.get('Plugins')}, results {results.get('Plugins')}"
-        )
     return mismatches, unverifiable, notes
 
 
