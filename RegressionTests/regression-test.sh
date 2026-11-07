@@ -13,8 +13,8 @@
 #   2. Read the build version from the image "version" label.
 #   3. Create the version-named directory under this folder.
 #   4. Copy the live PlexCleaner.json settings into the directory as a durable record.
-#   5. Write buildinfo.json with the channel, version, image digest, and run timestamp.
-#   6. Build the requested plugins from the matching source tag into the directory, except for a local image.
+#   5. Build the requested plugins from the matching source tag into the directory, except for a local image.
+#   6. Write buildinfo.json with the image, the run timestamp, and every input a run comparison checks.
 #   7. Run defaultsettings, provision the test dataset, run process, then run each plugin on the processed results.
 #
 # Settings file PlexCleaner.json is expected to use:
@@ -23,7 +23,7 @@
 #
 # The image ships no plugin assembly, so the script builds each plugin from the matching source tag.
 # That keeps the plugin API equal to the running image's.
-# The build needs git and the .NET SDK on the host.
+# The build needs git and the .NET SDK on the host, and buildinfo.json needs jq.
 # A local image, a missing tool, or an unresolvable tag skips the plugin run with a warning.
 
 set -Eeuo pipefail
@@ -141,13 +141,7 @@ SetLaunch() {
 # Where the corpus changed, the run renames the stale clone aside, since a rename succeeds where a destroy fails.
 # It then clones fresh and destroys any retired clones whose holders are gone.
 ProvisionDataset() {
-    local CorpusSnap Origin
-    CorpusSnap="$(zfs list -H -t snapshot -o name -s creation "$CorpusDataset" | tail -1)"
-    if [[ -z "$CorpusSnap" ]]; then
-        echo "No snapshot found on $CorpusDataset - snapshot the corpus first" >&2
-        exit 1
-    fi
-
+    local Origin
     Origin="$(zfs get -H -o value origin "$TestDataset" 2>/dev/null || true)"
     if [[ "$Origin" == "$CorpusSnap" ]]; then
         echo "Test clone current ($CorpusSnap) - rolling back"
@@ -182,31 +176,45 @@ GetImageVersion() {
     docker image inspect "$ImageRef" --format '{{ index .Config.Labels "version" }}' | tr -d '\r'
 }
 
-# WriteBuildInfo Version VersionDir
+# NewestCorpusSnapshot -> prints the corpus snapshot ProvisionDataset clones
+NewestCorpusSnapshot() {
+    zfs list -H -t snapshot -o name -s creation "$CorpusDataset" | tail -1
+}
+
+# WriteBuildInfo Version VersionDir Plugin...
 # Record the channel and run metadata, so results can be ordered later, such as the last develop build.
 WriteBuildInfo() {
     local Version="$1"
     local VersionDir="$2"
+    shift 2
 
-    local ImageId Digest Created Now
+    local ImageId Digest Created Now SettingsHash Coverage OptionsJson PluginsJson
     ImageId="$(docker image inspect "$ImageRef" --format '{{ .Id }}' | tr -d '\r')"
     Digest="$(docker image inspect "$ImageRef" --format '{{ if .RepoDigests }}{{ index .RepoDigests 0 }}{{ end }}' | tr -d '\r')"
     Created="$(docker image inspect "$ImageRef" --format '{{ .Created }}' | tr -d '\r')"
     Now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    SettingsHash="$(sha256sum "$VersionDir/$Settings" | cut -d' ' -f1)"
+    Coverage=false
+    [[ -n "$CoverageTool" ]] && Coverage=true
+    OptionsJson="$(jq -n '$ARGS.positional' --args -- "${ProcessOptions[@]}")"
+    PluginsJson="$(jq -n '$ARGS.positional' --args -- "$@")"
 
-    cat >"$VersionDir/buildinfo.json" <<EOF
-{
-  "Channel": "$Channel",
-  "Version": "$Version",
-  "Image": "$ImageRef",
-  "ImageId": "$ImageId",
-  "RepoDigest": "$Digest",
-  "ImageCreated": "$Created",
-  "RunTimestamp": "$Now",
-  "Mode": "$Mode",
-  "Corpus": "$Corpus"
-}
-EOF
+    jq -n \
+        --arg Channel "$Channel" \
+        --arg Version "$Version" \
+        --arg Image "$ImageRef" \
+        --arg ImageId "$ImageId" \
+        --arg RepoDigest "$Digest" \
+        --arg ImageCreated "$Created" \
+        --arg RunTimestamp "$Now" \
+        --arg Mode "$Mode" \
+        --arg Corpus "$Corpus" \
+        --arg CorpusSnapshot "$CorpusSnap" \
+        --argjson ProcessOptions "$OptionsJson" \
+        --arg SettingsSha256 "$SettingsHash" \
+        --argjson Coverage "$Coverage" \
+        --argjson Plugins "$PluginsJson" \
+        '$ARGS.named' >"$VersionDir/buildinfo.json"
 }
 
 # RunProcess Version
@@ -361,15 +369,13 @@ RunRegressionTests() {
     # Copy the live settings into the version directory for a durable record of what was run
     cp "$HostConfig/$Settings" "$VersionDir/$Settings"
 
-    WriteBuildInfo "$Version" "$VersionDir"
-
     # Version 3.20 and later append to the log file by default and support --logclear to clear on re-run.
     # Debug level logs each tool invocation with its command line, so a failure can be reproduced directly
     local LogOptions=(--logclear --loglevel Debug)
 
     # Build each requested plugin from the source tag matching the image, and skip any that fail to build.
     local Plugin Entry Project Dll
-    local -a BuiltPlugins=()
+    local -a BuiltPlugins=() BuiltNames=()
     for Plugin in "${Plugins[@]}"; do
         Entry="${PluginRegistry[$Plugin]}"
         read -r Project Dll <<<"$Entry"
@@ -377,10 +383,19 @@ RunRegressionTests() {
             echo "Skipping plugin run, a local image has no release tag to build from: $Plugin" >&2
         elif BuildPlugin "$Version" "$VersionDir" "$Project" "$Dll"; then
             BuiltPlugins+=("$Dll")
+            BuiltNames+=("$Plugin")
         else
             echo "Skipping plugin run, build failed: $Plugin" >&2
         fi
     done
+
+    # Resolve the snapshot once, so buildinfo.json names the one ProvisionDataset clones.
+    CorpusSnap="$(NewestCorpusSnapshot)"
+    if [[ -z "$CorpusSnap" ]]; then
+        echo "No snapshot found on $CorpusDataset - snapshot the corpus first" >&2
+        exit 1
+    fi
+    WriteBuildInfo "$Version" "$VersionDir" "${BuiltNames[@]}"
 
     # Root populates the version directory, but the containers run as nonroot:users and write into it.
     # Hand it to that user so the writes succeed regardless of the parent directory's ownership or ACLs.

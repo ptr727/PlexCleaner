@@ -2,10 +2,12 @@
 
 Each file is keyed by its original file name, without its directory, so a run in any media path compares.
 Writing the expected file from a results file records an intended change in one step.
+With --baseline, two regression harness runs compare directly, once their recorded inputs match.
 """
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,6 +15,18 @@ from typing import Any
 from corpus_common import state_flags
 
 Outcome = dict[str, Any]
+
+BUILD_INFO = "buildinfo.json"
+PROCESS_LOG = "PlexCleaner_process.log"
+INPUT_FIELDS = (
+    "Mode",
+    "Corpus",
+    "CorpusSnapshot",
+    "ProcessOptions",
+    "SettingsSha256",
+    "Coverage",
+)
+TOOL_VERSION = re.compile(r'> (?P<tool>\w+) : Version: "?(?P<version>[^",]*)"?, Path: ')
 
 
 def outcomes(results: dict[str, Any]) -> dict[str, Outcome]:
@@ -47,14 +61,99 @@ def differences(expected: dict[str, Outcome], actual: dict[str, Outcome]) -> lis
     return found
 
 
+def tool_versions(log: str) -> dict[str, str]:
+    """Return each media tool's version from the startup lines of a PlexCleaner log."""
+    found: dict[str, str] = {}
+    for match in TOOL_VERSION.finditer(log):
+        found.setdefault(match["tool"], match["version"])
+    return found
+
+
+def run_inputs(run_dir: Path) -> dict[str, Any]:
+    """Return a run's recorded inputs, its tool versions read from its process log."""
+    inputs: dict[str, Any] = json.loads((run_dir / BUILD_INFO).read_text(encoding="utf-8"))
+    log = run_dir / PROCESS_LOG
+    versions = tool_versions(log.read_text(encoding="utf-8")) if log.is_file() else {}
+    if versions:
+        inputs["ToolVersions"] = versions
+    return inputs
+
+
+def input_checks(
+    baseline: dict[str, Any], results: dict[str, Any]
+) -> tuple[list[str], list[str], list[str]]:
+    """Compare two runs' inputs, returning the mismatches, the unverifiable fields, and notes."""
+    mismatches: list[str] = []
+    unverifiable: list[str] = []
+    for field in (*INPUT_FIELDS, "ToolVersions"):
+        missing = [
+            side for side, run in (("baseline", baseline), ("results", results)) if field not in run
+        ]
+        if missing:
+            unverifiable.append(f"{field}: not recorded by the {' or '.join(missing)} run")
+        elif baseline[field] != results[field]:
+            mismatches.append(f"{field}: baseline {baseline[field]}, results {results[field]}")
+    notes: list[str] = []
+    # Plugins run after Results_process.json is written, so they cannot change what is compared.
+    if baseline.get("Plugins") != results.get("Plugins"):
+        notes.append(
+            f"Plugins: baseline {baseline.get('Plugins')}, results {results.get('Plugins')}"
+        )
+    return mismatches, unverifiable, notes
+
+
+def compare_runs(baseline: Path, results: Path) -> int:
+    """Compare a results file against a baseline run's, refusing runs whose inputs differ."""
+    for run in (baseline, results):
+        if not (run.parent / BUILD_INFO).is_file():
+            print(
+                f"::error::no {BUILD_INFO} beside {run}, so its inputs are unknown", file=sys.stderr
+            )
+            return 1
+    mismatches, unverifiable, notes = input_checks(
+        run_inputs(baseline.parent), run_inputs(results.parent)
+    )
+    for line in unverifiable:
+        print(f"::warning::unverifiable input {line}")
+    for line in notes:
+        print(f"note: {line}")
+    if mismatches:
+        for line in mismatches:
+            print(f"::error::input {line}")
+        print(f"{len(mismatches)} input mismatches, the runs are not comparable", file=sys.stderr)
+        return 1
+
+    expected = outcomes(json.loads(baseline.read_text(encoding="utf-8")))
+    actual = outcomes(json.loads(results.read_text(encoding="utf-8")))
+    found = differences(expected, actual)
+    for line in found:
+        print(f"::error::{line}")
+    if found:
+        print(f"{len(found)} differences from the baseline {baseline}", file=sys.stderr)
+        return 1
+    print(f"all {len(actual)} outcomes match the baseline {baseline}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--expected", required=True, type=Path, help="expected outcomes JSON file")
+    against = ap.add_mutually_exclusive_group(required=True)
+    against.add_argument("--expected", type=Path, help="expected outcomes JSON file")
+    against.add_argument(
+        "--baseline",
+        type=Path,
+        help="a harness run's Results_process.json, beside its buildinfo.json and process log",
+    )
     ap.add_argument("--results", required=True, type=Path, help="PlexCleaner --resultsfile output")
     ap.add_argument(
         "--write", action="store_true", help="write the expected file from the results instead"
     )
     args = ap.parse_args(argv)
+
+    if args.baseline is not None:
+        if args.write:
+            ap.error("--write records an --expected file, and has no meaning with --baseline")
+        return compare_runs(args.baseline, args.results)
 
     actual = outcomes(json.loads(args.results.read_text(encoding="utf-8")))
     if args.write:

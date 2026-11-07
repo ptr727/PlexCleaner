@@ -53,6 +53,16 @@ Setting `REGRESSION_COVERAGE_TOOL` to the absolute path of a host directory hold
 
 Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
 
+### Comparing two runs
+
+Each run writes `buildinfo.json` beside its results. It records the image and every input that shapes the outcome. Those inputs are the mode, the corpus, the corpus snapshot cloned, and the process options. They also cover the settings file's SHA-256, whether coverage ran, and the plugins built. Writing it needs `jq` on the host. Compare a run against a baseline run in one step:
+
+```shell
+python3 check_results.py --baseline <baseline>/Results_process.json --results <candidate>/Results_process.json
+```
+
+The comparison first checks the two runs' inputs. It reads each run's tool versions from the `<Tool> : Version:` lines at the start of its `PlexCleaner_process.log`. Any difference in an input other than the image refuses the comparison and names the mismatch. So a corpus refresh, a thread-count change, a settings change, or a tool update cannot pass for a code change. A field one run does not record is reported as unverifiable rather than compared. A plugin difference is only noted, since the plugins run after `Results_process.json` is written. Once the inputs match, it prints one line per file whose result, new name, `Modified` flag, `State` flags, or failed operation differs. It exits `0` when the runs match and `1` otherwise. Judge each difference as an intended effect of the change under test, a regression, or noise, since only the change's purpose decides that.
+
 ### Full-file scanning
 
 The harness scans the whole file; it does not use `--quickscan`. Bounding the scan to the start of the file causes false negatives for defects that surface later, notably closed-caption detection and interlace detection, so a full scan is the correct default for regression comparison.
@@ -128,7 +138,7 @@ Synthetic generation is a *targeted* tool, not a wholesale replacement for the r
 - [`synthetic/inject_hdr10plus_sei.py`][synthetic-inject-hdr10plus-sei] -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
 - [`synthetic/hevc_nal.py`][synthetic-hevc-nal] -- shared HEVC helpers used by both injectors. They pack bits, wrap a T.35 payload into a prefix-SEI NAL, and insert a SEI before every VCL NAL.
 - [`synthetic/expected-results.json`][synthetic-expected-results] -- the expected process result of every file in the integration run, see *CI integration run* below.
-- [`integration-test.sh`][integration-test] and [`check_results.py`][check-results] -- the integration run and its result check.
+- [`integration-test.sh`][integration-test] and [`check_results.py`][check-results] -- the integration run and its result check. The same script compares two harness runs, see *Comparing two runs* below.
 
 Requires `ffmpeg` (with libx265), `ffprobe`, and `mkvmerge` on `PATH`. Examples:
 
