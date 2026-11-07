@@ -18,8 +18,6 @@ public partial class FfProbe
 
         public GlobalOptions LogLevelError() => LogLevel("error");
 
-        public GlobalOptions LogLevelQuiet() => LogLevel("quiet");
-
         public GlobalOptions HideBanner() => Add("-hide_banner");
 
         public GlobalOptions AnalyzeDuration() => Add("-analyzeduration");
@@ -56,8 +54,6 @@ public partial class FfProbe
 
         public FfProbeOptions ShowPackets() => Add("-show_packets");
 
-        public FfProbeOptions ShowFrames() => Add("-show_frames");
-
         public FfProbeOptions ShowFormat() => Add("-show_format");
 
         public FfProbeOptions AnalyzeFrames() => Add("-analyze_frames");
@@ -66,36 +62,14 @@ public partial class FfProbe
 
         public FfProbeOptions SelectStreams(string option) => SelectStreams().Add(option);
 
-        public FfProbeOptions Format() => Add("-f");
-
-        public FfProbeOptions Format(string option) => Format().Add(option);
-
-        public FfProbeOptions Input() => Add("-i");
-
-        public FfProbeOptions Input(string option) => Input().Add(option);
-
         public FfProbeOptions ShowEntries() => Add("-show_entries");
 
         public FfProbeOptions ShowEntries(string option) => ShowEntries().Add(option);
-
-        public FfProbeOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
-            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
-                ? this
-                : Add("-read_intervals")
-                    .Add($"+{(int)timeStart.TotalSeconds}%{(int)timeStop.TotalSeconds}");
-
-        public FfProbeOptions SeekStart(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero
-                ? this
-                : Add("-read_intervals").Add($"+{(int)timeSpan.TotalSeconds}");
 
         public FfProbeOptions SeekStop(TimeSpan timeSpan) =>
             timeSpan == TimeSpan.Zero
                 ? this
                 : Add("-read_intervals").Add($"%{(int)timeSpan.TotalSeconds}");
-
-        public FfProbeOptions QuickScan() =>
-            Program.Options.QuickScan ? SeekStop(Program.QuickScanTimeSpan) : this;
 
         public FfProbeOptions ReadIntervalFrames(int frames) =>
             frames <= 0 ? this : Add("-read_intervals").Add($"%+#{frames}");

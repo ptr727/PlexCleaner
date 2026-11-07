@@ -162,7 +162,7 @@ Critical performance feature - DO NOT break compatibility:
 
 **Processing logic:**
 
-- Files must "settle" (no changes for `MonitorWaitTime` seconds) before processing
+- Files must "settle" (no changes for `SettleTime`, 60 seconds by default) before processing
 - Files must be readable (not being written) before processing
 - Cleanup: deletes empty folders when `DeleteEmptyFolders` is on, see [Run Flow][run-flow]
 - Pre-process: Optional initial scan of all monitored folders on startup
@@ -175,26 +175,21 @@ Critical performance feature - DO NOT break compatibility:
 
 ### XML and JSON Parsing
 
-AOT-safe parsers in `MediaInfoXmlParser.cs`:
+AOT-safe parser in `MediaInfoXmlParser.cs`, avoiding `XmlSerializer` (not AOT-compatible):
 
-- **MediaInfoFromXml()**: Parses specific MediaInfo XML elements into `MediaInfoToolXmlSchema.MediaInfo`
-  - Manually parses only known elements needed by PlexCleaner (id, format, language, etc.)
-  - Used by sidecar file system to parse XML output when JSON unavailable
-  - Avoids XmlSerializer (not AOT-compatible)
 - **GenericXmlToJson()**: Converts any XML file to JSON format
-  - Preserves all elements and attributes (unlike MediaInfoFromXml's selective parsing)
+  - Used by the sidecar v4 to v5 upgrade, which converts the stored MediaInfo XML to JSON
+  - Preserves every element below the root with its attributes, except namespace and `xsi` attributes
+  - Does not write the root element's own attributes
   - Handles attributes: prefix with `@` for elements with children, no prefix for leaf elements
   - Detects arrays: elements appearing multiple times become JSON arrays
   - Two-pass algorithm: collect children to detect arrays, then write JSON
-  - Uses `XmlReader` and `Utf8JsonWriter` for streaming efficiency
+  - Reads with `XmlReader` into an in-memory `ElementData` tree, then writes it with `Utf8JsonWriter`
   - Special handling for MediaInfo's mixed attribute/text content format (creatingLibrary)
-- **MediaInfoXmlToJson()**: Converts parsed MediaInfo XML to MediaInfo JSON schema
-  - Bridges between XML and JSON schema types
-  - Maps only known MediaInfo track properties
 
 Parser design patterns:
 
-- Forward-only `XmlReader` with depth tracking for streaming
+- Forward-only `XmlReader` with depth tracking
 - Recursive `ElementData` tree for generic XML-to-JSON conversion
 - Namespace filtering (skip `xmlns`, `xsi` attributes)
 - Special handling for MediaInfo's mixed attribute/text content format
@@ -353,39 +348,40 @@ flowchart TD
     P21 --> P22["ReEncode(): ReEncode"]
     P22 --> P23["VerifyAndRepair(): Verify, AutoRepair"]
   end
-  P23 --> G6{"A step from RemoveCoverArt() on modified the file?"}
+  P23 --> G6{"Any step from RemoveCoverArt() onward has modified the file?"}
   G6 -->|yes| CLEAN
-  G6 -->|no| P33
+  G6 -->|no| P34
   subgraph CLEAN["Cleanup re-run"]
-    P24["RemoveCoverArt(): ReMux"] --> P25["RemoveTags(): RemoveTags"]
-    P25 --> P26["RepairMetadataErrors(): AutoRepair"]
-    P26 --> P27["RepairMatroskaStructure(): Verify"]
-    P27 --> P28["RemoveClosedCaptions(): RemoveClosedCaptions"]
-    P28 --> P29["SetUnknownLanguageTracks(): SetUnknownLanguage"]
-    P29 --> P30["RemoveUnwantedLanguageTracks(): RemoveUnwantedLanguageTracks"]
-    P30 --> P31["RemoveDuplicateTracks(): RemoveDuplicateTracks"]
-    P31 --> P32["RepairDefaultFlags(): SetTrackFlags"]
+    P24["DeInterlaceAfterRepair(): DeInterlace"] --> P25["RemoveCoverArt(): ReMux"]
+    P25 --> P26["RemoveTags(): RemoveTags"]
+    P26 --> P27["RepairMetadataErrors(): AutoRepair"]
+    P27 --> P28["RepairMatroskaStructure(): Verify"]
+    P28 --> P29["RemoveClosedCaptions(): RemoveClosedCaptions"]
+    P29 --> P30["SetUnknownLanguageTracks(): SetUnknownLanguage"]
+    P30 --> P31["RemoveUnwantedLanguageTracks(): RemoveUnwantedLanguageTracks"]
+    P31 --> P32["RemoveDuplicateTracks(): RemoveDuplicateTracks"]
+    P32 --> P33["RepairDefaultFlags(): SetTrackFlags"]
   end
-  P32 --> P33["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
-  P33 --> P34["VerifyMediaInfo()"]
-  P34 --> OK(["Result true"])
+  P33 --> P34["SetLastWriteTimeUtc(): RestoreFileTimestamp"]
+  P34 --> P35["VerifyMediaInfo()"]
+  P35 --> OK(["Result true"])
   P03 -.->|"false or cancel"| AB
   P06 -.->|false| AB
   P07 -.->|"false or cancel"| AB
   MAIN -.->|"any step false or cancel"| AB
   CLEAN -.->|"any step false or cancel"| AB
-  P33 -.->|"false or cancel"| AB
-  P34 -.->|false| AB
+  P34 -.->|"false or cancel"| AB
+  P35 -.->|false| AB
   THR["Any step throws while no cancel is requested"] -.-> AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
-  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, then the sidecar of an MKV file, unless cancelled, a rename target held another file, a tool run for the file failed to launch, threw, or was killed by a signal outside Windows, or the state has PostDecodeTimestamps"]
+  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, then the sidecar of an MKV file, unless cancelled, a rename target held another file, a tool run for the file failed to launch, threw, or was killed by a signal outside Windows, the state has PostDecodeTimestamps, or the interlace rescan after a repair failed"]
   DF --> RET
 ```
 
-`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`, and a file whose remux or rename target already held another file. A media delete that throws is logged, and the file counts as not deleted. When the sidecar delete that follows throws, it is logged, and the file still counts as deleted with `FileDeleted` set.
+`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`, and a file whose remux or rename target already held another file. It keeps a file whose interlace rescan after a repair failed, since the repair already replaced it with media that verifies clean. A media delete that throws is logged, and the file counts as not deleted. When the sidecar delete that follows throws, it is logged, and the file still counts as deleted with `FileDeleted` set.
 
-After `VerifyAndRepair()`, when a step from `RemoveCoverArt()` on modified the file, the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
+After `VerifyAndRepair()`, when any step from `RemoveCoverArt()` onward has modified the file, `DeInterlaceAfterRepair()` runs first. It scans again only a file whose interlace scan was skipped and that the repair replaced, per "Deinterlace" below. Then the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path. `RemuxByExtension()` and `MakeExtensionLowercase()` fail the file before they write anything when another file holds the target name.
 
@@ -423,7 +419,7 @@ flowchart TD
 
 `IsMediaAndToolsCurrent()` is false when the media changed, or when a tool changed with `SidecarUpdateOnToolChange` on. With the option off, a tool upgrade alone never reruns the tools, and the sidecar keeps the tool versions it recorded until they rerun. A rename onto a name that has a sidecar keeps `FileReNamed` and the flags the renaming step set. `SidecarFile.Open()` adds them to the stored state. When the media differs from that sidecar, `Open()` drops the verify results, `SidecarFile.VerifyStates`, from the flags it adds.
 
-`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
+`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. An idet scan past FFmpeg's decode error rate sets no flag, because its counts cover only the frames that decoded. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
 
 ### Remux and Container Steps
 
@@ -634,10 +630,12 @@ flowchart TD
   F1 -->|yes| FOUND
   F1 -->|no| F2{"--quickscan set?"}
   F2 -->|yes| AOK
-  F2 -->|no| F3{"Process command, and the state has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
+  F2 -->|no| F3{"Process command, no rescan pending, and the state has ScannedInterlace, Verified, VerifyFailed or DeInterlaced?"}
   F3 -->|yes| AOK
   F3 -->|no| F4["FfMpeg idet scan"]
-  F4 -->|"scan fails or no result"| FAIL(["Fail"])
+  F4 -->|"scan or parse fails"| FAIL(["Fail"])
+  F4 -->|"decode error rate exceeded"| FSKIP["Warn, skip detection, no state set"]
+  FSKIP --> AOK
   F4 -->|progressive| F5["Sets ScannedInterlace and saves state"]
   F5 --> AOK
   F4 -->|interlaced| FOUND{"State has DeInterlaced?"}
@@ -664,6 +662,8 @@ flowchart TD
 ```
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
+
+A scan skipped past the decode error rate leaves interlacing unknown. When verify then fails and a repair verifies clean, `DeInterlaceAfterRepair()` scans the now decodable file once, past the `Verified` skip. A repair keeps interlaced content interlaced, and `Verified` would otherwise keep the file from ever being scanned. The repair saves its state without `Verified` while the rescan is pending. A cancel or a failure in the rescan then leaves the file for the next run to scan. A rescan that does not deinterlace sets `Verified` back. The `process` command runs it first in the post-repair cleanup, so the cleanup steps also cover a HandBrake deinterlace. A deinterlace there clears the verify states, so the next run verifies the new media.
 
 Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes DC to D5 for its caller. The repair by re-encode uses it for its HandBrake fallback. HandBrake would convert the subtitles to ASS, so it encodes without them, and MkvMerge merges the original subtitle tracks back unchanged. MkvMerge merges back only tracks, so closed captions embedded in the video stream are lost. `ReportClosedCaptionsDropped()` logs a warning first when the video carries them, as [Docs/ClosedCaptions.md][closed-captions] describes.
 
@@ -874,6 +874,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified`, `Repaired` |
 | `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | |
 | `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
+| `DeInterlaceAfterRepair()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed`, and `Verified` when it does not deinterlace | `SidecarFile.VerifyStates` when it rewrites the file |
 | `SetUnknownLanguageTracks()` | `SetLanguage` | |
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |
@@ -911,7 +912,7 @@ For formatter, EditorConfig, pre-commit hooks, line endings, and charset details
 
 ### Async and Concurrency
 
-- Main loop: Uses `WaitForCancel()` polling pattern instead of async/await
+- Main loop: `MonitorFolders` polls the token it is passed, linked with `Program.CancelToken()`, between processing cycles instead of using async/await. Processing itself observes the program token.
 - Tool execution: Synchronous wrappers around CliWrap async operations
 - Parallel processing: PLINQ with `AsParallel()`, `WithDegreeOfParallelism()`
 - Lock-based synchronization: `Lock` instances for collection access
@@ -925,8 +926,18 @@ Serilog log levels describe the **nature** of an event, applied uniformly across
 - **Warning** - the **trigger**: the orchestration layer inspected the file, interpreted the result, and has **decided to modify the media** (or detected a noteworthy non-fatal condition - unknown codec, cover art, language fallback, non-convergent repair, an interruption). Emitted **once**, at the decision point, *before* the modification. This is the event that elevates the per-file log from Warning to Information (see `PerFileLogLevel`), so `--loglevel Warning` shows every file that gets changed and why.
   - A "modification" is a write to the **media file**, including in-place metadata edits (MkvPropEdit flags/language/title) and container remuxes/renames. Sidecar cache writes and the results file are bookkeeping, not media modifications - they are Debug/Information, not Warnings.
   - **The media-manipulation code itself does not emit Warning.** Doing a remux or re-encode is that code's job, not a warning. Only the decision to run it is the Warning. Do not sprinkle Warnings through `Convert`, the media-tool wrappers, or the worker methods.
-- **Information** - the high-level narrative of what the app is doing, readable end to end at the default level with no low-level mechanics: startup (banner, settings, tool versions), discovery (`Discovered N files`), batch lifecycle (`Starting {Command}, processing N files`, progress, `Completed`, the run summary), the per-file entry, read-only outcomes of note (skips), a worker **doing its job** (e.g. `Convert.ReMux` logging `Remux using MkvMerge`), and the intended output of read-only commands (`getmediainfo` / `getsidecarinfo` / `gettagmap` dumps).
-- **Debug** - troubleshooting detail; *how* the work is done: raw tool invocations and command lines (`Executing MkvMerge : GetMediaPropsJson : args`, which carry the operation so a per-method "doing X" line is not needed), read/probe mechanics (`Reading media info from sidecar`, temp files, packet probes), per-track structural dumps during normal processing, inspection sub-steps (verify, bitrate, idet counting), and sidecar cache bookkeeping.
+- **Information** - the high-level narrative of what the app is doing, readable end to end at the default level with no low-level mechanics. It covers the following:
+  - startup (banner, settings, tool versions), discovery (`Discovered N files`), and the per-file entry.
+  - batch lifecycle (`Starting {Command}, processing N files`, progress, `Completed`, the run summary).
+  - read-only outcomes of note, such as skips, and each interlace scan's verdict and idet counts.
+  - a worker **doing its job**, such as `Convert.ReMux` logging `Remux using MkvMerge`.
+  - the intended output of read-only commands (`getmediainfo` / `getsidecarinfo` / `gettagmap` dumps).
+- **Debug** - troubleshooting detail, *how* the work is done. It covers the following:
+  - raw tool invocations and command lines, such as `Executing MkvMerge : GetMediaPropsJson : args`.
+    - Each carries its operation, so a per-method "doing X" line is not needed.
+  - read and probe mechanics (`Reading media info from sidecar`, temp files, packet probes).
+  - per-track structural dumps during normal processing.
+  - inspection sub-steps (verify, bitrate, the idet tool run), and sidecar cache bookkeeping.
 - **Verbose** - very granular: filesystem-watcher events, per-packet/byte-level progress.
 
 The elevation trigger (Warning) must be preserved: keep exactly one decision-Warning per media modification, with the action at Information and the underlying tool at Debug.

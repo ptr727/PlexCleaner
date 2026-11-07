@@ -31,6 +31,11 @@ public class ProcessFile
     // A rename blocked by an existing file says nothing about the media
     private bool _renameCollision;
 
+    // An interlace scan skipped for undecodable video runs once more after a repair fixes the file
+    private bool _interlaceScanSkipped;
+    private bool _interlaceRescan;
+    private bool _interlaceRescanFailed;
+
     // Null until a step's first call reads what an earlier run left, a later call follows this run
     private bool? _coverArtRemains;
     private bool? _trackFlagsDoNotStick;
@@ -1387,6 +1392,7 @@ public class ProcessFile
 
         if (
             conditional
+            && !_interlaceRescan
             && (
                 State.HasFlag(SidecarFile.StatesType.ScannedInterlace)
                 || State.HasFlag(SidecarFile.StatesType.Verified)
@@ -1400,14 +1406,38 @@ public class ProcessFile
         }
 
         // Count the frame types using the idet filter
-        if (!GetIdetInfo(out idetInfo) || idetInfo == null)
+        _interlaceRescan = false;
+        if (!GetIdetInfo(out idetInfo))
         {
             // Error, an idet execution or parse failure is unexpected, abort the file so the bug surfaces
             return false;
         }
+        if (idetInfo == null)
+        {
+            // Counts from a mostly undecodable stream are unreliable, record no verdict or scan state
+            _interlaceScanSkipped = true;
+            return true;
+        }
 
         // Idet result
-        if (!idetInfo.IsInterlaced())
+        bool interlaced = idetInfo.IsInterlaced();
+        Log.Information(
+            "Interlace scan counts : Interlaced: {Interlaced}, Multi: TFF: {MultiTff}, BFF: {MultiBff}, Progressive: {MultiProgressive}, Undetermined: {MultiUndetermined}, Single: TFF: {SingleTff}, BFF: {SingleBff}, Progressive: {SingleProgressive}, Undetermined: {SingleUndetermined}, Repeated: Neither: {RepeatedNeither}, Top: {RepeatedTop}, Bottom: {RepeatedBottom} : {FileName}",
+            interlaced,
+            idetInfo.MultiFrame.Tff,
+            idetInfo.MultiFrame.Bff,
+            idetInfo.MultiFrame.Progressive,
+            idetInfo.MultiFrame.Undetermined,
+            idetInfo.SingleFrame.Tff,
+            idetInfo.SingleFrame.Bff,
+            idetInfo.SingleFrame.Progressive,
+            idetInfo.SingleFrame.Undetermined,
+            idetInfo.RepeatedFields.Neither,
+            idetInfo.RepeatedFields.Top,
+            idetInfo.RepeatedFields.Bottom,
+            FileInfo.FullName
+        );
+        if (!interlaced)
         {
             // Not interlaced, clear the idet info so the caller does not treat it as a detection
             idetInfo = null;
@@ -1579,6 +1609,26 @@ public class ProcessFile
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         _sidecarFile.State &= ~SidecarFile.VerifyStates;
         return Refresh(true);
+    }
+
+    public bool DeInterlaceAfterRepair(ref bool modified)
+    {
+        // Verified stays unsaved while the rescan is pending, so an interrupted rescan scans again next run
+        if (!_interlaceRescan)
+        {
+            return true;
+        }
+        if (!DeInterlace(true, ref modified))
+        {
+            _interlaceRescanFailed = true;
+            return false;
+        }
+        if (State.HasFlag(SidecarFile.StatesType.DeInterlaced) || _bitrateToolError)
+        {
+            return true;
+        }
+        _sidecarFile.State |= SidecarFile.StatesType.Verified;
+        return SaveState();
     }
 
     public bool RemoveClosedCaptions(bool conditional, ref bool modified)
@@ -1927,6 +1977,7 @@ public class ProcessFile
         : Program.IsCancelledError() ? "Cancelled"
         : _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
             ? nameof(SidecarFile.StatesType.PostDecodeTimestamps)
+        : _interlaceRescanFailed ? "Interlace rescan after repair"
         : null;
 
     public bool DeleteFailedFile(string failedOperation)
@@ -2091,7 +2142,10 @@ public class ProcessFile
 
     private bool SetRepairedState(bool reEncoded, ref bool modified)
     {
-        _sidecarFile.State |= SidecarFile.StatesType.Verified;
+        _interlaceRescan = _interlaceScanSkipped;
+        _sidecarFile.State = _interlaceRescan
+            ? _sidecarFile.State & ~SidecarFile.StatesType.Verified
+            : _sidecarFile.State | SidecarFile.StatesType.Verified;
         _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State |= SidecarFile.StatesType.Repaired;
         _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
@@ -2853,40 +2907,6 @@ public class ProcessFile
         return true;
     }
 
-    public bool TestMediaProps()
-    {
-        // Only called from test code to verify behavior of parsing logic
-
-        // Get media info
-        if (!Refresh(false))
-        {
-            Log.Error("Failed to get media tool info : {FileName}", FileInfo.FullName);
-            return false;
-        }
-
-        // Verify that all codecs and tracks are supported
-        if (MediaInfoProps.Unsupported || FfProbeProps.Unsupported || MkvMergeProps.Unsupported)
-        {
-            Log.Error("Unsupported media info : {FileName}", FileInfo.FullName);
-            if (MediaInfoProps.Unsupported)
-            {
-                MediaInfoProps.WriteLine("Unsupported");
-            }
-            if (MkvMergeProps.Unsupported)
-            {
-                MkvMergeProps.WriteLine("Unsupported");
-            }
-            if (FfProbeProps.Unsupported)
-            {
-                FfProbeProps.WriteLine("Unsupported");
-            }
-            return false;
-        }
-
-        // Done
-        return true;
-    }
-
     public bool GetBitrateInfo(out BitrateInfo? bitrateInfo) =>
         GetPacketAnalysis(Program.Options.QuickScan, out bitrateInfo, out _);
 
@@ -2949,7 +2969,7 @@ public class ProcessFile
     private bool GetIdetInfo(out FfMpegIdetInfo? idetInfo)
     {
         // Count the frame types using the idet filter
-        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo) || idetInfo == null)
+        if (!FfMpegIdetInfo.GetIdetInfo(FileInfo.FullName, out idetInfo))
         {
             // Cancel requested
             if (Program.IsCancelledError())

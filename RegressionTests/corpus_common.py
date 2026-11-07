@@ -1,10 +1,10 @@
 """
 corpus_common.py - shared parsing + deterministic classification for the corpus tooling.
 
-Single source of truth so catalog_corpus.py and reduce_corpus.py never drift. Parses a
-PlexCleaner process log (attributing detections/errors to files by thread affinity + line
-filename) and classifies a file's State/detections/decode-signatures into a curated stable
-bucket set.
+Single source of truth so catalog_corpus.py, reduce_corpus.py, and check_results.py never drift.
+Parses a PlexCleaner process log, attributing detections and errors to files by thread affinity
+and line filename. Classifies a file's State, detections, and decode signatures into a curated
+stable bucket set.
 
 Robust to BOTH failure-log formats: a logging change inserted {Operation} before ExitCode and
 appended {FileName} after the error, so a fixed regex tied to the old shape would silently drop
@@ -47,16 +47,27 @@ DETECT_RE = re.compile(r"([A-Z][A-Za-z0-9 /_-]+?) detected\b")
 TRACK_RE = re.compile(
     r'MkvMerge\s*:\s*(Video|Audio|Subtitle)\s*:\s*Format:\s*"([^"]*)".*?Interlaced:\s*(True|False)'
 )
+IDET_RE = re.compile(
+    r"Interlace scan counts : Interlaced: (?P<interlaced>True|False), "
+    r"Multi: TFF: (?P<multi_tff>\d+), BFF: (?P<multi_bff>\d+), "
+    r"Progressive: (?P<multi_progressive>\d+), Undetermined: (?P<multi_undetermined>\d+), "
+    r"Single: TFF: (?P<single_tff>\d+), BFF: (?P<single_bff>\d+), "
+    r"Progressive: (?P<single_progressive>\d+), Undetermined: (?P<single_undetermined>\d+), "
+    r"Repeated: Neither: (?P<repeated_neither>\d+), Top: (?P<repeated_top>\d+), "
+    r"Bottom: (?P<repeated_bottom>\d+)"
+)
 #   old : Failed execution of FfMpeg : ExitCode: 183 : "e1 | e2 | e3"
 #   new : Failed execution of FfMpeg : Verify : ExitCode: 183 : "e1 | e2 | e3" : "/path/file.mkv"
 FAIL_RE = re.compile(r"Failed execution of (\w+)\b.*?ExitCode:\s*-?\d+\s*(?::\s*(.*))?$")
+LINE_FILE_RE = re.compile(r'"([^"]+\.[A-Za-z0-9]+)"\s*$')
 QUOTED_RE = re.compile(r'"([^"]*)"')
 # Environmental / informational stderr that is NOT a file-intrinsic issue - a reduced clip must not be
 # required to reproduce these (they depend on the host, not the media).
 BENIGN_NOISE = re.compile(
     r"Cannot load lib|libnvidia|libcuda|Using the demultiplexer|Using the muxer for|"
     r"Using the encoder|Using the decoder|Press \[q\]|configuration:|built with|"
-    r"deprecated pixel format",
+    r"deprecated pixel format|"
+    r"^frame=\s*\d+\s.*\bspeed=",
     re.IGNORECASE,
 )
 
@@ -116,6 +127,11 @@ DETECT_BUCKET = [
 
 def stem_of(p):
     return Path(p).stem
+
+
+def state_flags(state: str | None) -> set[str]:
+    """Split a results file's comma-separated State into its flag names."""
+    return {s.strip() for s in (state or "").split(",") if s.strip()}
 
 
 def hms(seconds):
@@ -269,14 +285,34 @@ def extract_errors(after):
     return errs
 
 
+def line_target(msg, stem):
+    """The stem a log line names as its trailing quoted file, else the thread's current file."""
+    fn = LINE_FILE_RE.search(msg)
+    return stem_of(fn.group(1)) if fn else stem
+
+
+def idet_counts(m):
+    """The interlace scan's verdict and counts, informational only, never part of the reduce gate."""
+    n = {k: int(v) for k, v in m.groupdict().items() if k != "interlaced"}
+    return {
+        "interlaced": m.group("interlaced") == "True",
+        **{
+            group: {k.split("_", 1)[1]: v for k, v in n.items() if k.startswith(group + "_")}
+            for group in ("multi", "single", "repeated")
+        },
+    }
+
+
 def parse_log(path):
-    """{stem: {detections:set, errors:set, tracks:list}} by thread affinity + line filename."""
+    """{stem: {detections, errors, tracks, idet}} by thread affinity + line filename."""
     result = {}
     thread_file = {}
     path = Path(path)
 
     def bucket(stem):
-        return result.setdefault(stem, {"detections": set(), "errors": set(), "tracks": []})
+        return result.setdefault(
+            stem, {"detections": set(), "errors": set(), "tracks": [], "idet": None}
+        )
 
     if not path.exists():
         return result
@@ -290,10 +326,15 @@ def parse_log(path):
             thread_file[tid] = stem_of(b.group(1))
             continue
         stem = thread_file.get(tid)
+        i = IDET_RE.search(msg)
+        if i:
+            target = line_target(msg, stem)
+            if target:
+                bucket(target)["idet"] = idet_counts(i)
+            continue
         d = DETECT_RE.search(msg)
         if d:
-            fn = re.search(r'"([^"]+\.[A-Za-z0-9]+)"\s*$', msg)
-            target = stem_of(fn.group(1)) if fn else stem
+            target = line_target(msg, stem)
             if target:
                 bucket(target)["detections"].add(d.group(1).strip())
             continue

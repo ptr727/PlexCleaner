@@ -20,15 +20,27 @@ class LocateIssueTests(unittest.TestCase):
         self.assertEqual(args[args.index("-i") + 1], "/in.mkv")
         self.assertEqual(args[-2:], ["null", "-"])
 
+    def test_region_window(self) -> None:
+        self.assertEqual(locate_issue.region_window(205.7, 40, False), (165, 245))
+        self.assertEqual(locate_issue.region_window(205.7, 40, True), (190, 245))
+        self.assertEqual(locate_issue.region_window(205.7, 10, True), (195, 215))
+        self.assertEqual(locate_issue.region_window(5, 40, True), (0, 45))
+        self.assertEqual(locate_issue.region_window(205, 10, False), (174, 215))
+        start, _ = locate_issue.region_window(205, 40, True)
+        self.assertLess(205 - start, locate_issue.SNIPPET_SECONDS)
+
     def test_write_region_merges(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             rules = Path(d) / "rules.json"
+            tuned = {"a": {"start": 7, "end": 8, "note": "hand"}}
+            rules.write_text(json.dumps({"regions": tuned}))
             locate_issue.write_region(rules, "a", 1, 2, "n1")
             locate_issue.write_region(rules, "b", 3, 4, "n2")
             data = json.loads(rules.read_text())
         self.assertEqual(data["schema"], 1)
-        self.assertEqual(data["regions"]["a"], {"start": 1, "end": 2, "note": "n1"})
-        self.assertEqual(data["regions"]["b"]["end"], 4)
+        self.assertEqual(data["regions"], tuned)
+        self.assertEqual(data["located"]["a"], {"start": 1, "end": 2, "note": "n1"})
+        self.assertEqual(data["located"]["b"]["end"], 4)
 
 
 if __name__ == "__main__":

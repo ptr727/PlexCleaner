@@ -55,15 +55,35 @@ jobs:
       python-directories: |
         RegressionTests
 
+  # The PR's integration run on the branch tip, so a publish never ships an image whose test commands fail (D1.7).
+  # It checks out github.sha, the commit publish builds, and uploads the branch's integration coverage.
+  integration:
+    name: Integration coverage job
+    needs: [plan]
+    if: ${{ needs.plan.outputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code step
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - name: Run integration coverage step
+        uses: ./.github/actions/integration-coverage
+        with:
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+
   # Build, version, and publish the triggering branch: the multi-runtime PlexCleaner.7z and the multi-arch
   # Docker image, then the GitHub release. Grants the write scopes the hub task needs, since it declares none
   # of its own: contents: write for the release, and actions: write to delete the consumed release-asset-*
   # transfer artifacts.
   publish:
     name: Publish project release job
-    needs: [plan, validate]
+    needs: [plan, validate, integration]
     if: >-
-      ${{ needs.plan.outputs.publish == 'true' && needs.validate.result == 'success' }}
+      ${{ needs.plan.outputs.publish == 'true' && needs.validate.result == 'success'
+      && needs.integration.result == 'success' }}
     uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@df04adaee6c5928177535e40eb5b9310638f501e # 2.0.1343
     secrets:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
