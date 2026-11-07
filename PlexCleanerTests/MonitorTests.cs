@@ -82,7 +82,8 @@ public sealed class MonitorTests : IDisposable
     [Fact]
     public void MonitorFolders_Failure_Disposes_Created_Watchers()
     {
-        Monitor monitor = new();
+        List<FileSystemWatcher> created = [];
+        Monitor monitor = new() { WatcherCreated = created.Add };
 
         _ = monitor
             .MonitorFolders(
@@ -92,7 +93,11 @@ public sealed class MonitorTests : IDisposable
             .Should()
             .BeFalse();
 
-        _ = monitor.WatcherCount.Should().Be(0);
+        _ = created.Should().ContainSingle();
+        _ = created[0]
+            .Invoking(watcher => watcher.EnableRaisingEvents = true)
+            .Should()
+            .Throw<ObjectDisposedException>();
     }
 
     [Fact]

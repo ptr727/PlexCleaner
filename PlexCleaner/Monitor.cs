@@ -14,7 +14,7 @@ public class Monitor
 
     private static void LogMonitorMessage() => Log.Information("Monitoring folders ...");
 
-    internal int WatcherCount => _watcher.Count;
+    internal Action<FileSystemWatcher>? WatcherCreated { get; init; }
 
     public bool MonitorFolders(List<string> folders, CancellationToken cancelToken)
     {
@@ -58,6 +58,7 @@ public class Monitor
             Log.Information("Monitoring : {Folder}", folder);
             FileSystemWatcher watch = new();
             _watcher.Add(watch);
+            WatcherCreated?.Invoke(watch);
             watch.Path = folder;
             watch.NotifyFilter =
                 NotifyFilters.Size
