@@ -38,6 +38,7 @@ jobs:
               - 'PlexCleanerTests/**'
               - 'Plugins/**'
               - 'Samples/**'
+              - 'ARCHITECTURE.md'
               - 'Docker/Dockerfile'
               - 'Docker/*.sh'
               - '.dockerignore'
@@ -51,6 +52,7 @@ jobs:
               - 'PlexCleanerTests/**'
               - 'Plugins/**'
               - 'Samples/**'
+              - 'ARCHITECTURE.md'
               - 'Docker/Dockerfile'
               - 'Docker/*.sh'
               - 'Docker/PlexCleaner.coverage.json'
@@ -123,7 +125,7 @@ jobs:
   # Single required status check, its name bound to the ruleset context (D1.5).
   # A skipped smoke-build or integration, an unchanged target, passes, and a failure or cancellation blocks.
   check-workflow-status:
-    name: Check pull request workflow status job
+    name: ${{ github.event_name == 'pull_request' && 'Check pull request workflow status job' || 'Check workflow status job' }}
     runs-on: ubuntu-latest
     needs: [changes, validate, smoke-build, integration]
     if: always()
