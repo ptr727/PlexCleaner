@@ -51,6 +51,14 @@ class ExtractErrorsTests(unittest.TestCase):
         after = '"real | frame=  318 fps= 76 q=-0.0 Lsize=N/A time=00:00:10.77 speed=2.56x"'
         self.assertEqual(cc.extract_errors(after), {"real"})
 
+    def test_rate_summary_dropped(self) -> None:
+        after = (
+            '"[aist#0:1/aac @ 0x1] [dec:aac @ 0x2] Decode error rate 0.71 exceeds maximum 0.67'
+            " | [aist#0:1/aac @ 0x1] [dec:aac @ 0x2] Task finished with error code: -1094995529"
+            ' (Error number -1094995529 occurred) | real"'
+        )
+        self.assertEqual(cc.extract_errors(after), {"real"})
+
     def test_error_naming_progress_fields_kept(self) -> None:
         after = '"[h264 @ 0x1] bad slice frame=12 speed=3"'
         self.assertEqual(cc.extract_errors(after), {"[h264 @ 0xADDR] bad slice frame=12 speed=3"})
