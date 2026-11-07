@@ -14,9 +14,27 @@ Running PlexCleaner against real media tools needs none of them installed on the
 
 ## Runbooks
 
+### Ship a change
+
+A change moves from a feature branch into `develop`, then from `develop` to `main` in a promotion. Regression testing gates each step in proportion to the change's risk. The branch rules themselves are in [GOVERNANCE.md](./GOVERNANCE.md) "Branching Model".
+
+1. **Feature to `develop`.** Branch from `develop`, and squash merge a pull request back into it. A change to processing, sidecar, media-tool, or language-tag code is regression tested from a local image first. Build that image from the branch per "Test a tool version the image does not carry", and run the harness with its local tag. Iterate until a `--baseline` comparison shows only the differences the change intends. A `quick` run over the `reduced` corpus is the usual first pass.
+2. **Dispatch a `develop` build.** Once `develop` holds the changes for a release, dispatch `publish-release.yml` from `develop` per "Publish a release". That publishes a prerelease and the `develop` image tag.
+3. **Regression test the `develop` image against the last release.** Run the harness on the `develop` tag over the `full` corpus. Use `full` mode when the changes touch remux, repair, or re-encode, since a `quick` run stops at the test snippet. Then compare the run with `check_results.py --baseline` against a run of the `latest` image. The comparison refuses runs whose mode, corpus snapshot, settings, or tool versions differ. So where no `latest` run matches those inputs, run `latest` in the same mode and corpus first. Judge every difference as intended, a regression, or noise before promoting.
+4. **Promote `develop` to `main`.** Open a `develop -> main` pull request, merged with a merge commit. A pull request into `develop` closes no issue, since GitHub closes issues from the default branch only. So the promotion pull request's body carries a closing keyword for every issue its changes fix. `develop` takes no back-merge from `main`. A conflicting promotion is therefore resolved on a branch cut from `main` that merges `develop`, and that branch heads the promotion pull request.
+5. **Fix and re-test.** A fix found during promotion goes into `develop` through step 1, and the promotion picks it up. Repeat steps 2 and 3 as the fix's risk calls for. A documentation or tooling fix needs no new run, and a processing fix does.
+6. **Merge and release.** The maintainer merges the promotion and dispatches `publish-release.yml` from `main`, which publishes the stable release and the `latest` image.
+
+Each step keeps the version and the release notes correct:
+
+- Only the maintainer changes the `major.minor` version in [version.json](./version.json), and only for a functional change. Nerdbank.GitVersioning sets the patch number from git height, so a release needs no version edit.
+- A version bump changes the README "Release Notes" version in the same commit. It replaces the previous version's summary there, and adds a new top entry to [HISTORY.md](./HISTORY.md).
+- A pull request with a user-visible change adds it to the current version's `HISTORY.md` entry. It also updates the README summary when the change is among that version's highlights.
+- Before promoting, confirm the README "Release Notes" version, the top `HISTORY.md` entry, and `version.json` name the same version.
+
 ### Publish a release
 
-Merges never publish. The publisher (`publish-release.yml`) runs on a weekly schedule and on manual dispatch, and each run builds the one branch it is started from: the schedule rebuilds `main` only (a stable release, the `latest` image, and a refreshed `ubuntu:rolling` base), and a dispatch publishes its own branch (`main` -> stable / `latest`, `develop` -> prerelease / `develop`). To ship the changes accumulated on `develop`, dispatch the workflow from `develop`. A dispatch from any other branch fails at the `plan` job rather than passing as a no-op. A re-run whose version is unchanged creates no duplicate release, and the Docker push still refreshes the image. Absent publish rights, nothing here can be run, and the verification falls back to the static and trace audits in [WORKFLOW.md](./WORKFLOW.md) section 5.
+Merges never publish. The publisher (`publish-release.yml`) runs on a weekly schedule and on manual dispatch, and each run builds the branch it starts from. The schedule rebuilds `main` only, as a stable release and the `latest` image on a refreshed `ubuntu:rolling` base. A dispatch from `develop` publishes the changes accumulated there as a prerelease and the `develop` image. A dispatch from `main` after a promotion publishes them as a stable release and the `latest` image. A dispatch from any other branch fails at the `plan` job rather than passing as a no-op. A re-run whose version is unchanged creates no duplicate release, and the Docker push still refreshes the image. Absent publish rights, nothing here can be run, and the verification falls back to the static and trace audits in [WORKFLOW.md](./WORKFLOW.md) section 5.
 
 ### Test the Docker image
 

@@ -1097,7 +1097,7 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 - The executable and Docker builds run the hub's default hooks rather than repo-specific ones: `dotnet_publish_project` names `./PlexCleaner/PlexCleaner.csproj`, which the default publishes across the 7-runtime matrix and archives as `PlexCleaner.7z`, and `docker_image` names `ptr727/plexcleaner`, which the default builds from `./Docker/Dockerfile` for `linux/amd64,linux/arm64` on a `main` publish.
 - Version info: `version.json` with Nerdbank.GitVersioning format. The hub's `get-version-task.yml`, reached from inside `build-release-task.yml`, surfaces `SemVer2`, the assembly versions, and `GitCommitId` (used to pin the release `target_commitish`).
 - Branches: `main` (stable releases, `latest`), `develop` (pre-releases, `develop`).
-- Release notes: keep a short current-version summary in `README.md` and the full history in `HISTORY.md`, updating both when cutting a release. `README.md` carries only the current version's summary - when bumping the version, replace the previous summary rather than appending, and prior versions live in `HISTORY.md`.
+- Release notes: `README.md` carries a short summary of the current version only, and `HISTORY.md` carries every version in full. [OPERATIONS.md][operations] "Ship a change" says when each is updated.
 
 ### Docker
 
@@ -1211,6 +1211,7 @@ Two entry-point workflows, whose build and publish jobs are thin callers of the 
 [governance]: ./GOVERNANCE.md
 [history]: ./HISTORY.md
 [language-matching]: ./Docs/LanguageMatching.md
+[operations]: ./OPERATIONS.md
 [process-command-logic]: #process-command-logic
 [readme]: ./README.md
 [regression-tests-readme]: ./RegressionTests/README.md
