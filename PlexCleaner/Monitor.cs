@@ -14,7 +14,26 @@ public class Monitor
 
     private static void LogMonitorMessage() => Log.Information("Monitoring folders ...");
 
+    internal int WatcherCount => _watcher.Count;
+
     public bool MonitorFolders(List<string> folders, CancellationToken cancelToken)
+    {
+        try
+        {
+            return WatchFolders(folders, cancelToken);
+        }
+        finally
+        {
+            _watcher.ForEach(item =>
+            {
+                item.EnableRaisingEvents = false;
+                item.Dispose();
+            });
+            _watcher.Clear();
+        }
+    }
+
+    private bool WatchFolders(List<string> folders, CancellationToken cancelToken)
     {
         using CancellationTokenSource stopSource = CancellationTokenSource.CreateLinkedTokenSource(
             cancelToken,
@@ -150,10 +169,6 @@ public class Monitor
 
             LogMonitorMessage();
         }
-
-        // Disable event watching
-        _watcher.ForEach(item => item.EnableRaisingEvents = false);
-        _watcher.Clear();
 
         // Done
         return true;

@@ -256,7 +256,10 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
             HasErrors = true;
             Actions |= ActionsType.SetLanguage;
             LanguageIetf = ietfLookup;
-            Log.Warning(
+            Log.Write(
+                Program.Config.ProcessOptions.SetIetfLanguageTags
+                    ? LogEventLevel.Warning
+                    : LogEventLevel.Debug,
                 "{Parser} : {Type} : Setting IETF tag from ISO639 tag : ISO639: {Language}, IETF: {LanguageIetf}, Actions: {Actions} : {FileName}",
                 Parent.Parser,
                 Type,

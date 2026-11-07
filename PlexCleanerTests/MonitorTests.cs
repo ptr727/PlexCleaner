@@ -80,6 +80,22 @@ public sealed class MonitorTests : IDisposable
     }
 
     [Fact]
+    public void MonitorFolders_Failure_Disposes_Created_Watchers()
+    {
+        Monitor monitor = new();
+
+        _ = monitor
+            .MonitorFolders(
+                [_directory, Path.Combine(_directory, "missing")],
+                TestContext.Current.CancellationToken
+            )
+            .Should()
+            .BeFalse();
+
+        _ = monitor.WatcherCount.Should().Be(0);
+    }
+
+    [Fact]
     public void MonitorFolders_PreProcess_Processes_Monitored_Folder()
     {
         Program.Options.PreProcess = true;
