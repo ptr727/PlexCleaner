@@ -61,12 +61,14 @@ IDET_RE = re.compile(
 FAIL_RE = re.compile(r"Failed execution of (\w+)\b.*?ExitCode:\s*-?\d+\s*(?::\s*(.*))?$")
 LINE_FILE_RE = re.compile(r'"([^"]+\.[A-Za-z0-9]+)"\s*$')
 QUOTED_RE = re.compile(r'"([^"]*)"')
-# Environmental / informational stderr that is NOT a file-intrinsic issue - a reduced clip must not be
-# required to reproduce these (they depend on the host, not the media).
+# Stderr that names no single site in the file, so a reduced clip need not reproduce it.
+# Host lines depend on the host, and FFmpeg's rate summaries depend on the whole file.
+# A task's exit line repeats the error that task already logged.
 BENIGN_NOISE = re.compile(
     r"Cannot load lib|libnvidia|libcuda|Using the demultiplexer|Using the muxer for|"
     r"Using the encoder|Using the decoder|Press \[q\]|configuration:|built with|"
     r"deprecated pixel format|"
+    r"Decode error rate [\d.]+ exceeds maximum|Task finished with error code:|"
     r"^frame=\s*\d+\s.*\bspeed=",
     re.IGNORECASE,
 )
