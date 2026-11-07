@@ -63,6 +63,7 @@ LINE_FILE_RE = re.compile(r'"([^"]+\.[A-Za-z0-9]+)"\s*$')
 QUOTED_RE = re.compile(r'"([^"]*)"')
 # Stderr that names no single site in the file, so a reduced clip need not reproduce it.
 # Host lines depend on the host, and FFmpeg's rate summaries depend on the whole file.
+# A task's exit line repeats the error that task already logged.
 BENIGN_NOISE = re.compile(
     r"Cannot load lib|libnvidia|libcuda|Using the demultiplexer|Using the muxer for|"
     r"Using the encoder|Using the decoder|Press \[q\]|configuration:|built with|"
