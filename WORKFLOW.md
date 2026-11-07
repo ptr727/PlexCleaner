@@ -226,7 +226,7 @@ flowchart TD
     T --> C["Detect changed targets job<br/>dorny/paths-filter, one release entry"]
     T --> V["Validate sources job<br/>hub validate-task.yml @pin"]
     C --> F{"release path changed<br/>or workflow_dispatch?"}:::gate
-    F -- "no: docs or workflow only" --> SK(["smoke-build skipped<br/>passes the aggregator"]):::stop
+    F -- "no: workflow only, or docs<br/>other than ARCHITECTURE.md" --> SK(["smoke-build skipped<br/>passes the aggregator"]):::stop
     F -- "yes" --> S["Smoke build job<br/>hub build-release-task.yml @pin<br/>smoke: true, github: false, dockerhub: false"]
     C --> FI{"integration path changed<br/>or workflow_dispatch?"}:::gate
     FI -- "no" --> ISK(["integration skipped<br/>passes the aggregator"]):::stop
@@ -247,9 +247,9 @@ flowchart TD
     SK --> A
     I --> A
     ISK --> A
-    A{"Check pull request workflow status job<br/>if: always()<br/>changes + validate succeeded,<br/>smoke-build + integration succeeded or skipped?"}:::gate
-    A -- "yes" --> G(["required check passes<br/>merge unblocked"]):::pub
-    A -- "no" --> R(["required check fails<br/>merge blocked"]):::stop
+    A{"Aggregator job, if: always()<br/>changes + validate succeeded,<br/>smoke-build + integration succeeded or skipped?"}:::gate
+    A -- "yes" --> G(["pull_request: Check pull request workflow status job<br/>passes, merge unblocked<br/>dispatch: Check workflow status job passes,<br/>no required context posted"]):::pub
+    A -- "no" --> R(["pull_request: required check fails, merge blocked<br/>dispatch: run fails"]):::stop
     classDef trig fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
     classDef gate fill:#fef9c3,stroke:#ca8a04,color:#713f12
     classDef pub fill:#dcfce7,stroke:#16a34a,color:#14532d
