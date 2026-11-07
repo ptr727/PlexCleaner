@@ -1,8 +1,10 @@
 """Tests for comparing a process results file with the expected outcomes in check_results."""
 
+import io
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from typing import Any
 
@@ -103,6 +105,125 @@ class MainTests(unittest.TestCase):
     def test_unknown_argument_refused(self) -> None:
         with self.assertRaises(SystemExit) as raised:
             self.run_main("--bogus")
+        self.assertNotEqual(raised.exception.code, 0)
+
+
+LOG = """\
+2026-01-01 00:00:00.000 +00:00 [INF] <1> FfMpeg : Version: "{ffmpeg}", Path: "ffmpeg"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> MkvMerge : Version: "1.0", Path: "mkvmerge"
+"""
+
+
+def build_info(**overrides: Any) -> dict[str, Any]:
+    info: dict[str, Any] = {
+        "Channel": "local",
+        "Version": "0123456789",
+        "Image": "plexcleaner:a",
+        "Mode": "quick",
+        "Corpus": "reduced",
+        "CorpusSnapshot": "pool/corpus@one",
+        "ProcessOptions": ["--parallel", "--threadcount", "8", "--testsnippets"],
+        "SettingsSha256": "aa",
+        "Coverage": False,
+        "Plugins": [],
+    }
+    return info | overrides
+
+
+class ToolVersionsTests(unittest.TestCase):
+    def test_reads_each_tool_once(self) -> None:
+        log = LOG.format(ffmpeg="8.1") + LOG.format(ffmpeg="9.0")
+        self.assertEqual(cr.tool_versions(log), {"FfMpeg": "8.1", "MkvMerge": "1.0"})
+
+
+class BaselineTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._dir.cleanup)
+        self.root = Path(self._dir.name)
+        self.baseline = self.write_run("baseline", build_info())
+
+    def write_run(
+        self,
+        name: str,
+        info: dict[str, Any] | None,
+        state: str = "Verified",
+        ffmpeg: str = "8.1",
+    ) -> Path:
+        run = self.root / name
+        run.mkdir()
+        if info is not None:
+            (run / "buildinfo.json").write_text(json.dumps(info), encoding="utf-8")
+        (run / "PlexCleaner_process.log").write_text(LOG.format(ffmpeg=ffmpeg), encoding="utf-8")
+        found = run / "Results_process.json"
+        found.write_text(json.dumps(results(result("a.mkv", state))), encoding="utf-8")
+        return found
+
+    def compare(self, candidate: Path) -> tuple[int, str]:
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = cr.main(["--baseline", str(self.baseline), "--results", str(candidate)])
+        return code, out.getvalue() + err.getvalue()
+
+    def test_match(self) -> None:
+        code, _ = self.compare(self.write_run("same", build_info(Image="plexcleaner:b")))
+        self.assertEqual(code, 0)
+
+    def test_outcome_difference(self) -> None:
+        code, text = self.compare(self.write_run("changed", build_info(), state="ReMuxed"))
+        self.assertEqual(code, 1)
+        self.assertIn("a.mkv: State expected ['Verified'], found ['ReMuxed']", text)
+
+    def test_refuses_input_mismatch(self) -> None:
+        cases = {
+            "Corpus": build_info(Corpus="full"),
+            "CorpusSnapshot": build_info(CorpusSnapshot="pool/corpus@two"),
+            "ProcessOptions": build_info(ProcessOptions=["--parallel", "--threadcount", "4"]),
+            "SettingsSha256": build_info(SettingsSha256="bb"),
+            "Coverage": build_info(Coverage=True),
+            "Mode": build_info(Mode="full"),
+        }
+        for field, info in cases.items():
+            with self.subTest(field=field):
+                code, text = self.compare(self.write_run(field, info, state="ReMuxed"))
+                self.assertEqual(code, 1)
+                self.assertIn(f"::error::input {field}:", text)
+                self.assertNotIn("a.mkv", text)
+
+    def test_refuses_tool_version_mismatch(self) -> None:
+        code, text = self.compare(self.write_run("tools", build_info(), ffmpeg="9.0"))
+        self.assertEqual(code, 1)
+        self.assertIn("::error::input ToolVersions:", text)
+
+    def test_missing_field_is_unverifiable_not_refused(self) -> None:
+        info = build_info()
+        del info["CorpusSnapshot"]
+        code, text = self.compare(self.write_run("older", info))
+        self.assertEqual(code, 0)
+        self.assertIn("unverifiable input CorpusSnapshot: not recorded by the results run", text)
+
+    def test_plugin_difference_is_noted_not_refused(self) -> None:
+        code, text = self.compare(self.write_run("plugins", build_info(Plugins=["A"])))
+        self.assertEqual(code, 0)
+        self.assertIn("note: Plugins:", text)
+
+    def test_missing_plugins_is_unverifiable_not_noted(self) -> None:
+        info = build_info()
+        del info["Plugins"]
+        code, text = self.compare(self.write_run("noplugins", info))
+        self.assertEqual(code, 0)
+        self.assertIn("unverifiable input Plugins: not recorded by the results run", text)
+        self.assertNotIn("note:", text)
+
+    def test_missing_build_info_refused(self) -> None:
+        code, text = self.compare(self.write_run("bare", None))
+        self.assertEqual(code, 1)
+        self.assertIn("no buildinfo.json", text)
+
+    def test_write_with_baseline_refused(self) -> None:
+        candidate = self.write_run("write", build_info())
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as raised:
+            cr.main(["--baseline", str(self.baseline), "--results", str(candidate), "--write"])
         self.assertNotEqual(raised.exception.code, 0)
 
 
