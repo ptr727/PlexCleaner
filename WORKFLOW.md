@@ -222,7 +222,7 @@ ruleset-bound required check (D1, D6). A second filter entry decides whether the
 
 ```mermaid
 flowchart TD
-    T(["pull_request: main, develop<br/>(or workflow_dispatch)"]):::trig
+    T(["pull_request, any base<br/>(or workflow_dispatch)"]):::trig
     T --> C["Detect changed targets job<br/>dorny/paths-filter, one release entry"]
     T --> V["Validate sources job<br/>hub validate-task.yml @pin"]
     C --> F{"release path changed<br/>or workflow_dispatch?"}:::gate
@@ -582,9 +582,9 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
   branch; every hub-task `uses:` is an owner-scoped `ptr727/ProjectTemplate/...@<sha> # <tag>` and no
   `validate-task.yml`, `build-release-task.yml`, `build-docker-task.yml`, `build-executable-task.yml` or
   `get-version-task.yml` exists under `.github/workflows/`.
-- **D1:** CI triggers on `pull_request` to `main` and `develop` and on `workflow_dispatch`, with no `push`
-  trigger. The `changes` job's `release` entry lists the executable and Docker paths and no workflow or
-  doc path. `validate` calls the hub validator by pin, passes `CODECOV_TOKEN` by name, and declares
+- **D1:** CI triggers on every `pull_request`, with no base filter, and on `workflow_dispatch`, with no `push`
+  trigger. The `changes` job's `release` entry lists the executable and Docker paths, no workflow path, and
+  no doc path other than `ARCHITECTURE.md`. `validate` calls the hub validator by pin, passes `CODECOV_TOKEN` by name, and declares
   `RegressionTests`. `smoke-build` `needs:` `changes` and runs with `smoke: true` only on a `release` change
   or a dispatch. Every build `upload-artifact` is gated `!smoke`. `global.json` declares
   `test.runner = Microsoft.Testing.Platform`. The unit-test step passes
