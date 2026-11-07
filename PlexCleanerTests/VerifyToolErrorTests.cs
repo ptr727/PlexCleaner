@@ -14,6 +14,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     private readonly bool _useSidecarFiles = Program.Config.ProcessOptions.UseSidecarFiles;
     private readonly bool _autoRepair = Program.Config.VerifyOptions.AutoRepair;
     private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
+    private readonly bool _registerInvalidFiles = Program.Config.VerifyOptions.RegisterInvalidFiles;
     private readonly int _maximumBitrate = Program.Config.VerifyOptions.MaximumBitrate;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
@@ -47,6 +48,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         Program.Config.ProcessOptions.UseSidecarFiles = _useSidecarFiles;
         Program.Config.VerifyOptions.AutoRepair = _autoRepair;
         Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
+        Program.Config.VerifyOptions.RegisterInvalidFiles = _registerInvalidFiles;
         Program.Config.VerifyOptions.MaximumBitrate = _maximumBitrate;
         Directory.Delete(_directory, true);
     }
@@ -170,7 +172,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = ToolErrorScope.SignalCount.Should().Be(deleted ? 0 : 1);
         _ = ToolErrorScope.Count.Should().Be(0);
         _ = processFile.State.Should().Be(state);
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().Be(deleted);
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().Be(deleted);
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be(autoRepair ? "2" : "1");
 
         _ = modified.Should().BeFalse();
@@ -216,7 +218,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = ToolErrorScope.Count.Should().Be(1);
         _ = ToolErrorScope.SignalCount.Should().Be(0);
         _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("2");
 
         _ = modified.Should().BeFalse();
@@ -262,7 +264,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = ToolErrorScope.SignalCount.Should().Be(1);
         _ = ToolErrorScope.Count.Should().Be(0);
         _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
 
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
@@ -300,7 +302,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = ToolErrorScope.Count.Should().BeGreaterThan(0);
         _ = ToolErrorScope.SignalCount.Should().Be(0);
         _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
 
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
@@ -308,7 +310,7 @@ public sealed class VerifyToolErrorTests : IDisposable
     }
 
     [Fact]
-    public void VerifyAndRepair_PostDecodeTimestampRepairFails_KeepsFilesOnEveryRun()
+    public void VerifyAndRepair_PostDecodeTimestampRepairFails_MarksProcessFailedAndSkipsNextRun()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
@@ -350,22 +352,23 @@ public sealed class VerifyToolErrorTests : IDisposable
             );
         bool deleted = true;
         IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
-            deleted = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+            deleted = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair))
         );
         _ = deleted.Should().BeFalse();
+        _ = processFile.InvalidReason.Should().BeNull();
         _ = LogCapture
-            .Messages(events, LogEventLevel.Information)
+            .Messages(events, LogEventLevel.Warning)
             .Should()
             .ContainSingle()
             .Which.Should()
-            .StartWith("Keeping failed file : PostDecodeTimestamps : ");
+            .StartWith("Keeping failed file, marking as ProcessFailed : VerifyAndRepair : ");
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("2");
 
         ProcessFile nextRun = new(mediaFile);
-        _ = nextRun.GetMediaProps().Should().BeTrue();
-        _ = nextRun.VerifyAndRepair(ref modified).Should().BeFalse();
-        _ = nextRun.State.Should().HaveFlag(SidecarFile.StatesType.PostDecodeTimestamps);
-        _ = nextRun.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        _ = nextRun.GetMediaProps(true).Should().BeFalse();
+        _ = nextRun.State.Should().HaveFlag(SidecarFile.StatesType.ProcessFailed);
+        _ = nextRun.HandleFailedFile(nameof(ProcessFile.GetMediaProps)).Should().BeFalse();
+        _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("2");
 
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
@@ -421,6 +424,67 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
         _ = processFile.State.Should().Be(state);
         _ = modified.Should().BeFalse();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_VerifyFails_RegisterWinsOverDelete()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.VerifyOptions.AutoRepair = false;
+        Program.Config.VerifyOptions.RegisterInvalidFiles = true;
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+        FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), "exit 183\n", true);
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
+        bool deleted = true;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            deleted = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair))
+        );
+
+        _ = deleted.Should().BeFalse();
+        _ = processFile.InvalidReason.Should().Be("Verify failed");
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.VerifyFailed);
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Information)
+            .Should()
+            .ContainSingle()
+            .Which.Should()
+            .StartWith("Registering invalid file : Verify failed, VerifyAndRepair : ");
+        _ = File.Exists(mediaFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void VerifyAndRepair_CarriedVerifyFailed_KeepsFileAndMarksProcessFailed()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.VerifyFailed
+        );
+        string sidecarFile = Path.ChangeExtension(mediaFile, ".PlexCleaner");
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+        string ffMpeg = Tools.FfMpeg.GetToolPath();
+        FakeTools.WriteScript(ffMpeg, "touch \"$0.ran\"\nexit 1\n");
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
+        _ = processFile.InvalidReason.Should().BeNull();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+
+        SidecarFile.StatesType expected =
+            SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.ProcessFailed;
+        _ = processFile.State.Should().Be(expected);
+        _ = FakeTools.ReadSidecarState(sidecarFile).Should().Be((int)expected);
+        _ = File.Exists(ffMpeg + ".ran").Should().BeFalse();
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = new ProcessFile(mediaFile).GetMediaProps(true).Should().BeFalse();
+        _ = new ProcessFile(mediaFile).GetMediaProps().Should().BeTrue();
     }
 
     [Fact]
@@ -498,7 +562,7 @@ public sealed class VerifyToolErrorTests : IDisposable
                     | SidecarFile.StatesType.PostDecodeTimestamps
             );
         _ = File.ReadAllText(ffMpeg + ".step").Trim().Should().Be("3");
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
 
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
@@ -517,7 +581,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         bool modified = false;
         _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
         _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
 
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
@@ -534,7 +598,7 @@ public sealed class VerifyToolErrorTests : IDisposable
 
         bool modified = false;
         _ = processFile.RepairTimestamps(ref modified).Should().BeFalse();
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
 
         _ = File.Exists(mediaFile).Should().BeTrue();
         _ = File.Exists(sidecarFile).Should().BeTrue();
@@ -547,7 +611,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         string mediaFile = CreateFile("name.mkv");
 
         _ = Process
-            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation, out _)
             .Should()
             .BeFalse();
 
@@ -573,7 +637,7 @@ public sealed class VerifyToolErrorTests : IDisposable
         _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
         _ = File.Exists(ffMpeg).Should().BeFalse();
         _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
-        _ = processFile.DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
 
         _ = modified.Should().BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();

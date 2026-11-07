@@ -29,6 +29,7 @@ public sealed class InterlaceRescanTests : IDisposable
     private readonly bool _deleteInvalidFiles = Program.Config.VerifyOptions.DeleteInvalidFiles;
     private readonly int _maximumBitrate = Program.Config.VerifyOptions.MaximumBitrate;
     private readonly bool _quickScan = Program.Options.QuickScan;
+    private readonly List<VideoFormat> _reEncodeVideo = Program.Config.ProcessOptions.ReEncodeVideo;
     private readonly MediaToolInfo _ffProbeInfo = Tools.FfProbe.Info;
     private readonly MediaToolInfo _mkvMergeInfo = Tools.MkvMerge.Info;
     private readonly MediaToolInfo _mediaInfoInfo = Tools.MediaInfo.Info;
@@ -63,6 +64,7 @@ public sealed class InterlaceRescanTests : IDisposable
         Program.Config.VerifyOptions.DeleteInvalidFiles = _deleteInvalidFiles;
         Program.Config.VerifyOptions.MaximumBitrate = _maximumBitrate;
         Program.Options.QuickScan = _quickScan;
+        Program.Config.ProcessOptions.ReEncodeVideo = _reEncodeVideo;
         Directory.Delete(_directory, true);
     }
 
@@ -194,7 +196,7 @@ public sealed class InterlaceRescanTests : IDisposable
     }
 
     [Fact]
-    public void DeleteFailedFile_RescanAfterRepairFails_KeepsRepairedFile()
+    public void HandleFailedFile_RescanAfterRepairFails_KeepsRepairedFileAndMarksProcessFailed()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
@@ -215,7 +217,7 @@ public sealed class InterlaceRescanTests : IDisposable
         _ = processFile.DeInterlaceAfterRepair(ref modified).Should().BeFalse();
 
         _ = processFile
-            .DeleteFailedFile(nameof(ProcessFile.DeInterlaceAfterRepair))
+            .HandleFailedFile(nameof(ProcessFile.DeInterlaceAfterRepair))
             .Should()
             .BeFalse();
         _ = File.Exists(mediaFile).Should().BeTrue();
@@ -223,5 +225,100 @@ public sealed class InterlaceRescanTests : IDisposable
         SidecarFile.StatesType saved = (SidecarFile.StatesType)FakeTools.ReadSidecarState(sidecar);
         _ = saved.HasFlag(SidecarFile.StatesType.Repaired).Should().BeTrue();
         _ = saved.HasFlag(SidecarFile.StatesType.Verified).Should().BeFalse();
+        _ = saved.HasFlag(SidecarFile.StatesType.ProcessFailed).Should().BeTrue();
+    }
+
+    [Fact]
+    public void DeInterlaceAfterRepair_RescanSkippedAgain_MarksProcessFailedNotVerified()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        Program.Config.VerifyOptions.DeleteInvalidFiles = true;
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        (_, string handBrake, string sidecar, _, _) = WriteTools(
+            mediaFile,
+            skipped: true,
+            reEncode: false,
+            InterlacedIdet + "\nexit 69"
+        );
+
+        bool modified = false;
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+        _ = processFile.DeInterlace(true, ref modified).Should().BeTrue();
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
+        _ = processFile.DeInterlaceAfterRepair(ref modified).Should().BeFalse();
+        _ = processFile
+            .HandleFailedFile(nameof(ProcessFile.DeInterlaceAfterRepair))
+            .Should()
+            .BeFalse();
+
+        _ = File.Exists(mediaFile).Should().BeTrue();
+        _ = File.Exists(handBrake + ".log").Should().BeFalse();
+        SidecarFile.StatesType saved = (SidecarFile.StatesType)FakeTools.ReadSidecarState(sidecar);
+        _ = saved.HasFlag(SidecarFile.StatesType.Repaired).Should().BeTrue();
+        _ = saved.HasFlag(SidecarFile.StatesType.Verified).Should().BeFalse();
+        _ = saved.HasFlag(SidecarFile.StatesType.ProcessFailed).Should().BeTrue();
+        _ = new ProcessFile(mediaFile).GetMediaProps(true).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ReEncode_AfterSkippedScan_RescansBeforeVerified(bool rescanSkipped)
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        Program.Config.ProcessOptions.ReEncodeVideo = [new VideoFormat()];
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        (string ffMpeg, _, string sidecar, _, _) = WriteTools(
+            mediaFile,
+            skipped: true,
+            reEncode: false,
+            ProgressiveIdet
+        );
+
+        // The first idet run is skipped, the re-encode writes its output, and the verify is clean
+        string secondIdet = rescanSkipped ? InterlacedIdet + "\nexit 69" : ProgressiveIdet;
+        FakeTools.WriteScript(
+            ffMpeg,
+            $$"""
+            case "$*" in
+            *idet*)
+            idet=$(($(cat "$0.idet" 2>/dev/null || echo 0) + 1))
+            echo $idet > "$0.idet"
+            if [ $idet -eq 1 ]; then
+            {{InterlacedIdet}}
+            exit 69
+            fi
+            {{secondIdet}}
+            ;;
+            *.tmp1*) for a; do case $a in *.tmp1) echo ffmpeg > "$a" ;; esac; done ;;
+            esac
+            exit 0
+
+            """,
+            true
+        );
+
+        bool modified = false;
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+        _ = processFile.DeInterlace(true, ref modified).Should().BeTrue();
+        _ = processFile.ReEncode(false, ref modified).Should().BeTrue();
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeTrue();
+        _ = ((SidecarFile.StatesType)FakeTools.ReadSidecarState(sidecar))
+            .HasFlag(SidecarFile.StatesType.Verified)
+            .Should()
+            .BeFalse();
+
+        _ = processFile.DeInterlaceAfterRepair(ref modified).Should().Be(!rescanSkipped);
+        _ = File.ReadAllText(ffMpeg + ".idet").Trim().Should().Be("2");
+        _ = processFile.State.HasFlag(SidecarFile.StatesType.ReEncoded).Should().BeTrue();
+        _ = processFile.State.HasFlag(SidecarFile.StatesType.Verified).Should().Be(!rescanSkipped);
+        _ = ((SidecarFile.StatesType)FakeTools.ReadSidecarState(sidecar))
+            .Should()
+            .Be(processFile.State);
+        _ = ToolErrorScope.Count.Should().Be(0);
     }
 }

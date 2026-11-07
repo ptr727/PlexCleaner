@@ -77,7 +77,7 @@ rm -rf ./.artifacts/coverage
 dotnet test --project PlexCleanerTests/PlexCleanerTests.csproj --coverage --coverage-output-format cobertura --results-directory ./.artifacts/coverage
 ```
 
-Measure the real-tool paths in the image with `dotnet-coverage`, pinned in [.config/dotnet-tools.json](./.config/dotnet-tools.json). The image has no SDK, so mount the restored tool and run it on the image's runtime. [Docker/PlexCleaner.coverage.json](./Docker/PlexCleaner.coverage.json) is the default settings with every optional processing step turned on. `test.sh` runs the Debug build, whose PDB sits beside it. The settings are copied first, since `RegisterInvalidFiles` writes to the file it reads:
+Measure the real-tool paths in the image with `dotnet-coverage`, pinned in [.config/dotnet-tools.json](./.config/dotnet-tools.json). The image has no SDK, so mount the restored tool and run it on the image's runtime. [Docker/PlexCleaner.coverage.json](./Docker/PlexCleaner.coverage.json) is the default settings with every optional processing step turned on, `RegisterInvalidFiles` rather than `DeleteInvalidFiles` since the two cannot both be on. `test.sh` runs the Debug build, whose PDB sits beside it. The settings are copied first, since `RegisterInvalidFiles` writes to the file it reads:
 
 ```sh
 version="$(jq -r '.tools["dotnet-coverage"].version' .config/dotnet-tools.json)"

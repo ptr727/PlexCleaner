@@ -94,6 +94,7 @@
     "State": [
       "ClearedDefaultFlags",
       "PostDecodeTimestamps",
+      "ProcessFailed",
       "RepairFailed",
       "ScannedCaptions",
       "ScannedInterlace",
@@ -120,7 +121,7 @@
     "NewFileName": "hdr10-cc.mkv",
     "Result": false,
     "State": [
-      "FileDeleted"
+      "ProcessFailed"
     ]
   },
   "hdr10-multitrack.mkv": {
@@ -144,7 +145,7 @@
     "NewFileName": "hdr10plus-cc.mkv",
     "Result": false,
     "State": [
-      "FileDeleted"
+      "ProcessFailed"
     ]
   },
   "interlaced.mkv": {

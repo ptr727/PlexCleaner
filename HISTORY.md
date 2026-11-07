@@ -14,8 +14,14 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - Pull requests that change the application or the image run it, and a publish waits for it to pass.
     - Its coverage reports to Codecov under the `integration` flag.
   - A file whose video mostly fails to decode skips interlace detection with a warning, instead of failing at the interlace scan.
-    - When a repair then fixes the file, the file is scanned again and deinterlaced if it is interlaced. `DeleteInvalidFiles` keeps the repaired file when that scan fails.
+    - When a repair or a video re-encode then rewrites the file, the file is scanned again and deinterlaced if it is interlaced. A file whose scan fails, or is skipped again, is kept and marked `ProcessFailed` rather than `Verified`.
   - With `DeInterlace` on, each interlace scan logs its verdict and idet frame counts at Information level, so processing a collection surveys its field orders.
+  - `DeleteInvalidFiles` and `RegisterInvalidFiles` act only on media judged invalid in the current run, and setting both fails configuration validation.
+    - Media is judged invalid when verify or repair fails, the media tools cannot read the file, or neither MkvMerge nor FFmpeg can remux it.
+    - A file that fails any other way is kept, such as one with no video track or one a tool fails to write.
+    - A file an earlier version marked `VerifyFailed` is kept too.
+    - Every failed file that is not deleted or registered is marked `ProcessFailed`, and later runs skip it until the media file changes. Run `createsidecar` on a file to process it again.
+    - The results file records why each file was judged invalid, and `RegisterInvalidFiles` adds only those files to the `FileIgnoreList`.
 - Version 3.23:
   - Added a minimum version for every media tool, and PlexCleaner exits with an error at startup when an installed tool is older.
     - The minimums are FFmpeg 8.0, HandBrake 1.10.0, MediaInfo 25.07, MKVToolNix 94.0, and 7-Zip 25.01.

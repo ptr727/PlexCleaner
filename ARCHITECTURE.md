@@ -291,7 +291,7 @@ flowchart TD
   RF --> P["FinishProcessing(): log the error, modified and VerifyFailed files"]
   RT --> P
   P --> Q{"RegisterInvalidFiles option on?"}
-  Q -->|yes| Q1["RegisterInvalidFiles(): add each VerifyFailed path the run did not delete to FileIgnoreList"]
+  Q -->|yes| Q1["RegisterInvalidFiles(): add each path the run judged invalid to FileIgnoreList"]
   Q -->|no| W
   Q1 --> Q2["IsMissingFile(): prune the entries whose file is gone from a folder that exists"]
   Q2 --> Q3{"FileIgnoreList changed, or an earlier settings write failed?"}
@@ -375,19 +375,30 @@ flowchart TD
   THR["Any step throws while no cancel is requested"] -.-> AB
   AB["Abort the file, failedOperation names the step"] --> G5{"Skipped as read-only, or a step threw?"}
   G5 -->|yes| RET(["Result false, return the state and final path"])
-  G5 -->|no| DF["DeleteFailedFile(): DeleteInvalidFiles deletes the media file, then the sidecar of an MKV file, unless cancelled, a rename target held another file, a tool run for the file failed to launch, threw, or was killed by a signal outside Windows, the state has PostDecodeTimestamps, or the interlace rescan after a repair failed"]
-  DF --> RET
+  G5 -->|no| HF{"HandleFailedFile(): state already ProcessFailed, cancelled, a rename target held another file, or a tool run for the file failed to launch, threw, or was killed by a signal outside Windows?"}
+  HF -->|"yes, keep the file as it is"| RET
+  HF -->|no| HI{"Judged invalid in this run?"}
+  HI -->|"yes, RegisterInvalidFiles on"| RET
+  HI -->|"yes, DeleteInvalidFiles on"| DF["DeleteFailedFile(): delete the media file, then the sidecar of an MKV file"]
+  DF -->|deleted| RET
+  DF -->|"delete failed"| PF
+  HI -->|"no, or neither option on"| PF["SetProcessFailed(): save ProcessFailed in the sidecar of an MKV file"]
+  PF --> RET
 ```
 
-`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `DeleteFailedFile()` does not delete a file that had any such tool run. It also keeps a file whose state carries `PostDecodeTimestamps`, and a file whose remux or rename target already held another file. It keeps a file whose interlace rescan after a repair failed, since the repair already replaced it with media that verifies clean. A media delete that throws is logged, and the file counts as not deleted. When the sidecar delete that follows throws, it is logged, and the file still counts as deleted with `FileDeleted` set.
+`ProcessDriver.ProcessFiles()` counts the tool runs of each file that fail to launch, are cancelled, or throw, since such a run leaves the media unjudged. Outside Windows, it counts a tool run a signal terminates the same way, since that run ended before a result. It counts an FfMpeg verify run a signal terminates apart, since an external kill and a crash on corrupt media exit alike. `HandleFailedFile()` keeps a file that had any such tool run as it is, so the next run tries it again. It does the same for a cancel. It also keeps a file whose remux or rename target already held another file, since the sidecar there names that file.
 
-After `VerifyAndRepair()`, when any step from `RemoveCoverArt()` onward has modified the file, `DeInterlaceAfterRepair()` runs first. It scans again only a file whose interlace scan was skipped and that the repair replaced, per "Deinterlace" below. Then the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
+Only a verdict judged in this run counts as invalid media, held in memory as `InvalidReason` rather than as a sidecar flag. A verify or a repair that fails judges the media. So do the media tools rejecting the file in `GetMediaProps()`, and both MkvMerge and FfMpeg failing to remux its container. A repair that fails with post-decode only timestamps is not such a verdict. Nor is a `VerifyFailed` carried in from an earlier run's sidecar. With `RegisterInvalidFiles` on, an invalid file is kept and added to `FileIgnoreList` after the run. With `DeleteInvalidFiles` on, it is deleted. Setting both fails configuration validation. A media delete that throws is logged, and the file counts as not deleted. When the sidecar delete that follows throws, it is logged, and the file still counts as deleted with `FileDeleted` set.
+
+Every other failed file is kept and takes the single terminal state `ProcessFailed`. That covers a processing failure, a policy failure such as an audio-only file, and an invalid file with neither option on. In the `process` command, `GetMediaProps()` fails a file whose sidecar holds `ProcessFailed` before any other step runs. So no later run processes it again until the media changes. An explicit command such as `verify`, and a plugin, still reach the file. Without a sidecar, or for a file that is not MKV, nothing keeps the state, so the next run processes the file again.
+
+After `VerifyAndRepair()`, when any step from `RemoveCoverArt()` onward has modified the file, `DeInterlaceAfterRepair()` runs first. It scans again only a file whose interlace scan was skipped and that a repair or a video re-encode replaced, per "Deinterlace" below. Then the steps from `RemoveCoverArt()` through `RepairDefaultFlags()` run again, except `VerifyMediaInfo()` and `DeInterlace()`. A rewrite by FfMpeg or HandBrake can undo their work. Otherwise the first pass already ran on the final media, so running the steps again would change nothing.
 
 `VerifyTrackCounts()` fails a file with no video track or more than one, and only warns when there is no audio track. `VerifyMediaInfo()` fails a file when FfProbe, MkvMerge and MediaInfo disagree on the track count of any type. A rename from a remux or the lowercase step reaches the result as the new path. `RemuxByExtension()` and `MakeExtensionLowercase()` fail the file before they write anything when another file holds the target name.
 
 ### Sidecar Refresh
 
-Every step that changes the file calls `Refresh()`. `Refresh(newName)` adds `FileReNamed` when the path changed, then reloads the media info. `GetMediaProps()` calls `Refresh(false)` and then fails a file that any tool reports as unsupported. A step that only changes the state calls `SaveState()`, which calls `Refresh(false)` only with `UseSidecarFiles` on.
+Every step that changes the file calls `Refresh()`. `Refresh(newName)` adds `FileReNamed` when the path changed, then reloads the media info. `GetMediaProps()` calls `Refresh(false)`, then fails a file that any tool reports as unsupported, and in the `process` command a file whose state holds `ProcessFailed`. A step that only changes the state calls `SaveState()`, which calls `Refresh(false)` only with `UseSidecarFiles` on.
 
 ```mermaid
 flowchart TD
@@ -419,7 +430,7 @@ flowchart TD
 
 `IsMediaAndToolsCurrent()` is false when the media changed, or when a tool changed with `SidecarUpdateOnToolChange` on. With the option off, a tool upgrade alone never reruns the tools, and the sidecar keeps the tool versions it recorded until they rerun. A rename onto a name that has a sidecar keeps `FileReNamed` and the flags the renaming step set. `SidecarFile.Open()` adds them to the stored state. When the media differs from that sidecar, `Open()` drops the verify results, `SidecarFile.VerifyStates`, from the flags it adds.
 
-`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags, and it never skips a whole file. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. An idet scan past FFmpeg's decode error rate sets no flag, because its counts cover only the frames that decoded. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
+`IsMediaCurrent()` logs a changed write time and ignores it, because the write time is unreliable over SMB. The sidecar holds media info and state flags. Only `ProcessFailed` skips a whole file, and only in the `process` command. A `Verified` or `VerifyFailed` flag skips only the checks that read it, such as verify and the scans for interlacing and closed captions. A clean scan of the whole file sets `ScannedInterlace` or `ScannedCaptions`, which skips only that scan. A later step that rewrites the file keeps both flags, because no step adds captions or interlacing to the media it writes. An idet scan past FFmpeg's decode error rate sets no flag, because its counts cover only the frames that decoded. `ReEncode()` and `DeInterlace()` clear `SidecarFile.VerifyStates` when they replace the file, so the new media is verified again. `RemoveClosedCaptions()` keeps them, because removing the caption NAL units leaves the decoded frames unchanged.
 
 ### Remux and Container Steps
 
@@ -663,7 +674,7 @@ flowchart TD
 
 A metadata interlace flag can survive deinterlacing, so the `process` command does not deinterlace a file already `DeInterlaced` again.
 
-A scan skipped past the decode error rate leaves interlacing unknown. When verify then fails and a repair verifies clean, `DeInterlaceAfterRepair()` scans the now decodable file once, past the `Verified` skip. A repair keeps interlaced content interlaced, and `Verified` would otherwise keep the file from ever being scanned. The repair saves its state without `Verified` while the rescan is pending. A cancel or a failure in the rescan then leaves the file for the next run to scan. A rescan that does not deinterlace sets `Verified` back. The `process` command runs it first in the post-repair cleanup, so the cleanup steps also cover a HandBrake deinterlace. A deinterlace there clears the verify states, so the next run verifies the new media.
+A scan skipped past the decode error rate leaves interlacing unknown. When a repair verifies clean, or a re-encode of the video track replaces the file, `DeInterlaceAfterRepair()` scans the rewritten file once, past the `Verified` skip. Neither rewrite deinterlaces, and `Verified` would otherwise keep the file from ever being scanned. The state is saved without `Verified` while the rescan is pending. A cancel then leaves the file for the next run to scan. A rescan that does not deinterlace sets `Verified`. A rescan that fails, or is skipped past the decode error rate again, fails the file, which takes `ProcessFailed` rather than `Verified`. The `process` command runs it first in the post-repair cleanup, so the cleanup steps also cover a HandBrake deinterlace. A deinterlace there clears the verify states, so the next run verifies the new media.
 
 Every HandBrake run goes through `ConvertUsingHandBrake()`, which runs nodes DC to D5 for its caller. The repair by re-encode uses it for its HandBrake fallback. HandBrake would convert the subtitles to ASS, so it encodes without them, and MkvMerge merges the original subtitle tracks back unchanged. MkvMerge merges back only tracks, so closed captions embedded in the video stream are lost. `ReportClosedCaptionsDropped()` logs a warning first when the video carries them, as [Docs/ClosedCaptions.md][closed-captions] describes.
 
@@ -822,7 +833,7 @@ flowchart TD
   R6 -->|"TimestampOnly path"| RS
   R6 -->|"DecodeError path"| RC{"Cancelled?"}
   RC -->|"yes, the next run verifies the replaced media again"| FAIL
-  RC -->|no| RS["SetRepairedState(): set Verified and Repaired, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh()"]
+  RC -->|no| RS["SetRepairedState(): set Repaired, and Verified unless the interlace scan was skipped, clear VerifyFailed, RepairFailed and PostDecodeTimestamps, Refresh()"]
   RS --> RB["VerifyBitrate() again after a re-encode, clear Verified when a tool error ended the bitrate analysis, save state"]
   RB --> OK
   RF{"Cancelled, a tool run during the repair failed to launch, threw, or was ended by a signal, or a signal ended a verify?"} -->|yes| FAIL
@@ -831,7 +842,7 @@ flowchart TD
 
 `VerifyBitrate()` sets `BitrateExceeded` when a measured bitrate exceeds `MaximumBitrate`, and clears it when a measurement is within the limit. Where no measurement runs, the flag stays. That covers no limit, `--quickscan`, and every path the chart draws that skips `VerifyBitrate()`. A failed bitrate analysis warns and keeps the last measured state. When a tool error ended it, a file that passes or is repaired is not marked `Verified`, so the next run measures it again. A repair that re-encodes measures the repaired media again.
 
-A repair failure that records state sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote, which can hold `RepairFailed` without `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` fails again on each later run until its media changes and the sidecar resets to `FileModified`. `RegisterInvalidFiles` adds such a file to `FileIgnoreList` instead, so later runs ignore it.
+A repair failure that records state sets `RepairFailed` and `VerifyFailed` together, and `VerifyFailed` fails the verify before any repair. So the `RepairFailed` check before a repair matters only for a sidecar an earlier version wrote, which can hold `RepairFailed` without `VerifyFailed`. With the `Verify` option off, `VerifyAndRepair()` leaves the state unchanged, so `Verified` is set only by a verification that ran. With the `Verify` option on, a file with `VerifyFailed` carried in from an earlier run fails the verify and takes `ProcessFailed`. Later runs skip it until its media changes and the sidecar resets to `FileModified`.
 
 ### Track State and Actions
 
@@ -866,6 +877,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | Step | Sets | Clears |
 | --- | --- | --- |
 | `DeleteMismatchedSidecarFile()`, `DeleteNonMkvFile()`, `DeleteFailedFile()` | `FileDeleted` | |
+| `HandleFailedFile()` | `ProcessFailed` | |
 | `MakeExtensionLowercase()` | `FileReNamed` | |
 | `RemuxByExtension()`, `RemuxNonMkvContainer()`, `RemuxRemoveExtraVideoTracks()` | `ReMuxed` | |
 | `RemoveCoverArt()` | `ReMuxed`, `RemovedCoverArt`, `RemovedAttachments`, `ClearedTags` | |
@@ -874,7 +886,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RepairMatroskaStructure()` | `ReMuxed`, `VerifyFailed` | `Verified`, `Repaired` |
 | `RemoveClosedCaptions()` | `ScannedCaptions`, `ClearedCaptions`, `ReMuxed` | |
 | `DeInterlace()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed` | `SidecarFile.VerifyStates` when it rewrites the file |
-| `DeInterlaceAfterRepair()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed`, and `Verified` when it does not deinterlace | `SidecarFile.VerifyStates` when it rewrites the file |
+| `DeInterlaceAfterRepair()` | `ScannedInterlace`, `DeInterlaced`, `ReMuxed`, and `Verified` when a clean verify waited for it and it does not deinterlace | `SidecarFile.VerifyStates` when it rewrites the file |
 | `SetUnknownLanguageTracks()` | `SetLanguage` | |
 | `RemoveUnwantedLanguageTracks()`, `RemoveDuplicateTracks()` | `ReMuxed` | |
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |
@@ -948,8 +960,9 @@ The elevation trigger (Warning) must be preserved: keep exactly one decision-War
 - Deleting a media file is a Warning, since it is the decision to modify the media.
 - Deleting a sidecar, an empty folder, or the input a conversion replaced is Information.
 - A failed delete logs Error `Failed to delete {What} : {FileName}`, and a failed delete of a non-MKV or orphan sidecar file then fails the file.
-- With `DeleteInvalidFiles` on, `DeleteFailedFile` logs Information `Keeping failed file : {Reason} : {FileName}` for each failed file it keeps.
-- A read-only file or an exception never reaches `DeleteFailedFile`, and its own Error line says why the file is kept.
+- `HandleFailedFile` logs Information `Keeping failed file : {Reason} : {FileName}` for a failed file it keeps as it is, and Information `Registering invalid file : {Reason} : {FileName}` for one it registers.
+- It logs Warning `Keeping failed file, marking as ProcessFailed : {Operation} : {FileName}` for a file that takes the terminal state.
+- A read-only file or an exception never reaches `HandleFailedFile`, and its own Error line says why the file is kept.
 
 ### Tool execution and failure logging
 
@@ -991,7 +1004,8 @@ enum StatesType {
     BitrateExceeded, ClearedTags, FileReNamed, FileDeleted,
     FileModified, ClearedCaptions, RemovedAttachments,
     SetFlags, RemovedCoverArt, ClearedDefaultFlags,
-    PostDecodeTimestamps, ScannedInterlace, ScannedCaptions
+    PostDecodeTimestamps, ScannedInterlace, ScannedCaptions,
+    ProcessFailed
 }
 ```
 

@@ -132,7 +132,7 @@
   },
   "VerifyOptions": {
     "AutoRepair": true,
-    "DeleteInvalidFiles": true,
+    "DeleteInvalidFiles": false,
     "RegisterInvalidFiles": true,
     "MaximumBitrate": 100000000
   }

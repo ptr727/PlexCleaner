@@ -33,6 +33,7 @@ public class SidecarFile
         PostDecodeTimestamps = 1 << 18,
         ScannedInterlace = 1 << 19,
         ScannedCaptions = 1 << 20,
+        ProcessFailed = 1 << 21,
     }
 
     // Verify results describe one media file, a rewrite or a changed file needs them measured again
@@ -41,7 +42,8 @@ public class SidecarFile
         | StatesType.VerifyFailed
         | StatesType.RepairFailed
         | StatesType.BitrateExceeded
-        | StatesType.PostDecodeTimestamps;
+        | StatesType.PostDecodeTimestamps
+        | StatesType.ProcessFailed;
 
     private const string SidecarExtension = ".PlexCleaner";
     private const string MkvExtension = ".mkv";
@@ -83,6 +85,9 @@ public class SidecarFile
     public MediaProps MediaInfoProps { get; private set; }
 
     public StatesType State { get; set; }
+
+    // A media tool that cannot read or describe the file judges the media, unlike a sidecar write failure
+    public bool ToolInfoFailed { get; private set; }
 
     public bool Create()
     {
@@ -537,6 +542,7 @@ public class SidecarFile
         )
         {
             Log.Error("Failed to read media properties : {FileName}", _mediaFileInfo.FullName);
+            ToolInfoFailed = true;
             return false;
         }
 
@@ -560,6 +566,7 @@ public class SidecarFile
         )
         {
             Log.Error("Failed to de-serialize tool data : {FileName}", _mediaFileInfo.FullName);
+            ToolInfoFailed = true;
             return false;
         }
 

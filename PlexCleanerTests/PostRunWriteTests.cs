@@ -55,6 +55,7 @@ public sealed class PostRunWriteTests : IDisposable
             OriginalFileName = fileName,
             NewFileName = fileName,
             State = state,
+            InvalidReason = "Verify failed",
         };
 
     [Fact]
@@ -115,6 +116,26 @@ public sealed class PostRunWriteTests : IDisposable
         );
 
         _ = Process.FinishProcessing(resultsJson).Should().BeFalse();
+    }
+
+    [Fact]
+    public void FinishProcessing_FailedFileNotJudgedInvalid_IsNotRegistered()
+    {
+        string settingsFile = Path.Combine(_directory, "settings.json");
+        Program.Options.SettingsFile = settingsFile;
+        Program.Options.ResultsFile = string.Empty;
+        Program.Config.VerifyOptions.RegisterInvalidFiles = true;
+        ProcessResultJsonSchema resultsJson = new();
+        ProcessResultJsonSchema.ProcessResult carried = CreateResult(
+            Path.Combine(_directory, "carried.mkv"),
+            SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.ProcessFailed
+        );
+        carried.InvalidReason = null;
+        resultsJson.Results.Results.Add(carried);
+
+        _ = Process.FinishProcessing(resultsJson).Should().BeTrue();
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().BeEmpty();
+        _ = File.Exists(settingsFile).Should().BeFalse();
     }
 
     [Theory]

@@ -26,7 +26,8 @@ public sealed class OrphanSidecarTests : IDisposable
                 out bool ignored,
                 out SidecarFile.StatesType state,
                 out _,
-                out string? failedOperation
+                out string? failedOperation,
+                out _
             )
             .Should()
             .BeTrue();
@@ -47,7 +48,7 @@ public sealed class OrphanSidecarTests : IDisposable
         File.WriteAllText(sidecarFile, "");
 
         _ = Process
-            .ProcessFile(sidecarFile, out _, out bool ignored, out _, out _, out _)
+            .ProcessFile(sidecarFile, out _, out bool ignored, out _, out _, out _, out _)
             .Should()
             .BeTrue();
 
