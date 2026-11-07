@@ -458,6 +458,79 @@ public sealed class VerifyToolErrorTests : IDisposable
     }
 
     [Fact]
+    public void HandleFailedFile_ToolErrorAfterVerdict_ClearsInvalidReason()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.VerifyOptions.AutoRepair = false;
+        Program.Config.VerifyOptions.RegisterInvalidFiles = true;
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+        FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), "exit 183\n", true);
+
+        bool modified = false;
+        _ = processFile.VerifyAndRepair(ref modified).Should().BeFalse();
+        _ = processFile.InvalidReason.Should().Be("Verify failed");
+        ToolErrorScope.Record();
+        _ = processFile.HandleFailedFile(nameof(ProcessFile.VerifyAndRepair)).Should().BeFalse();
+
+        _ = processFile.InvalidReason.Should().BeNull();
+        _ = processFile.State.Should().NotHaveFlag(SidecarFile.StatesType.ProcessFailed);
+        _ = File.Exists(mediaFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void HandleFailedFile_MediaToolsReject_KeepsFileWithoutProbingAgain()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        Program.Config.VerifyOptions.DeleteInvalidFiles = false;
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = Path.Combine(_directory, "name.mkv");
+        File.WriteAllText(mediaFile, "");
+        string mediaInfo = Tools.MediaInfo.GetToolPath();
+        FakeTools.WriteScript(
+            mediaInfo,
+            "echo $(($(cat \"$0.runs\" 2>/dev/null || echo 0) + 1)) > \"$0.runs\"\nexit 1\n"
+        );
+
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps(true).Should().BeFalse();
+        _ = processFile.InvalidReason.Should().Be("Media tools rejected the file");
+        bool deleted = true;
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            deleted = processFile.HandleFailedFile(nameof(ProcessFile.GetMediaProps))
+        );
+
+        _ = deleted.Should().BeFalse();
+        _ = LogCapture.Messages(events, LogEventLevel.Error).Should().BeEmpty();
+        _ = File.ReadAllText(mediaInfo + ".runs").Trim().Should().Be("1");
+        _ = File.Exists(mediaFile).Should().BeTrue();
+    }
+
+    [Fact]
+    public void RepairTimestamps_Clean_ClearsProcessFailed()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.VerifyFailed
+                | SidecarFile.StatesType.RepairFailed
+                | SidecarFile.StatesType.ProcessFailed
+        );
+        ProcessFile processFile = new(mediaFile);
+        _ = processFile.GetMediaProps().Should().BeTrue();
+        FakeTools.WriteScript(Tools.FfMpeg.GetToolPath(), "exit 0\n", true);
+
+        bool modified = false;
+        _ = processFile.RepairTimestamps(ref modified).Should().BeTrue();
+
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.Verified);
+        _ = new ProcessFile(mediaFile).GetMediaProps(true).Should().BeTrue();
+    }
+
+    [Fact]
     public void VerifyAndRepair_CarriedVerifyFailed_KeepsFileAndMarksProcessFailed()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");

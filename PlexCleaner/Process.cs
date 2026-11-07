@@ -736,14 +736,10 @@ public static class Process
         string settingsFile
     )
     {
-        // Add invalid items to the ignore list, a deleted file no longer exists to be ignored
+        // Add invalid items to the ignore list
         HashSet<string> ignoreList = Program.Config.ProcessOptions.FileIgnoreList;
         bool modified = false;
-        foreach (
-            ProcessResultJsonSchema.ProcessResult item in invalidResults.Where(item =>
-                !item.State.HasFlag(SidecarFile.StatesType.FileDeleted)
-            )
-        )
+        foreach (ProcessResultJsonSchema.ProcessResult item in invalidResults)
         {
             modified |= ignoreList.Add(item.NewFileName);
         }

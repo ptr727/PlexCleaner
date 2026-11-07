@@ -2031,6 +2031,7 @@ public class ProcessFile
                 keepReason,
                 FileInfo.FullName
             );
+            InvalidReason = null;
             return false;
         }
 
@@ -2061,7 +2062,11 @@ public class ProcessFile
 
     private void SetProcessFailed(string failedOperation)
     {
-        if (!Program.Config.ProcessOptions.UseSidecarFiles || !SidecarFile.IsMkvFile(FileInfo))
+        if (
+            !Program.Config.ProcessOptions.UseSidecarFiles
+            || !SidecarFile.IsMkvFile(FileInfo)
+            || _sidecarFile.ToolInfoFailed
+        )
         {
             Log.Information(
                 "Keeping failed file : {Reason:l} : {FileName}",
@@ -2135,6 +2140,7 @@ public class ProcessFile
                 _sidecarFile.State |= SidecarFile.StatesType.Verified;
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
+                _sidecarFile.State &= ~SidecarFile.StatesType.ProcessFailed;
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
 
                 // Update state
@@ -2244,6 +2250,7 @@ public class ProcessFile
         _sidecarFile.State |= SidecarFile.StatesType.Repaired;
         _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
+        _sidecarFile.State &= ~SidecarFile.StatesType.ProcessFailed;
         modified = true;
         if (!Refresh(true))
         {
@@ -2685,6 +2692,7 @@ public class ProcessFile
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
+                _sidecarFile.State &= ~SidecarFile.StatesType.ProcessFailed;
                 return SaveState();
             case VerifyResult.TimestampOnly:
                 // Detected non-monotonic DTS, run the timestamp repair ladder
