@@ -12,7 +12,7 @@ Refer to the [project page][github-link] for complete usage and configuration.
 
 ## Docker Tags
 
-Images are rebuilt weekly to pick up upstream base-image and tool updates.
+The `latest` image is rebuilt weekly on the latest `ubuntu:rolling` base image. The `develop` image is rebuilt only when a `develop` build is dispatched.
 
 - `latest`: built from the release [main branch][main-branch-link]. Multi-architecture (`linux/amd64`, `linux/arm64`) on the `ubuntu:rolling` base.
 - `develop`: built from the pre-release [develop branch][develop-branch-link].
