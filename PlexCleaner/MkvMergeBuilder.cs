@@ -11,8 +11,6 @@ public partial class MkvMerge
         public GlobalOptions Default() =>
             DisableTrackStatisticsTags().NormalizeLanguageIetfExtended();
 
-        public GlobalOptions Quiet() => Add("--quiet");
-
         public GlobalOptions NormalizeLanguageIetf(string option) =>
             Add("--normalize-language-ietf").Add(option);
 
@@ -108,25 +106,6 @@ public partial class MkvMerge
         public OutputOptions IdentificationFormatJson() => IdentificationFormat("json");
 
         public OutputOptions OutputFile(string option) => Add("--output").Add($"\"{option}\"");
-
-        public OutputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
-            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
-                ? this
-                : Add("--split")
-                    .Add($"parts:{(int)timeStart.TotalSeconds}s-{(int)timeStop.TotalSeconds}s");
-
-        public OutputOptions SeekStart(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero
-                ? this
-                : Add("--split").Add($"parts:{(int)timeSpan.TotalSeconds}s-");
-
-        public OutputOptions SeekStop(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero
-                ? this
-                : Add("--split").Add($"parts:-{(int)timeSpan.TotalSeconds}s");
-
-        public OutputOptions TestSnippets() =>
-            Program.Options.TestSnippets ? SeekStop(Program.SnippetTimeSpan) : this;
 
         public OutputOptions Add(string option) => Add(option, false);
 

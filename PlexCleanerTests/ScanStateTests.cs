@@ -118,6 +118,33 @@ public sealed class ScanStateTests : IDisposable
     }
 
     [Fact]
+    public void DeInterlace_DecodeErrorRateExceeded_SkipsDetectionWithoutScanState()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
+        using IDisposable toolErrorScope = ToolErrorScope.BeginScope();
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        FakeTools.WriteScript(
+            Tools.FfMpeg.GetToolPath(),
+            """
+            echo '[Parsed_idet_0 @ 0] Repeated Fields: Neither: 318 Top: 0 Bottom: 0' >&2
+            echo '[Parsed_idet_0 @ 0] Single frame detection: TFF: 300 BFF: 0 Progressive: 10 Undetermined: 8' >&2
+            echo '[Parsed_idet_0 @ 0] Multi frame detection: TFF: 300 BFF: 0 Progressive: 10 Undetermined: 8' >&2
+            echo 'Decode error rate 0.9 exceeds maximum 0.666667' >&2
+            exit 69
+
+            """
+        );
+        string handBrakeMarker = WriteFailingTool(Tools.HandBrake.GetToolPath());
+
+        bool modified = false;
+        ProcessFile processFile = OpenProcessFile(mediaFile);
+        _ = processFile.DeInterlace(true, ref modified).Should().BeTrue();
+        _ = processFile.State.Should().Be(SidecarFile.StatesType.None);
+        _ = File.Exists(handBrakeMarker).Should().BeFalse();
+        _ = modified.Should().BeFalse();
+    }
+
+    [Fact]
     public void DeInterlace_CleanScanWithoutSidecars_ProbesNoMediaProps()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");

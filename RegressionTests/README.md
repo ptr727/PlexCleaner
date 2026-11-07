@@ -9,21 +9,21 @@ PlexCleaner's behavior depends heavily on the specific media it processes: most 
 The committed contents are code plus a synthetic example. No media and no media filenames live in the repository:
 
 - The **media collection** lives on a server, next to the media (like a Plex library would). It is never committed. The copyrighted filenames stay out of source control entirely.
-- The same holds for issues, pull requests, and commit messages, per [GOVERNANCE.md](../GOVERNANCE.md) "Representative Data in Agent-Authored Text". A defect found in the collection is reported with a synthetic fixture that carries the triggering property.
-- The **media-specific reduction rules** (issue-localized cut windows and relaxed-acceptance overrides) also live with the media, in an external JSON file the tooling reads and writes. The repo ships only [`reduction-rules.example.json`](reduction-rules.example.json) with synthetic placeholder names.
+- The same holds for issues, pull requests, and commit messages, per [GOVERNANCE.md][governance] "Representative Data in Agent-Authored Text". A defect found in the collection is reported with a synthetic fixture that carries the triggering property.
+- The **media-specific reduction rules** (issue-localized cut windows and relaxed-acceptance overrides) also live with the media, in an external JSON file the tooling reads and writes. The repo ships only [`reduction-rules.example.json`][reduction-rules-example] with synthetic placeholder names.
 
 ## Layout
 
-- [`regression-test.sh`](regression-test.sh) -- the harness: provision a test dataset, process it through one Docker image tag, and write per-version results and logs for diffing.
-- [`corpus_common.py`](corpus_common.py) -- shared library: log parsing, deterministic issue classification, and the clip and metadata-surgery helpers.
-- [`catalog_corpus.py`](catalog_corpus.py) -- derive a machine-readable issue catalog (`catalog.json`) for a collection from a processing run.
-- [`reduce_corpus.py`](reduce_corpus.py) -- build and validate a reduced collection: shrink each sample while proving every issue survives.
-- [`locate_issue.py`](locate_issue.py) -- find where a decode signature lives in a file, and optionally record the located window into the external rules file.
-- [`audit_physical.py`](audit_physical.py) -- physical-error-shape coverage audit of the reduced collection.
-- [`reduction-rules.example.json`](reduction-rules.example.json) -- synthetic example of the external rules schema.
-- [`synthetic/`](synthetic/) -- the synthetic-targeting library: build small, fully synthetic fixtures that reproduce specific detections without any copyrighted media (see below).
-- [`pyproject.toml`](pyproject.toml) -- ruff and mypy configuration for the Python tooling.
-- [`tests/`](tests/) -- the `unittest` suite for the pure helpers in the Python tooling, which CI runs under coverage.
+- [`regression-test.sh`][regression-test] -- the harness: provision a test dataset, process it through one Docker image tag, and write per-version results and logs for diffing.
+- [`corpus_common.py`][corpus-common] -- shared library: log parsing, deterministic issue classification, and the clip and metadata-surgery helpers.
+- [`catalog_corpus.py`][catalog-corpus] -- derive a machine-readable issue catalog (`catalog.json`) for a collection from a processing run.
+- [`reduce_corpus.py`][reduce-corpus] -- build and validate a reduced collection: shrink each sample while proving every issue survives.
+- [`locate_issue.py`][locate-issue] -- find where a decode signature lives in a file, and optionally record the located window into the external rules file.
+- [`audit_physical.py`][audit-physical] -- physical-error-shape coverage audit of the reduced collection.
+- [`reduction-rules.example.json`][reduction-rules-example] -- synthetic example of the external rules schema.
+- [`synthetic/`][synthetic] -- the synthetic-targeting library: build small, fully synthetic fixtures that reproduce specific detections without any copyrighted media (see below).
+- [`pyproject.toml`][pyproject] -- ruff and mypy configuration for the Python tooling.
+- [`tests/`][tests] -- the `unittest` suite for the pure helpers in the Python tooling, which CI runs under coverage.
 
 ## The collection
 
@@ -47,7 +47,9 @@ sudo ./regression-test.sh [quick|full] [tag] [corpus] [plugin...]
 - `corpus` selects `full` (default) or `reduced`.
 - `plugin` names optional example plugins to build and run after processing, to confirm a plugin loads and runs against the processed dataset.
 
-The harness tests a published image tag. To test a build before any image carries it, run it inside the image as [OPERATIONS.md](../OPERATIONS.md) "Test an unreleased build in the image" describes.
+A `tag` holding a colon names a local image instead, such as `plexcleaner:local`, which the harness runs without a pull. A reference naming the published repository runs as published, by its tag or its digest. That is how a branch is tested before any published image carries it. Commit the branch, then build the image from it per [OPERATIONS.md][operations] "Test a tool version the image does not carry", adding `--build-arg LABEL_VERSION=$(git rev-parse --short=10 HEAD)`. The build compiles the working tree, so an uncommitted edit would run under the label of a commit that lacks it. The label names the results directory, so the harness refuses a local label that is not a commit hash. That refuses the Dockerfile default `1.0.0.0`, and any published version, which always holds a dot. A local run records `local` as its channel, so a tool picking the newest `develop` run never picks it. It builds no plugin, since a plugin builds from the release tag its image version names.
+
+Setting `REGRESSION_COVERAGE_TOOL` to the absolute path of a host directory holding `dotnet-coverage.dll` runs the process and plugin runs under `dotnet-coverage collect`. Each run writes a Cobertura report beside its log, `coverage_process.xml` and `coverage_custom_<plugin>.xml`, and each harness invocation first removes the reports an earlier one left. The image's sources are under `/Builder`, and each plugin is built with a path map to the same root. So [codecov.yml][codecov]'s `fixes` rule maps every report. The version directory's name, less any `-reduced` suffix, is a published build's release tag or a local build's commit. So `git rev-parse <version>^{commit}` gives the run's commit. `sudo` resets the environment, so pass the variable through `sudo env REGRESSION_COVERAGE_TOOL=<dir> ./regression-test.sh ...`.
 
 Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
 
@@ -58,6 +60,8 @@ The harness scans the whole file; it does not use `--quickscan`. Bounding the sc
 ## The issue catalog
 
 `catalog_corpus.py` turns a processing run into `catalog.json`: one entry per file recording its processing State, the detections it triggered, and the classified decode-error subtypes. This catalog is the ground truth the reduction proves against, and the artifact compared between versions.
+
+Each entry also records the interlace scan's verdict and idet counts, from PlexCleaner's `Interlace scan counts` log line, as a survey of the corpus's field orders. The field is `null` where no scan ran, or where the scan exceeded FFmpeg's decode error rate. It is informational, and the reduction ignores it, since a cut clip's counts differ from its source's.
 
 Classification is deterministic and lives in `corpus_common.py`: raw ffmpeg error lines carry per-site coordinates (macroblock positions, picture numbers) and accumulate across every corrupt site, so they are normalized to a stable signature class before comparison.
 
@@ -90,14 +94,16 @@ Most defects live in the head of the file, so the default is a head clip. Defect
 Generate them from your own media on demand:
 
 ```shell
-# locate the decode signature and record a padded window into the rules file
+# locate the decode signature and record a padded window into the rules file's located map
 python3 locate_issue.py --catalog /path/to/full/catalog.json --full --write-rules /path/to/full/reduction-rules.json
 
 # build the reduced collection, reading those windows
 python3 reduce_corpus.py --catalog /path/to/full/catalog.json --mode generate --out /path/to/reduced
 ```
 
-The rules schema has a `regions` map (issue-localized cut windows) and an `accept` map (relaxed-acceptance overrides), both keyed by source basename; see [`reduction-rules.example.json`](reduction-rules.example.json). If the rules file is absent, every file is head-clipped, no relaxed acceptance applies, and the tool says so.
+Reduce processes each clip with `--testsnippets`, so a repair re-encodes only the clip's first 30 seconds. A repair copies a subtitle defect through rather than fixing it. So a window for a source that ends `RepairFailed` starts less than 30 seconds before the defect, and the repaired snippet fails verify again. A window for a source that repairs clean starts more than 30 seconds before the defect, so the snippet stays clear of it. A defect less than that lead into the file starts its window at 0 instead, which can put it inside the snippet. `locate_issue.py --write-rules` picks the lead from the catalog's state the same way.
+
+The rules schema has three maps, each keyed by source basename. The `regions` map holds hand-tuned cut windows, which no tool writes. The `located` map holds the windows `locate_issue.py --write-rules` generates, which a later locate run replaces. A `regions` entry wins over a `located` one for the same file, and reduce says when it does. So tune a window by adding it to `regions`, where a locate run cannot overwrite it. The `accept` map holds relaxed-acceptance overrides. See [`reduction-rules.example.json`][reduction-rules-example]. If the rules file is absent, every file is head-clipped, no relaxed acceptance applies, and the tool says so.
 
 ## Physical-shape coverage audit
 
@@ -105,7 +111,7 @@ The reduction gate compares broad signature classes, and a class can lump severa
 
 ## Synthetic file generation
 
-The corpus is built from real troublesome media, but many issues are *structural* (track layout, flags, tags, language, container, HDR, closed captions) and depend on nothing copyrighted. Those can be reproduced by **fully synthetic** files -- ffmpeg `lavfi` video/audio (`testsrc2`, `sine`) plus a targeted mux -- so a fixture can be regenerated anywhere with no media to ship. The [`synthetic/`](synthetic/) library is the start of this.
+The corpus is built from real troublesome media. Many issues are *structural*, though (track layout, flags, tags, language, container, HDR, closed captions), and depend on nothing copyrighted. Those can be reproduced by **fully synthetic** files, ffmpeg `lavfi` video/audio (`testsrc`, `testsrc2`, `sine`) plus a targeted mux. A fixture can then be regenerated anywhere with no media to ship. The [`synthetic/`][synthetic] library is the start of this.
 
 ### Objectives
 
@@ -117,10 +123,12 @@ Synthetic generation is a *targeted* tool, not a wholesale replacement for the r
 
 ### Components
 
-- [`synthetic/synthesize.py`](synthetic/synthesize.py) -- generation primitives (HDR10 base, SDR video, audio, subtitles) and builders that target a specific detection set, plus a small CLI.
-- [`synthetic/inject_cc_sei.py`](synthetic/inject_cc_sei.py) -- insert CEA-608 closed-caption SEI into an HEVC stream (no common tool does this: ffmpeg `-a53cc` is libx264 only, libx265 drops captions), preserving any HDR SEI. Importable, or a standalone CLI.
-- [`synthetic/inject_hdr10plus_sei.py`](synthetic/inject_hdr10plus_sei.py) -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
-- [`synthetic/hevc_nal.py`](synthetic/hevc_nal.py) -- shared HEVC helpers (bit packing, wrapping a T.35 payload into a prefix-SEI NAL, inserting a SEI before every VCL NAL) used by both injectors.
+- [`synthetic/synthesize.py`][synthetic-synthesize] -- generation primitives (HDR10 base, SDR video, audio, subtitles) and builders that target a specific detection set, plus a small CLI.
+- [`synthetic/inject_cc_sei.py`][synthetic-inject-cc-sei] -- insert CEA-608 closed-caption SEI into an HEVC stream, preserving any HDR SEI. No common tool does this, since ffmpeg `-a53cc` is libx264 only and libx265 drops captions. Importable, or a standalone CLI.
+- [`synthetic/inject_hdr10plus_sei.py`][synthetic-inject-hdr10plus-sei] -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
+- [`synthetic/hevc_nal.py`][synthetic-hevc-nal] -- shared HEVC helpers used by both injectors. They pack bits, wrap a T.35 payload into a prefix-SEI NAL, and insert a SEI before every VCL NAL.
+- [`synthetic/expected-results.json`][synthetic-expected-results] -- the expected process result of every file in the integration run, see *CI integration run* below.
+- [`integration-test.sh`][integration-test] and [`check_results.py`][check-results] -- the integration run and its result check.
 
 Requires `ffmpeg` (with libx265), `ffprobe`, and `mkvmerge` on `PATH`. Examples:
 
@@ -132,6 +140,7 @@ python3 synthetic/synthesize.py dts-timebase -o dts-timebase.mkv     # healthy V
 python3 synthetic/synthesize.py dts-duplicate-pts -o dts-dup.mkv     # one repeated frame timestamp, fails verify
 python3 synthetic/synthesize.py dts-mixed -o dts-mixed.mkv           # audio DTS break plus post-decode video break
 python3 synthetic/synthesize.py dts-audio-tagged -o dts-audio.mkv  # audio DTS break under a tag and an attachment, repaired losslessly
+python3 synthetic/synthesize.py --corpus corpus                       # every corpus target, named by CORPUS_NAMES
 ```
 
 ### Targeting methodology
@@ -149,11 +158,35 @@ Pick the detections a fixture must reproduce, build a candidate, then **validate
 - **Verify DTS time base** -- `dts-timebase` muxes a 23.976 cadence followed by a denser 29.97 cadence under a 23.976 default duration. Every timestamp increases at 1 ms precision, so verify passes it. A verify that encodes in the 1/framerate time base instead rounds the dense frames onto the same tick and reports a false non-monotonic DTS.
 - **Verify DTS duplicate PTS** -- `dts-duplicate-pts` repeats one frame timestamp. Verify reports the repeat at native precision. The demuxer derives a DTS from the repeated timestamp, so the repeat is demux-visible and takes the full repair ladder.
 - **Verify DTS mixed** -- `dts-mixed` swaps two B-frame video timestamps and steps one AAC packet timestamp back, using the unsorted mkvmerge v4 timestamps format. The demuxer derives video DTS from the sorted timestamps, so only the audio break is demux-visible, while the decoded video display order runs backward. The lossless `setts` tier repairs the audio but leaves the video failing verify, so the repair stops after the remux and marks the file `RepairFailed`. The v2 timestamps format cannot build this fixture, because mkvmerge sorts v2 timestamps and so removes both the swap and the step back.
+- **Progressive SDR source** -- ffmpeg `idet` reads small `testsrc2` frames as interlaced, with both field orders outnumbering the progressive frames. A deinterlace re-encode then hides the path a fixture targets, so the SDR primitives use `testsrc`, which `idet` reads as progressive. The 4K HDR base keeps `testsrc2`, which `idet` reads as progressive at that size.
+- **Containers and names** -- `container-mp4` is remuxed by its extension. `container-renamed` is an MP4 under an MKV name, which only the mkvmerge container check finds. `uppercase-extension` is renamed, and `unwanted-extension` is deleted.
+- **Cover art** -- `cover-art` attaches a JPEG, which ffprobe reports as a cover art video track, and the attachment removal clears it.
+- **Language tags** -- `language-tags` carries only legacy ISO 639-2 tags, which read as IETF tags to set, and its audio language is undefined.
+- **Interlaced** -- `interlaced` weaves 59.94 progressive frames into 29.97 top-field-first frames, which `idet` detects and processing deinterlaces.
+- **Re-encode** -- `reencode` carries MPEG-2 video and MP2 audio, both on the re-encode lists.
+- **Closed captions on SDR** -- `sdr-cc` injects the A53 CC SEI into an SDR HEVC stream, which processing removes.
+- **Bitrate exceeded** -- `bitrate-exceeded` is lossless H.264 of per-frame noise, above the integration settings' 100 Mbps maximum.
+- **Seek index** -- `no-cues` is written with `mkvmerge --no-cues`, so its SeekHead names no Cues and processing remuxes it.
 - **Verify DTS audio tagged** -- `dts-audio-tagged` steps one AAC packet timestamp back under a global tag and an attachment, with healthy video. The lossless `setts` tier repairs the whole file. Its MkvMerge pass drops the tag, the attachment, and the tags FfMpeg writes, like every other rewrite. The regression gate compares only the media streams, since the attachment stream is gone after the pass.
 
 ### Extending the library
 
-Add a builder function that constructs the target with the primitives, register it in `TARGETS`, and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit copyrighted media or media filenames. Candidate next steps: interlaced, cover-art, and container-specific (AVI / WMV / MPEG-2) targets, and per-frame-varying HDR10+ metadata.
+Add a builder function that constructs the target with the primitives, register it in `TARGETS`, and validate it through the image. Keep everything synthetic (or publicly sourced) -- never commit copyrighted media or media filenames. Every target except `hdr10-base` joins the integration run, under the file name `CORPUS_NAMES` gives it. So a new target fails the run until its expected result is recorded as below. Candidate next steps: AVI and WMV container targets, and per-frame-varying HDR10+ metadata.
+
+### CI integration run
+
+The `integration` CI job runs [`integration-test.sh`][integration-test] against an image built from the pull request tree. It generates the corpus in a throwaway container from that image with `python3` added, and adds the [Matroska test files][matroska-test-files-link] at a pinned commit. It then runs the image's `/Test/test.sh` under `dotnet-coverage` with every optional processing step on. [`check_results.py`][check-results] compares each file's result, new name, `Modified` flag, `State` flags, and failed operation with [`synthetic/expected-results.json`][synthetic-expected-results], and any difference fails the job. Codecov receives the coverage under the `integration` flag. Run it locally against an image built per [OPERATIONS.md][operations] "Test a tool version the image does not carry":
+
+```shell
+dotnet tool restore
+./RegressionTests/integration-test.sh plexcleaner:local /tmp/integration
+```
+
+A changed result fails the run until it is recorded. Confirm in the run's log that the change is intended. Then record it from the run's results file, and commit the expected file with the change:
+
+```shell
+python3 RegressionTests/check_results.py --write --expected RegressionTests/synthetic/expected-results.json --results /tmp/integration/out/Results.json
+```
 
 ### Toward xUnit coverage generation
 
@@ -186,7 +219,7 @@ The working loop when the collection changes:
 
 ## Python tooling
 
-The Python utilities are standalone and stdlib-only (subprocess, json, argparse, pathlib, re). They are linted with ruff, type-checked with mypy, and tested with the `unittest` suite under [`tests/`](tests/). The configuration is in [`pyproject.toml`](pyproject.toml). Run them via `uvx`, which needs no install:
+The Python utilities are standalone and stdlib-only (subprocess, json, argparse, pathlib, re). They are linted with ruff, type-checked with mypy, and tested with the `unittest` suite under [`tests/`][tests]. The configuration is in [`pyproject.toml`][pyproject]. Run them via `uvx`, which needs no install:
 
 ```shell
 uvx ruff@latest check .
@@ -196,3 +229,30 @@ uvx coverage@latest run -m unittest discover -s tests
 ```
 
 These run the latest tools and are available as VSCode tasks. CI runs the same latest tools through the hub's reusable validator. Python source is LF, matching the repository's default line-ending convention.
+
+<!-- Repo -->
+
+[audit-physical]: audit_physical.py
+[catalog-corpus]: catalog_corpus.py
+[check-results]: check_results.py
+[codecov]: ../codecov.yml
+[corpus-common]: corpus_common.py
+[governance]: ../GOVERNANCE.md
+[integration-test]: integration-test.sh
+[locate-issue]: locate_issue.py
+[operations]: ../OPERATIONS.md
+[pyproject]: pyproject.toml
+[reduce-corpus]: reduce_corpus.py
+[reduction-rules-example]: reduction-rules.example.json
+[regression-test]: regression-test.sh
+[synthetic]: synthetic/
+[synthetic-expected-results]: synthetic/expected-results.json
+[synthetic-hevc-nal]: synthetic/hevc_nal.py
+[synthetic-inject-cc-sei]: synthetic/inject_cc_sei.py
+[synthetic-inject-hdr10plus-sei]: synthetic/inject_hdr10plus_sei.py
+[synthetic-synthesize]: synthetic/synthesize.py
+[tests]: tests/
+
+<!-- External -->
+
+[matroska-test-files-link]: https://github.com/ietf-wg-cellar/matroska-test-files

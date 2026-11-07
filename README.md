@@ -24,15 +24,13 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.23**:
+**Version: 3.24**:
 
 **Summary:**
 
-- Added a minimum version for every media tool, checked at startup, such as FFmpeg 8.0 and HandBrake 1.10.0.
-- Renamed the Docker image test script to `/Test/test.sh` and the version script to `/PlexCleaner/version.sh`.
-- Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
-- Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, since the re-encode drops frames.
-- An exception in one file fails only that file instead of ending the run.
+- Removed code that nothing called, as the first step toward broader test coverage, with no change in processing behavior.
+- Documented how to measure code coverage locally and in the Docker image.
+- Added a CI integration test that runs the Docker image's test commands over synthetic media and checks each file's processing result.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -1069,7 +1067,6 @@ The third-party tools, libraries, and actions this project depends on.
 | [RFC 5646 language tags][rfc5646-link] | Language tag standard. |
 | [Serilog][serilog-link] | Structured logging library for .NET. |
 | [Utf8JsonAsyncStreamReader][utf8jsonasync-link] | Streaming JSON reader for .NET. |
-| [Xml2CSharp][xmltocsharp-link] | XML to C# class generator. |
 | [xUnit.Net][xunit-link] | Test framework for .NET. |
 
 ## Sample Media Files
@@ -1165,5 +1162,4 @@ Licensed under the [MIT License][license]\
 [visualstudio-link]: https://visualstudio.microsoft.com/downloads/
 [vscode-link]: https://code.visualstudio.com/download
 [winget-cli-issue-link]: https://github.com/microsoft/winget-cli/issues/3437
-[xmltocsharp-link]: https://xmltocsharp.azurewebsites.net/
 [xunit-link]: https://xunit.net/

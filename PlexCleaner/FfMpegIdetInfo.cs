@@ -66,11 +66,15 @@ public partial class FfMpegIdetInfo
 
     public static bool GetIdetInfo(string fileName, out FfMpegIdetInfo? idetInfo)
     {
-        // Get idet output from ffmpeg
+        // Get idet output from ffmpeg, idetInfo stays null when the counts are unreliable
         idetInfo = null;
-        if (!Tools.FfMpeg.GetIdetText(fileName, out string text))
+        if (!Tools.FfMpeg.GetIdetText(fileName, out string text, out bool decodeErrorRateExceeded))
         {
             return false;
+        }
+        if (decodeErrorRateExceeded)
+        {
+            return true;
         }
 
         // Parse the text

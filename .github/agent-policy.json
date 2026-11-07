@@ -1,0 +1,42 @@
+{
+    "$schema": "https://raw.githubusercontent.com/ptr727/ProjectTemplate/main/spec/agent-policy.schema.json",
+    "version": 1,
+    "review": {
+        "bots": {
+            "copilot": {
+                "trigger": "auto",
+                "bases": [
+                    "@default"
+                ],
+                "when": "on-open",
+                "rounds": "per-push",
+                "maxRounds": null,
+                "gate": true
+            },
+            "coderabbit": {
+                "trigger": "auto",
+                "bases": [
+                    "@default",
+                    "^develop$"
+                ],
+                "when": "on-open",
+                "rounds": "per-push",
+                "maxRounds": null,
+                "gate": false,
+                "command": "review"
+            },
+            "qodo": {
+                "trigger": "auto",
+                "bases": [
+                    "@default",
+                    "^develop$"
+                ],
+                "when": "on-open",
+                "rounds": "per-push",
+                "maxRounds": null,
+                "gate": false
+            }
+        }
+    },
+    "guard": {}
+}
