@@ -51,9 +51,17 @@ public static class Convert
         string inputName,
         MediaProps? languageProps,
         out string outputName
+    ) => ReMuxToMkv(inputName, languageProps, out outputName, out _);
+
+    public static bool ReMuxToMkv(
+        string inputName,
+        MediaProps? languageProps,
+        out string outputName,
+        out bool rejected
     )
     {
         // This function will try both MkvMerge and FfMpeg
+        rejected = false;
 
         // Match the logic in ConvertToMKV()
 
@@ -98,6 +106,7 @@ public static class Convert
                 Log.Error("Failed to remux using FfMpeg : {TempFileName}", tempName);
 
                 // Error
+                rejected = true;
                 return false;
             }
 

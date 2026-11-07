@@ -101,6 +101,30 @@ public sealed class ToolChangeSenseTests : IDisposable
             .Contain($"Sidecar {tool} tool version mismatch");
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Read_ToolChange_ClearsProcessFailedOnlyWithSidecarUpdateOnToolChange(
+        bool updateOnToolChange
+    )
+    {
+        Program.Config.ProcessOptions.SidecarUpdateOnToolChange = updateOnToolChange;
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.Repaired | SidecarFile.StatesType.ProcessFailed
+        );
+        Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
+
+        SidecarFile sidecarFile = new(mediaFile);
+        _ = sidecarFile.Read(out _).Should().BeTrue();
+
+        _ = sidecarFile
+            .State.HasFlag(SidecarFile.StatesType.ProcessFailed)
+            .Should()
+            .Be(!updateOnToolChange);
+        _ = sidecarFile.State.Should().HaveFlag(SidecarFile.StatesType.Repaired);
+    }
+
     [Fact]
     public void Open_StateChangeAfterToolChange_KeepsStoredToolVersions()
     {

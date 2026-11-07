@@ -31,10 +31,10 @@ public class ProcessFile
     // A rename blocked by an existing file says nothing about the media
     private bool _renameCollision;
 
-    // An interlace scan skipped for undecodable video runs once more after a repair fixes the file
+    // An interlace scan skipped for undecodable video runs once more after a repair or re-encode rewrites it
     private bool _interlaceScanSkipped;
     private bool _interlaceRescan;
-    private bool _interlaceRescanFailed;
+    private bool _verifyDeferred;
 
     // Null until a step's first call reads what an earlier run left, a later call follows this run
     private bool? _coverArtRemains;
@@ -51,6 +51,11 @@ public class ProcessFile
     public MediaProps MediaInfoProps { get; private set; } = null!;
     public SidecarFile.StatesType State => _sidecarFile.State;
     public FileInfo FileInfo { get; private set; }
+
+    // Only a verdict judged in this run deletes or registers a failed file
+    public string? InvalidReason { get; private set; }
+
+    private void SetInvalid(string reason) => InvalidReason ??= reason;
 
     public bool DeleteMismatchedSidecarFile(ref bool modified)
     {
@@ -221,9 +226,19 @@ public class ProcessFile
         }
 
         // ReMux the file, use the new filename, the media props are not read yet
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, languageProps: null, out string outputName))
+        if (
+            !Convert.ReMuxToMkv(
+                FileInfo.FullName,
+                languageProps: null,
+                out string outputName,
+                out bool rejected
+            )
+        )
         {
-            // Error
+            if (rejected)
+            {
+                SetInvalid("Remux failed");
+            }
             return false;
         }
 
@@ -270,9 +285,19 @@ public class ProcessFile
         );
 
         // ReMux the file, use the new filename
-        if (!Convert.ReMuxToMkv(FileInfo.FullName, MkvMergeProps, out string outputName))
+        if (
+            !Convert.ReMuxToMkv(
+                FileInfo.FullName,
+                MkvMergeProps,
+                out string outputName,
+                out bool rejected
+            )
+        )
         {
-            // Error
+            if (rejected)
+            {
+                SetInvalid("Remux failed");
+            }
             return false;
         }
 
@@ -525,6 +550,7 @@ public class ProcessFile
         _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
         _sidecarFile.State &= ~SidecarFile.StatesType.Repaired;
+        SetInvalid("Verify failed");
         _ = SaveState();
 
         // Always returns false to signal the repair did not succeed
@@ -1618,12 +1644,24 @@ public class ProcessFile
         {
             return true;
         }
+        _interlaceScanSkipped = false;
         if (!DeInterlace(true, ref modified))
         {
-            _interlaceRescanFailed = true;
             return false;
         }
-        if (State.HasFlag(SidecarFile.StatesType.DeInterlaced) || _bitrateToolError)
+        if (_interlaceScanSkipped)
+        {
+            Log.Warning(
+                "Interlace scan skipped again after rewriting the file : {FileName}",
+                FileInfo.FullName
+            );
+            return false;
+        }
+        if (
+            !_verifyDeferred
+            || State.HasFlag(SidecarFile.StatesType.DeInterlaced)
+            || _bitrateToolError
+        )
         {
             return true;
         }
@@ -1848,6 +1886,7 @@ public class ProcessFile
 
         // Refresh
         modified = true;
+        _interlaceRescan |= _interlaceScanSkipped && selectMediaProps.Selected.Video.Count > 0;
         _sidecarFile.State |= SidecarFile.StatesType.ReEncoded;
         _sidecarFile.State |= SidecarFile.StatesType.ReMuxed;
         _sidecarFile.State &= ~SidecarFile.VerifyStates;
@@ -1970,20 +2009,17 @@ public class ProcessFile
         return verifyResult;
     }
 
+    // An unproven verdict retries next run, and a rename collision's sidecar names the other file
     private string? KeepFailedFileReason() =>
         _renameCollision ? "Rename collision"
         : ToolErrorScope.Count > 0 ? "Tool error"
         : ToolErrorScope.SignalCount > 0 ? "Tool signal"
         : Program.IsCancelledError() ? "Cancelled"
-        : _sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps)
-            ? nameof(SidecarFile.StatesType.PostDecodeTimestamps)
-        : _interlaceRescanFailed ? "Interlace rescan after repair"
         : null;
 
-    public bool DeleteFailedFile(string failedOperation)
+    public bool HandleFailedFile(string failedOperation)
     {
-        // Conditional
-        if (!Program.Config.VerifyOptions.DeleteInvalidFiles)
+        if (State.HasFlag(SidecarFile.StatesType.ProcessFailed))
         {
             return false;
         }
@@ -1995,17 +2031,65 @@ public class ProcessFile
                 keepReason,
                 FileInfo.FullName
             );
+            InvalidReason = null;
             return false;
         }
 
-        if (
-            !FileDelete.TryDelete(
-                LogEventLevel.Warning,
-                "media file",
-                $"Failed {failedOperation}",
-                FileInfo.FullName
+        if (InvalidReason != null)
+        {
+            if (Program.Config.VerifyOptions.RegisterInvalidFiles)
+            {
+                Log.Information(
+                    "Registering invalid file : {Reason:l}, {Operation:l} : {FileName}",
+                    InvalidReason,
+                    failedOperation,
+                    FileInfo.FullName
+                );
+                return false;
+            }
+            if (
+                Program.Config.VerifyOptions.DeleteInvalidFiles
+                && DeleteFailedFile($"{InvalidReason}, {failedOperation}")
             )
+            {
+                return true;
+            }
+        }
+
+        SetProcessFailed(failedOperation);
+        return false;
+    }
+
+    private void SetProcessFailed(string failedOperation)
+    {
+        if (
+            !Program.Config.ProcessOptions.UseSidecarFiles
+            || !SidecarFile.IsMkvFile(FileInfo)
+            || _sidecarFile.ToolInfoFailed
         )
+        {
+            Log.Information(
+                "Keeping failed file : {Reason:l} : {FileName}",
+                failedOperation,
+                FileInfo.FullName
+            );
+            return;
+        }
+        Log.Warning(
+            "Keeping failed file, marking as ProcessFailed : {Operation:l} : {FileName}",
+            failedOperation,
+            FileInfo.FullName
+        );
+        _sidecarFile.State |= SidecarFile.StatesType.ProcessFailed;
+        if (!SaveState())
+        {
+            Log.Error("Failed to save ProcessFailed state : {FileName}", FileInfo.FullName);
+        }
+    }
+
+    public bool DeleteFailedFile(string reason)
+    {
+        if (!FileDelete.TryDelete(LogEventLevel.Warning, "media file", reason, FileInfo.FullName))
         {
             return false;
         }
@@ -2043,12 +2127,20 @@ public class ProcessFile
         // Verify (verify does not set any state, it just tests state)
         if (Verify(true, out bool canRepair))
         {
+            // A pending interlace rescan saves Verified once it finds the file progressive
+            if (_interlaceRescan && !_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified))
+            {
+                _verifyDeferred = true;
+                return true;
+            }
+
             // Set Verified state if not already set, and not when the bitrate analysis hit a tool error
             if (!_sidecarFile.State.HasFlag(SidecarFile.StatesType.Verified) && !_bitrateToolError)
             {
                 _sidecarFile.State |= SidecarFile.StatesType.Verified;
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
+                _sidecarFile.State &= ~SidecarFile.StatesType.ProcessFailed;
                 Debug.Assert(!_sidecarFile.State.HasFlag(SidecarFile.StatesType.RepairFailed));
 
                 // Update state
@@ -2078,6 +2170,12 @@ public class ProcessFile
             if (ToolErrorScope.SignalCount > 0)
             {
                 return false;
+            }
+
+            // A VerifyFailed carried in from an earlier run returns no verdict from this run
+            if (canRepair)
+            {
+                SetInvalid("Verify failed");
             }
 
             // Set VerifyFailed state if not already set
@@ -2124,6 +2222,7 @@ public class ProcessFile
             }
 
             // Repair failed and verify failed state
+            SetInvalid("Repair failed");
             _sidecarFile.State |= SidecarFile.StatesType.VerifyFailed;
             _sidecarFile.State &= ~SidecarFile.StatesType.Verified;
             _sidecarFile.State |= SidecarFile.StatesType.RepairFailed;
@@ -2143,6 +2242,7 @@ public class ProcessFile
     private bool SetRepairedState(bool reEncoded, ref bool modified)
     {
         _interlaceRescan = _interlaceScanSkipped;
+        _verifyDeferred = _interlaceRescan;
         _sidecarFile.State = _interlaceRescan
             ? _sidecarFile.State & ~SidecarFile.StatesType.Verified
             : _sidecarFile.State | SidecarFile.StatesType.Verified;
@@ -2150,6 +2250,7 @@ public class ProcessFile
         _sidecarFile.State |= SidecarFile.StatesType.Repaired;
         _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
         _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
+        _sidecarFile.State &= ~SidecarFile.StatesType.ProcessFailed;
         modified = true;
         if (!Refresh(true))
         {
@@ -2591,6 +2692,7 @@ public class ProcessFile
                 _sidecarFile.State &= ~SidecarFile.StatesType.VerifyFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.RepairFailed;
                 _sidecarFile.State &= ~SidecarFile.StatesType.PostDecodeTimestamps;
+                _sidecarFile.State &= ~SidecarFile.StatesType.ProcessFailed;
                 return SaveState();
             case VerifyResult.TimestampOnly:
                 // Detected non-monotonic DTS, run the timestamp repair ladder
@@ -2649,6 +2751,12 @@ public class ProcessFile
         if (postDecodeOnly)
         {
             _sidecarFile.State |= SidecarFile.StatesType.PostDecodeTimestamps;
+        }
+
+        // A post-decode only DTS is a kept failure, not a verdict of invalid media
+        if (!_sidecarFile.State.HasFlag(SidecarFile.StatesType.PostDecodeTimestamps))
+        {
+            SetInvalid("Repair failed");
         }
         _ = SaveState();
         return false;
@@ -2872,15 +2980,31 @@ public class ProcessFile
         return true;
     }
 
-    public bool GetMediaProps()
+    public bool GetMediaProps() => GetMediaProps(false);
+
+    internal bool GetMediaProps(bool skipProcessFailed)
     {
         // Only MKV files in production use
         Debug.Assert(SidecarFile.IsMkvFile(FileInfo));
 
-        // Get media info
+        // Get media info, without a sidecar only the media tools can fail
         if (!Refresh(false))
         {
             Log.Error("Failed to get media tool info : {FileName}", FileInfo.FullName);
+            if (!Program.Config.ProcessOptions.UseSidecarFiles || _sidecarFile.ToolInfoFailed)
+            {
+                SetInvalid("Media tools rejected the file");
+            }
+            return false;
+        }
+
+        // A file an earlier run failed is not processed again until the media file changes
+        if (skipProcessFailed && _sidecarFile.State.HasFlag(SidecarFile.StatesType.ProcessFailed))
+        {
+            Log.Warning(
+                "Skipping file that failed processing in an earlier run : {FileName}",
+                FileInfo.FullName
+            );
             return false;
         }
 

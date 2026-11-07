@@ -55,30 +55,8 @@ public sealed class PostRunWriteTests : IDisposable
             OriginalFileName = fileName,
             NewFileName = fileName,
             State = state,
+            InvalidReason = "Verify failed",
         };
-
-    [Fact]
-    public void RegisterInvalidFiles_DeletedFile_IsSkipped()
-    {
-        string settingsFile = Path.Combine(_directory, "settings.json");
-        string kept = Path.Combine(_directory, "kept.mkv");
-        string deleted = Path.Combine(_directory, "gone", "deleted.mkv");
-        File.WriteAllText(kept, string.Empty);
-        bool result = Process.RegisterInvalidFiles(
-            [
-                CreateResult(kept, SidecarFile.StatesType.VerifyFailed),
-                CreateResult(
-                    deleted,
-                    SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.FileDeleted
-                ),
-            ],
-            settingsFile
-        );
-
-        _ = result.Should().BeTrue();
-        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().Equal(kept);
-        _ = File.Exists(settingsFile).Should().BeTrue();
-    }
 
     [Fact]
     public void RegisterInvalidFiles_ExistingEntry_IsKept()
@@ -88,12 +66,7 @@ public sealed class PostRunWriteTests : IDisposable
         _ = Program.Config.ProcessOptions.FileIgnoreList.Add(deleted);
 
         bool result = Process.RegisterInvalidFiles(
-            [
-                CreateResult(
-                    deleted,
-                    SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.FileDeleted
-                ),
-            ],
+            [CreateResult(deleted, SidecarFile.StatesType.VerifyFailed)],
             Path.Combine(_directory, "settings.json")
         );
 
@@ -115,6 +88,26 @@ public sealed class PostRunWriteTests : IDisposable
         );
 
         _ = Process.FinishProcessing(resultsJson).Should().BeFalse();
+    }
+
+    [Fact]
+    public void FinishProcessing_FailedFileNotJudgedInvalid_IsNotRegistered()
+    {
+        string settingsFile = Path.Combine(_directory, "settings.json");
+        Program.Options.SettingsFile = settingsFile;
+        Program.Options.ResultsFile = string.Empty;
+        Program.Config.VerifyOptions.RegisterInvalidFiles = true;
+        ProcessResultJsonSchema resultsJson = new();
+        ProcessResultJsonSchema.ProcessResult carried = CreateResult(
+            Path.Combine(_directory, "carried.mkv"),
+            SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.ProcessFailed
+        );
+        carried.InvalidReason = null;
+        resultsJson.Results.Results.Add(carried);
+
+        _ = Process.FinishProcessing(resultsJson).Should().BeTrue();
+        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().BeEmpty();
+        _ = File.Exists(settingsFile).Should().BeFalse();
     }
 
     [Theory]
@@ -144,25 +137,6 @@ public sealed class PostRunWriteTests : IDisposable
         _ = Process.FinishProcessing(resultsJson).Should().BeFalse();
         _ = File.Exists(settingsFile).Should().Be(!settingsFails);
         _ = File.Exists(resultsFile).Should().Be(settingsFails);
-    }
-
-    [Fact]
-    public void RegisterInvalidFiles_OnlyDeletedFiles_WritesNothing()
-    {
-        string settingsFile = Path.Combine(_directory, "settings.json");
-        bool result = Process.RegisterInvalidFiles(
-            [
-                CreateResult(
-                    Path.Combine(_directory, "gone", "deleted.mkv"),
-                    SidecarFile.StatesType.VerifyFailed | SidecarFile.StatesType.FileDeleted
-                ),
-            ],
-            settingsFile
-        );
-
-        _ = result.Should().BeTrue();
-        _ = Program.Config.ProcessOptions.FileIgnoreList.Should().BeEmpty();
-        _ = File.Exists(settingsFile).Should().BeFalse();
     }
 
     [Fact]
