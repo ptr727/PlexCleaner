@@ -1,3 +1,4 @@
+using System.Globalization;
 using AwesomeAssertions;
 using PlexCleaner;
 using Serilog.Events;
@@ -88,6 +89,46 @@ public class TrackPropsCreateTests
         _ = props.Language.Should().Be("eng");
         _ = props.HasErrors.Should().BeTrue();
         _ = props.Actions.Should().Be(TrackProps.ActionsType.ReMux);
+    }
+
+    [Theory]
+    [InlineData(true, LogEventLevel.Warning)]
+    [InlineData(false, LogEventLevel.Debug)]
+    public void MkvMerge_Iso_Language_Without_Ietf_Logs_At_Option_Level(
+        bool setIetfLanguageTags,
+        LogEventLevel expectedLevel
+    )
+    {
+        bool savedOption = Program.Config.ProcessOptions.SetIetfLanguageTags;
+        Program.Config.ProcessOptions.SetIetfLanguageTags = setIetfLanguageTags;
+        try
+        {
+            MkvToolJsonSchema.Track track = NewMkvTrack("SubRip/SRT", "S_TEXT/UTF8");
+            track.Properties.Language = "eng";
+            SubtitleProps props = NewTrack(MediaTool.ToolType.MkvMerge, MkvContainer);
+            bool created = false;
+
+            IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+                created = props.Create(track)
+            );
+
+            _ = created.Should().BeTrue();
+            _ = props.LanguageIetf.Should().Be("en");
+            _ = props.HasErrors.Should().BeTrue();
+            _ = props.Actions.Should().Be(TrackProps.ActionsType.SetLanguage);
+            _ = events
+                .Where(e =>
+                    e.RenderMessage(CultureInfo.InvariantCulture)
+                        .Contains("Setting IETF tag from ISO639 tag", StringComparison.Ordinal)
+                )
+                .Select(e => e.Level)
+                .Should()
+                .Equal(expectedLevel);
+        }
+        finally
+        {
+            Program.Config.ProcessOptions.SetIetfLanguageTags = savedOption;
+        }
     }
 
     [Theory]

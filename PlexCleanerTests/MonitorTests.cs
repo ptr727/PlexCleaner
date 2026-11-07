@@ -80,6 +80,27 @@ public sealed class MonitorTests : IDisposable
     }
 
     [Fact]
+    public void MonitorFolders_Failure_Disposes_Created_Watchers()
+    {
+        List<FileSystemWatcher> created = [];
+        Monitor monitor = new() { WatcherCreated = created.Add };
+
+        _ = monitor
+            .MonitorFolders(
+                [_directory, Path.Combine(_directory, "missing")],
+                TestContext.Current.CancellationToken
+            )
+            .Should()
+            .BeFalse();
+
+        _ = created.Should().ContainSingle();
+        _ = created[0]
+            .Invoking(watcher => watcher.EnableRaisingEvents = true)
+            .Should()
+            .Throw<ObjectDisposedException>();
+    }
+
+    [Fact]
     public void MonitorFolders_PreProcess_Processes_Monitored_Folder()
     {
         Program.Options.PreProcess = true;

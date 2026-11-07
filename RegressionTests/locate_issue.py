@@ -153,9 +153,10 @@ def region_window(t: float, pad: int, repair_failed: bool) -> tuple[int, int]:
     Its lead is at most half the snippet, since a keyframe snap or a late stats time shifts it.
     Any other source leads by more than the snippet, so the snippet stays clear and repairs clean.
     A defect nearer the file start than the lead starts the window at 0.
+    The window ends at least one second past the defect's whole second, so it is never empty.
     """
     lead = min(pad, SNIPPET_SECONDS // 2) if repair_failed else max(pad, SNIPPET_SECONDS + 1)
-    return max(0, int(t) - lead), int(t) + pad
+    return max(0, int(t) - lead), int(t) + max(pad, 1)
 
 
 def write_region(rules_path: Path, name: str, start: int, end: int, note: str) -> None:
