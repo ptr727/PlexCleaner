@@ -4,23 +4,23 @@
     "review": {
         "bots": {
             "copilot": {
-                "trigger": "auto",
+                "trigger": "explicit",
                 "bases": [
                     "@default"
                 ],
-                "when": "on-open",
+                "when": "after-checks",
                 "rounds": "per-push",
-                "maxRounds": null,
+                "maxRounds": 3,
                 "gate": true
             },
             "coderabbit": {
-                "trigger": "auto",
+                "trigger": "explicit",
                 "bases": [
                     "@default",
                     "^develop$"
                 ],
-                "when": "on-open",
-                "rounds": "per-push",
+                "when": "after-checks",
+                "rounds": "once",
                 "maxRounds": null,
                 "gate": false,
                 "command": "review"
