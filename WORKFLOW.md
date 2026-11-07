@@ -15,7 +15,7 @@ assumes. Each guarantee names the **failure it prevents**, so the reason survive
 PlexCleaner ships **two targets**: standalone **executables** (a multi-runtime `PlexCleaner.7z` attached to
 a GitHub release) and a **multi-arch Docker image** (Docker Hub). Two workflows do the work:
 
-- **CI** runs on **every pull request into `main` or `develop`**, and on manual dispatch. It validates every
+- **CI** runs on **every pull request**, whatever its base, and on manual dispatch. It validates every
   change (unit tests + lint), and smoke-builds both targets only when a release path changed. It runs the
   image's test commands under coverage when an integration path changed. It publishes nothing. A pull request merges only when its required check is green.
 - **The publisher** runs on a **weekly schedule and on manual dispatch** - never on a merge, and builds **one
@@ -118,7 +118,7 @@ Legibility rules. Necessary but not sufficient: a perfectly styled workflow can 
 
 CI ([`test-pull-request.yml`](./.github/workflows/test-pull-request.yml)) and the publisher
 ([`publish-release.yml`](./.github/workflows/publish-release.yml)) are separate workflows with separate
-concurrency, so they never race. CI tests every pull request into `main` or `develop` and never publishes.
+concurrency, so they never race. CI tests every pull request and never publishes.
 The publisher releases on its own cadence and never runs on push. *Prevents a merge from silently cutting a
 release, and a CI run from racing a publish on the same ref.*
 
@@ -162,14 +162,15 @@ every other branch must. Downstream jobs `needs:` it. The `plan` job is the entr
 
 ### Fast CI feedback, filtered by changed paths
 
-CI runs on every pull request into `main` or `develop`, and on manual dispatch. It has no `push` trigger. A
+CI runs on every pull request, and on manual dispatch. It has no `push` trigger. Its `pull_request` trigger
+names no base branch, so a stacked pull request retargeted onto `develop` is not left waiting for its check. A
 `changes` job runs `dorny/paths-filter` with a `release` entry listing the executable and Docker target's
 paths. Its `integration` entry adds the paths only the integration run reads. The `validate` job always
 runs, calling the hub's `validate-task.yml` by pin. The `smoke-build` job runs the hub release task with
 `smoke: true` only when `release` changed, or on dispatch. It uploads and pushes nothing. The `integration`
 job builds the image from the pull request tree and runs its test commands under coverage only when
-`integration` changed, or on dispatch. A docs-only or workflow-only pull request therefore validates without
-either. One aggregator job, the ruleset-bound required check, gates the merge and passes a skipped smoke build
+`integration` changed, or on dispatch. A workflow-only pull request, or a docs-only one that leaves `ARCHITECTURE.md`
+alone, therefore validates without either. One aggregator job, the ruleset-bound required check, gates the merge and passes a skipped smoke build
 or integration run.
 
 On a `pull_request` event the entry workflow and its hub pins come from the pull request's merge commit. A
@@ -221,11 +222,11 @@ ruleset-bound required check (D1, D6). A second filter entry decides whether the
 
 ```mermaid
 flowchart TD
-    T(["pull_request: main, develop<br/>(or workflow_dispatch)"]):::trig
+    T(["pull_request, any base<br/>(or workflow_dispatch)"]):::trig
     T --> C["Detect changed targets job<br/>dorny/paths-filter, one release entry"]
     T --> V["Validate sources job<br/>hub validate-task.yml @pin"]
     C --> F{"release path changed<br/>or workflow_dispatch?"}:::gate
-    F -- "no: docs or workflow only" --> SK(["smoke-build skipped<br/>passes the aggregator"]):::stop
+    F -- "no: workflow only, or docs<br/>other than ARCHITECTURE.md" --> SK(["smoke-build skipped<br/>passes the aggregator"]):::stop
     F -- "yes" --> S["Smoke build job<br/>hub build-release-task.yml @pin<br/>smoke: true, github: false, dockerhub: false"]
     C --> FI{"integration path changed<br/>or workflow_dispatch?"}:::gate
     FI -- "no" --> ISK(["integration skipped<br/>passes the aggregator"]):::stop
@@ -246,9 +247,9 @@ flowchart TD
     SK --> A
     I --> A
     ISK --> A
-    A{"Check pull request workflow status job<br/>if: always()<br/>changes + validate succeeded,<br/>smoke-build + integration succeeded or skipped?"}:::gate
-    A -- "yes" --> G(["required check passes<br/>merge unblocked"]):::pub
-    A -- "no" --> R(["required check fails<br/>merge blocked"]):::stop
+    A{"Aggregator job, if: always()<br/>changes + validate succeeded,<br/>smoke-build + integration succeeded or skipped?"}:::gate
+    A -- "yes" --> G(["pull_request: Check pull request workflow status job<br/>passes, merge unblocked<br/>dispatch: Check workflow status job passes,<br/>no required context posted"]):::pub
+    A -- "no" --> R(["pull_request: required check fails, merge blocked<br/>dispatch: run fails"]):::stop
     classDef trig fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
     classDef gate fill:#fef9c3,stroke:#ca8a04,color:#713f12
     classDef pub fill:#dcfce7,stroke:#16a34a,color:#14532d
@@ -348,7 +349,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 - **D1.1 Only the changed target builds.** Input: a pull request. Output: the `changes` job's
   `dorny/paths-filter` step carries one `release` entry, since the executable and Docker image build as one
   release target. That entry lists paths rather than negating them. It names the app, test, plugin, and
-  sample projects, the Docker build files, and the shared build, package, SDK, and version configuration. A
+  sample projects, the Docker build files, `ARCHITECTURE.md`, and the shared build, package, SDK, and version
+  configuration. A
   change matching it marks `release`, and `smoke-build` runs through the hub's `build-release-task` with
   `smoke: true`. A change matching nothing marks nothing, and `smoke-build` skips. A `workflow_dispatch` run
   bypasses the filter and always smoke-builds. A second `integration` entry gates the integration run per
@@ -367,16 +369,18 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   Docker Hub login is **not** gated: smoke logs in too, for higher pull/cache-read rate limits, so it does
   require the Docker Hub secrets (present in both the Actions and Dependabot stores). Fork safety rests on
   GitHub giving a fork pull request run a read-only token and no secrets (D6.2).
-- **D1.4 Workflow-only and docs-only changes are not smoke-built.** Input: a pull request changing only
-  `.github/workflows/**`, or only documentation. Output: the filter marks nothing, so `smoke-build` skips and
+- **D1.4 Workflow-only and docs-only changes, `ARCHITECTURE.md` aside, are not smoke-built.** Input: a pull
+  request changing only `.github/workflows/**`, or only documentation other than `ARCHITECTURE.md`. Output: the filter marks nothing, so `smoke-build` skips and
   the aggregator passes the skip. The `release` entry reaches this by leaving workflow and doc paths out.
+  The one doc it lists is `ARCHITECTURE.md`, which the Docker image copies and `ArchitectureDiagramTests` reads.
   *Implication: a hub-pin bump is not smoke-built on its pull request. The validator still runs actionlint
   on it, and a `workflow_dispatch` of CI on the branch it targets, after it merges, smoke-builds the new pin.*
 - **D1.5 One required aggregator gates merge.** Output: a single aggregator job runs under `if: always()`
   and `needs:` `changes`, `validate`, `smoke-build`, and `integration`. It must **succeed**, not merely "not
   fail". It requires `changes` and `validate` to succeed, passes a skipped `smoke-build` or `integration`, and
-  blocks on failure or cancellation. Its name is ruleset-bound (D6.2) and must not be renamed. *Prevents a defect merging
-  unverified, and a filter error letting a release change merge unbuilt.*
+  blocks on failure or cancellation. Its name is ruleset-bound (D6.2) and must not be renamed. An expression
+  `name:` yields that name only on a `pull_request` run, so a dispatch run cannot post the required context.
+  *Prevents a defect merging unverified, and a filter error letting a release change merge unbuilt.*
 - **D1.6 Unit tests run under coverage.** Output: the validator's `unit-test` job runs `dotnet test`, built
   with `TreatWarningsAsErrors` from `Directory.Build.props`, so analyzer and style warnings fail here. The step
   fails when the run writes no non-empty Cobertura report. [`global.json`](./global.json) opts the run
@@ -578,9 +582,9 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
   branch; every hub-task `uses:` is an owner-scoped `ptr727/ProjectTemplate/...@<sha> # <tag>` and no
   `validate-task.yml`, `build-release-task.yml`, `build-docker-task.yml`, `build-executable-task.yml` or
   `get-version-task.yml` exists under `.github/workflows/`.
-- **D1:** CI triggers on `pull_request` to `main` and `develop` and on `workflow_dispatch`, with no `push`
-  trigger. The `changes` job's `release` entry lists the executable and Docker paths and no workflow or
-  doc path. `validate` calls the hub validator by pin, passes `CODECOV_TOKEN` by name, and declares
+- **D1:** CI triggers on every `pull_request`, with no base filter, and on `workflow_dispatch`, with no `push`
+  trigger. The `changes` job's `release` entry lists the executable and Docker paths, no workflow path, and
+  no doc path other than `ARCHITECTURE.md`. `validate` calls the hub validator by pin, passes `CODECOV_TOKEN` by name, and declares
   `RegressionTests`. `smoke-build` `needs:` `changes` and runs with `smoke: true` only on a `release` change
   or a dispatch. Every build `upload-artifact` is gated `!smoke`. `global.json` declares
   `test.runner = Microsoft.Testing.Platform`. The unit-test step passes
@@ -630,7 +634,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 | # | Input | Expected output | Exercises |
 | --- | --- | --- | --- |
 | S1 | PR touching `PlexCleaner/**` | `changes` marks `release` and `integration`, so `validate`, `smoke-build`, and `integration` run. Both targets compile/pack, with **no push, no artifact uploads, no release**. `validate-release` self-skips (smoke). `integration` checks every file's result and uploads its coverage. The aggregator succeeds and no artifacts dangle | D0.1, D1.1, D1.3, D1.7, D2.2 |
-| S2 | PR changing only docs | `changes` marks nothing, so `smoke-build` and `integration` skip. `validate` runs markdownlint, cspell on README.md and HISTORY.md, and the prose gate. The aggregator passes the skips and nothing publishes | D1.4, D1.5 |
+| S2 | PR changing only docs other than `ARCHITECTURE.md` | `changes` marks nothing, so `smoke-build` and `integration` skip. `validate` runs markdownlint, cspell on README.md and HISTORY.md, and the prose gate. The aggregator passes the skips and nothing publishes | D1.4, D1.5 |
 | S3 | PR changing only `.github/workflows/**` | `changes` marks nothing, so `smoke-build` and `integration` skip. `validate` runs at the PR's own pin and its `lint` job runs actionlint. The aggregator succeeds | D1.4, D6.1 |
 | S4 | weekly `schedule` | builds + publishes `main` only: stable release + refreshed `latest` (multi-arch) + `PlexCleaner.7z`; `target_commitish` = main's SHA; develop is not touched; no dangling artifacts | D4.1, D4.2, D4.4 |
 | S5 | `workflow_dispatch` from `develop` | builds + publishes `develop`: prerelease `X.Y.<height>-g<sha>` + `develop` image + `PlexCleaner.7z`; `github.ref` is develop, so NBGV classifies it non-public | D4.1, D4.2, D3.2 |
@@ -644,15 +648,15 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 | S15 | Dependabot bumps a `ptr727/ProjectTemplate` hub-task pin | the PR changes only workflow files, so `smoke-build` skips and `validate` runs at the new pin. A validator regression fails the required check. A dispatch of CI on the target branch after the merge smoke-builds the new release-task pin | D0.4, D1.4, D6.1 |
 | S13 | `develop` -> `main` promotion (merge commit) | the merge itself does not publish; `main`'s accumulated changes ship in the next weekly run | D4.1, D8.1 |
 | S14 | branch and version classification disagree (NBGV mis-classifies) | `validate-release` **fails loud** with `::error::`; the build and publish jobs skip, so nothing is built or pushed | D2.2 |
-| S16 | `workflow_dispatch` of `test-pull-request` on a branch | the filter is bypassed, so `validate`, `smoke-build` with `smoke: true`, and `integration` run at the branch's own pins. Nothing publishes | D1.1, D1.2, D1.7, D6.1 |
+| S16 | `workflow_dispatch` of `test-pull-request` on a branch | the filter is bypassed, so `validate`, `smoke-build` with `smoke: true`, and `integration` run at the branch's own pins. The aggregator runs as `Check workflow status job`, so it posts no required context. Nothing publishes | D1.1, D1.2, D1.5, D1.7, D6.1 |
 | S17 | PR changing only `RegressionTests/synthetic/**` | `changes` marks `integration` but not `release`, so `integration` runs and `smoke-build` skips. A builder whose result differs from the expected file fails `integration`, and the aggregator blocks the merge | D1.5, D1.7 |
 | S18 | `schedule` or `workflow_dispatch` where the integration run fails, such as a refreshed tool changing a result | `integration` fails, so `publish` and `publish-docker-readme` skip and nothing publishes | D1.7, D4.9 |
 
 ### 5C. Live probe (where warranted, never publishing)
 
 - Open a trivial-change PR touching `PlexCleaner/**` and confirm S1 (both targets smoke-build, nothing pushed,
-  aggregator green, 0 artifacts left). Open a docs-only PR and confirm S2 (smoke build skipped, aggregator
-  green).
+  aggregator green, 0 artifacts left). Open a docs-only PR that leaves `ARCHITECTURE.md` alone and confirm S2 (smoke
+  build skipped, aggregator green).
 - After a `main` publish (schedule or dispatch) confirm a stable release (`isPrerelease == false`) with the
   `PlexCleaner.7z` attaching the runtime subfolders and a multi-arch `latest` + `:SemVer2`
   (`docker buildx imagetools inspect` shows amd64 + arm64); after a `develop` dispatch confirm a prerelease
