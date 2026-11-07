@@ -223,7 +223,7 @@ A version with a release prefix, a HandBrake nightly (by branch or build date), 
 - See the [Docker README][docker-hub-link] for current distribution and media tool versions.
 - `ptr727/plexcleaner:latest` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `main` branch.
 - `ptr727/plexcleaner:develop` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `develop` branch.
-- Docker images and GitHub Releases for both branches are published on a weekly schedule (and on demand), each refreshed with the latest upstream and base-image updates. Pull requests are smoke-tested only and do not publish.
+- Docker images and GitHub Releases for `main` are published on a weekly schedule, refreshed with the latest upstream and base-image updates. Either branch publishes on demand, and `develop` publishes only then. Pull requests are smoke-tested only and do not publish.
 - The container has all the prerequisite 3rd party tools pre-installed.
 
 **Path Mapping Convention**: All examples use `/data/media` as the host path mapped to `/media` inside the container. Replace `/data/media` with your actual host media location.
