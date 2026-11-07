@@ -169,8 +169,8 @@ paths. Its `integration` entry adds the paths only the integration run reads. Th
 runs, calling the hub's `validate-task.yml` by pin. The `smoke-build` job runs the hub release task with
 `smoke: true` only when `release` changed, or on dispatch. It uploads and pushes nothing. The `integration`
 job builds the image from the pull request tree and runs its test commands under coverage only when
-`integration` changed, or on dispatch. A docs-only or workflow-only pull request therefore validates without
-either. One aggregator job, the ruleset-bound required check, gates the merge and passes a skipped smoke build
+`integration` changed, or on dispatch. A workflow-only pull request, or a docs-only one that leaves `ARCHITECTURE.md`
+alone, therefore validates without either. One aggregator job, the ruleset-bound required check, gates the merge and passes a skipped smoke build
 or integration run.
 
 On a `pull_request` event the entry workflow and its hub pins come from the pull request's merge commit. A
@@ -655,8 +655,8 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 ### 5C. Live probe (where warranted, never publishing)
 
 - Open a trivial-change PR touching `PlexCleaner/**` and confirm S1 (both targets smoke-build, nothing pushed,
-  aggregator green, 0 artifacts left). Open a docs-only PR and confirm S2 (smoke build skipped, aggregator
-  green).
+  aggregator green, 0 artifacts left). Open a docs-only PR that leaves `ARCHITECTURE.md` alone and confirm S2 (smoke
+  build skipped, aggregator green).
 - After a `main` publish (schedule or dispatch) confirm a stable release (`isPrerelease == false`) with the
   `PlexCleaner.7z` attaching the runtime subfolders and a multi-arch `latest` + `:SemVer2`
   (`docker buildx imagetools inspect` shows amd64 + arm64); after a `develop` dispatch confirm a prerelease
