@@ -53,6 +53,11 @@ class OutcomesTests(unittest.TestCase):
     def test_invalid_reason(self) -> None:
         item = result("a.mkv", "FileDeleted", result_ok=False) | {"InvalidReason": "Verify failed"}
         self.assertEqual(cr.outcomes(results(item))["a.mkv"]["InvalidReason"], "Verify failed")
+        other = item | {"InvalidReason": "Decode failed"}
+        self.assertEqual(
+            cr.differences(cr.outcomes(results(item)), cr.outcomes(results(other))),
+            ["a.mkv: InvalidReason expected Verify failed, found Decode failed"],
+        )
 
     def test_duplicate_name_refused(self) -> None:
         dup = results(result("a.mkv", "Verified"), result("a.mkv", "Verified"))
@@ -226,6 +231,17 @@ class BaselineTests(unittest.TestCase):
         code, text = self.compare(candidate)
         self.assertEqual(code, 1)
         self.assertIn("::error::input ToolVersions: not recorded by the results run", text)
+
+    def test_missing_baseline_input_refused(self) -> None:
+        info = build_info()
+        del info["CorpusSnapshot"]
+        (self.baseline.parent / "buildinfo.json").write_text(json.dumps(info), encoding="utf-8")
+        (self.baseline.parent / "PlexCleaner_process.log").unlink()
+        code, text = self.compare(self.write_run("current", build_info()))
+        self.assertEqual(code, 1)
+        for field in ("CorpusSnapshot", "ToolVersions"):
+            with self.subTest(field=field):
+                self.assertIn(f"::error::input {field}: not recorded by the baseline run", text)
 
     def test_partial_tool_versions_refused(self) -> None:
         for run in (self.baseline, self.write_run("partial", build_info())):
