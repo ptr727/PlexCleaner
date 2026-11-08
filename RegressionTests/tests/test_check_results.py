@@ -197,7 +197,7 @@ class BaselineTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("a.mkv: State expected ['Verified'], found ['ReMuxed']", text)
 
-    def test_refuses_input_mismatch(self) -> None:
+    def test_input_mismatch_warns(self) -> None:
         cases = {
             "Corpus": build_info(Corpus="full"),
             "CorpusSnapshot": build_info(CorpusSnapshot="pool/corpus@two"),
@@ -205,75 +205,66 @@ class BaselineTests(unittest.TestCase):
             "SettingsSha256": build_info(SettingsSha256="bb"),
             "Coverage": build_info(Coverage=True),
             "Mode": build_info(Mode="full"),
+            "Plugins": build_info(Plugins=["A"]),
         }
         for field, info in cases.items():
             with self.subTest(field=field):
-                code, text = self.compare(self.write_run(field, info, state="ReMuxed"))
-                self.assertEqual(code, 1)
-                self.assertIn(f"::error::input {field}:", text)
-                self.assertNotIn("a.mkv", text)
+                code, text = self.compare(self.write_run(field, info))
+                self.assertEqual(code, 0)
+                self.assertIn(f"::warning::input {field}:", text)
 
-    def test_refuses_tool_version_mismatch(self) -> None:
+    def test_tool_version_mismatch_warns(self) -> None:
         code, text = self.compare(self.write_run("tools", build_info(), ffmpeg="9.0"))
-        self.assertEqual(code, 1)
-        self.assertIn("::error::input ToolVersions:", text)
+        self.assertEqual(code, 0)
+        self.assertIn("::warning::input ToolVersions:", text)
 
-    def test_missing_field_refused(self) -> None:
+    def test_input_warning_still_compares_outcomes(self) -> None:
+        code, text = self.compare(self.write_run("both", build_info(Mode="full"), state="ReMuxed"))
+        self.assertEqual(code, 1)
+        self.assertIn("::warning::input Mode:", text)
+        self.assertIn("a.mkv: State expected ['Verified'], found ['ReMuxed']", text)
+
+    def test_missing_field_warns(self) -> None:
         info = build_info()
         del info["CorpusSnapshot"]
         code, text = self.compare(self.write_run("older", info))
-        self.assertEqual(code, 1)
-        self.assertIn("::error::input CorpusSnapshot: not recorded by the results run", text)
+        self.assertEqual(code, 0)
+        self.assertIn("::warning::input CorpusSnapshot: not recorded by the results run", text)
 
-    def test_missing_tool_versions_refused(self) -> None:
+    def test_missing_tool_versions_warns(self) -> None:
         candidate = self.write_run("nolog", build_info())
         (candidate.parent / "PlexCleaner_process.log").unlink()
         code, text = self.compare(candidate)
-        self.assertEqual(code, 1)
-        self.assertIn("::error::input ToolVersions: not recorded by the results run", text)
+        self.assertEqual(code, 0)
+        self.assertIn("::warning::input ToolVersions: not recorded by the results run", text)
 
-    def test_missing_baseline_input_refused(self) -> None:
+    def test_missing_baseline_input_warns(self) -> None:
         info = build_info()
         del info["CorpusSnapshot"]
         (self.baseline.parent / "buildinfo.json").write_text(json.dumps(info), encoding="utf-8")
         (self.baseline.parent / "PlexCleaner_process.log").unlink()
         code, text = self.compare(self.write_run("current", build_info()))
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 0)
         for field in ("CorpusSnapshot", "ToolVersions"):
             with self.subTest(field=field):
-                self.assertIn(f"::error::input {field}: not recorded by the baseline run", text)
+                self.assertIn(f"::warning::input {field}: not recorded by the baseline run", text)
 
-    def test_partial_tool_versions_refused(self) -> None:
+    def test_partial_tool_versions_warns(self) -> None:
         for run in (self.baseline, self.write_run("partial", build_info())):
             log = run.parent / "PlexCleaner_process.log"
-            kept = [
-                line
-                for line in log.read_text(encoding="utf-8").splitlines(keepends=True)
-                if "SevenZip" not in line
-            ]
+            text = log.read_text(encoding="utf-8")
+            kept = [line for line in text.splitlines(keepends=True) if "SevenZip" not in line]
             log.write_text("".join(kept), encoding="utf-8")
         code, text = self.compare(self.root / "partial" / "Results_process.json")
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 0)
         self.assertIn(
-            "::error::input ToolVersions: not recorded by the baseline or results run", text
+            "::warning::input ToolVersions: not recorded by the baseline or results run", text
         )
 
-    def test_plugin_difference_is_noted_not_refused(self) -> None:
-        code, text = self.compare(self.write_run("plugins", build_info(Plugins=["A"])))
-        self.assertEqual(code, 0)
-        self.assertIn("note: Plugins:", text)
-
-    def test_missing_plugins_is_noted_not_refused(self) -> None:
-        info = build_info()
-        del info["Plugins"]
-        code, text = self.compare(self.write_run("noplugins", info))
-        self.assertEqual(code, 0)
-        self.assertIn("note: Plugins: not recorded by the results run", text)
-
-    def test_missing_build_info_refused(self) -> None:
+    def test_missing_build_info_warns(self) -> None:
         code, text = self.compare(self.write_run("bare", None))
-        self.assertEqual(code, 1)
-        self.assertIn("no buildinfo.json", text)
+        self.assertEqual(code, 0)
+        self.assertIn("::warning::input Mode: not recorded by the results run", text)
 
     def test_write_with_baseline_refused(self) -> None:
         candidate = self.write_run("write", build_info())
