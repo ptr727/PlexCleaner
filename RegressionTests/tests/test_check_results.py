@@ -2,6 +2,7 @@
 
 import io
 import json
+import re
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -141,6 +142,12 @@ def build_info(**overrides: Any) -> dict[str, Any]:
 
 
 class ToolVersionsTests(unittest.TestCase):
+    def test_tools_match_application_tool_list(self) -> None:
+        source = Path(__file__).resolve().parents[2] / "PlexCleaner" / "Tools.cs"
+        found = re.search(r"GetToolList\(\) =>\s*\[([^\]]*)\]", source.read_text())
+        assert found is not None
+        self.assertEqual(tuple(name.strip() for name in found[1].split(",")), cr.TOOLS)
+
     def test_reads_each_tool_once(self) -> None:
         log = LOG.format(ffmpeg="8.1") + LOG.format(ffmpeg="9.0")
         self.assertEqual(cr.tool_versions(log)["FfMpeg"], "8.1")
