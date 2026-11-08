@@ -140,7 +140,7 @@ Synthetic generation is a *targeted* tool, not a wholesale replacement for the r
 - [`synthetic/inject_hdr10plus_sei.py`][synthetic-inject-hdr10plus-sei] -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
 - [`synthetic/hevc_nal.py`][synthetic-hevc-nal] -- shared HEVC helpers used by both injectors. They pack bits, wrap a T.35 payload into a prefix-SEI NAL, and insert a SEI before every VCL NAL.
 - [`synthetic/expected-results.json`][synthetic-expected-results] -- the expected process result of every file in the integration run, see *CI integration run* below.
-- [`integration-test.sh`][integration-test] and [`check_results.py`][check-results] -- the integration run and its result check. The same script compares two harness runs, see *Comparing two runs* below.
+- [`integration-test.sh`][integration-test] and [`check_results.py`][check-results] -- the integration run and its result check. The same script compares two harness runs, see *Comparing two runs* above.
 
 Requires `ffmpeg` (with libx265), `ffprobe`, and `mkvmerge` on `PATH`. Examples:
 
@@ -187,7 +187,7 @@ Add a builder function that constructs the target with the primitives, register 
 
 ### CI integration run
 
-The `integration` CI job runs [`integration-test.sh`][integration-test] against an image built from the pull request tree. It generates the corpus in a throwaway container from that image with `python3` added, and adds the [Matroska test files][matroska-test-files-link] at a pinned commit. It then runs the image's `/Test/test.sh` under `dotnet-coverage` with every optional processing step on. [`check_results.py`][check-results] compares each file's result, new name, `Modified` flag, `State` flags, and failed operation with [`synthetic/expected-results.json`][synthetic-expected-results], and any difference fails the job. Codecov receives the coverage under the `integration` flag. Run it locally against an image built per [OPERATIONS.md][operations] "Test a tool version the image does not carry":
+The `integration` CI job runs [`integration-test.sh`][integration-test] against an image built from the pull request tree. It generates the corpus in a throwaway container from that image with `python3` added, and adds the [Matroska test files][matroska-test-files-link] at a pinned commit. It then runs the image's `/Test/test.sh` under `dotnet-coverage` with every optional processing step on. [`check_results.py`][check-results] compares each file's result, new name, `Modified` flag, `State` flags, failed operation, and invalid reason with [`synthetic/expected-results.json`][synthetic-expected-results], and any difference fails the job. Codecov receives the coverage under the `integration` flag. Run it locally against an image built per [OPERATIONS.md][operations] "Test a tool version the image does not carry":
 
 ```shell
 dotnet tool restore
