@@ -63,7 +63,7 @@ Each run writes `buildinfo.json` beside its results. It records the image and ev
 python3 check_results.py --baseline <baseline>/Results_process.json --results <candidate>/Results_process.json
 ```
 
-The comparison first checks the two runs' inputs. It reads each run's tool versions from the `<Tool> : Version:` lines at the start of its `PlexCleaner_process.log`. Any difference in an input other than the image refuses the comparison and names the mismatch. So a corpus refresh, a thread-count change, a settings change, or a tool update cannot pass for a code change. An input one run does not record, other than the plugins, refuses it too, since that input cannot be shown to match. So a baseline run recorded before an input existed is run again. A plugin difference is only noted, since the plugins run after `Results_process.json` is written. Once the inputs match, it prints one line per file whose result, new name, `Modified` flag, `State` flags, failed operation, or invalid reason differs. It exits `0` when the runs match and `1` otherwise. Judge each difference as an intended effect of the change under test, a regression, or noise, since only the change's purpose decides that.
+The comparison first checks the two runs' inputs. It reads each run's tool versions from the `<Tool> : Version:` lines at the start of its `PlexCleaner_process.log`. A log lacking the version of any tool PlexCleaner checks at startup records no tool versions. Any difference in an input other than the image refuses the comparison and names the mismatch. So a corpus refresh, a thread-count change, a settings change, or a tool update cannot pass for a code change. An input one run does not record, other than the plugins, refuses it too, since that input cannot be shown to match. So a baseline run recorded before an input existed is run again. A plugin difference is only noted, since the plugins run after `Results_process.json` is written. Once the inputs match, it prints one line per file whose result, new name, `Modified` flag, `State` flags, failed operation, or invalid reason differs. It exits `0` when the runs match and `1` otherwise. Judge each difference as an intended effect of the change under test, a regression, or noise, since only the change's purpose decides that.
 
 ### Full-file scanning
 
@@ -228,7 +228,7 @@ The working loop when the collection changes:
 2. Snapshot the dataset, since the harness clones the newest snapshot rather than the live collection.
 3. Run the harness over the `full` corpus, so a run reflects the updated collection.
 4. Regenerate the affected catalog with `catalog_corpus.py --run <that run's results directory>`.
-5. Rebuild and validate the reduced collection with `reduce_corpus.py`, and audit coverage with `audit_physical.py`.
+5. Rebuild and validate the reduced collection with `reduce_corpus.py`, and audit coverage with `audit_physical.py --run` naming the same run.
 6. Snapshot the dataset again, so a run clones the validated collection.
 
 ## Python tooling

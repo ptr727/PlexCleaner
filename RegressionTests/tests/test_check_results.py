@@ -115,7 +115,12 @@ class MainTests(unittest.TestCase):
 
 LOG = """\
 2026-01-01 00:00:00.000 +00:00 [INF] <1> FfMpeg : Version: "{ffmpeg}", Path: "ffmpeg"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> FfProbe : Version: "{ffmpeg}", Path: "ffprobe"
 2026-01-01 00:00:00.000 +00:00 [INF] <1> MkvMerge : Version: "1.0", Path: "mkvmerge"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> MkvPropEdit : Version: "1.0", Path: "mkvpropedit"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> MediaInfo : Version: "2.0", Path: "mediainfo"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> HandBrake : Version: "3.0", Path: "HandBrakeCLI"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> SevenZip : Version: "4.0", Path: "7z"
 """
 
 
@@ -138,7 +143,8 @@ def build_info(**overrides: Any) -> dict[str, Any]:
 class ToolVersionsTests(unittest.TestCase):
     def test_reads_each_tool_once(self) -> None:
         log = LOG.format(ffmpeg="8.1") + LOG.format(ffmpeg="9.0")
-        self.assertEqual(cr.tool_versions(log), {"FfMpeg": "8.1", "MkvMerge": "1.0"})
+        self.assertEqual(cr.tool_versions(log)["FfMpeg"], "8.1")
+        self.assertEqual(cr.tool_versions(log).keys(), set(cr.TOOLS))
 
 
 class BaselineTests(unittest.TestCase):
@@ -213,6 +219,21 @@ class BaselineTests(unittest.TestCase):
         code, text = self.compare(candidate)
         self.assertEqual(code, 1)
         self.assertIn("::error::input ToolVersions: not recorded by the results run", text)
+
+    def test_partial_tool_versions_refused(self) -> None:
+        for run in (self.baseline, self.write_run("partial", build_info())):
+            log = run.parent / "PlexCleaner_process.log"
+            kept = [
+                line
+                for line in log.read_text(encoding="utf-8").splitlines(keepends=True)
+                if "SevenZip" not in line
+            ]
+            log.write_text("".join(kept), encoding="utf-8")
+        code, text = self.compare(self.root / "partial" / "Results_process.json")
+        self.assertEqual(code, 1)
+        self.assertIn(
+            "::error::input ToolVersions: not recorded by the baseline or results run", text
+        )
 
     def test_plugin_difference_is_noted_not_refused(self) -> None:
         code, text = self.compare(self.write_run("plugins", build_info(Plugins=["A"])))

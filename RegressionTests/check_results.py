@@ -26,6 +26,7 @@ INPUT_FIELDS = (
     "SettingsSha256",
     "Coverage",
 )
+TOOLS = ("FfMpeg", "FfProbe", "MkvMerge", "MkvPropEdit", "MediaInfo", "HandBrake", "SevenZip")
 TOOL_VERSION = re.compile(r'> (?P<tool>\w+) : Version: "?(?P<version>[^",]*)"?, Path: ')
 
 
@@ -71,11 +72,14 @@ def tool_versions(log: str) -> dict[str, str]:
 
 
 def run_inputs(run_dir: Path) -> dict[str, Any]:
-    """Return a run's recorded inputs, its tool versions read from its process log."""
+    """Return a run's recorded inputs, its tool versions read from its process log.
+
+    The tool versions count as recorded only when the log names a version for every tool in TOOLS.
+    """
     inputs: dict[str, Any] = json.loads((run_dir / BUILD_INFO).read_text(encoding="utf-8"))
     log = run_dir / PROCESS_LOG
     versions = tool_versions(log.read_text(encoding="utf-8")) if log.is_file() else {}
-    if versions:
+    if all(versions.get(tool) for tool in TOOLS):
         inputs["ToolVersions"] = versions
     return inputs
 
