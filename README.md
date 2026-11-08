@@ -32,7 +32,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 - Documented how to measure code coverage locally and in the Docker image.
 - Added a CI integration test that runs the Docker image's test commands over synthetic media and checks each file's processing result.
 - `DeleteInvalidFiles` and `RegisterInvalidFiles` act only on media judged invalid in the current run, and setting both fails configuration validation.
-- A failed MKV file that is not deleted or registered is marked `ProcessFailed`, and later runs skip it until the media file changes. A cancel or a tool failure leaves a file unmarked, so the next run retries it. Run `createsidecar` on a marked file to process it again.
+- A failed MKV file that is not deleted or registered is marked `ProcessFailed`, and later runs skip it until the media file changes. A cancel, or a tool run that ends without a result, leaves a file unmarked, so the next run retries it. Run `createsidecar` on a marked file to process it again.
 - A file whose video mostly fails to decode skips interlace detection with a warning, instead of failing at the interlace scan.
 - With `DeInterlace` on, each interlace scan logs its verdict and idet frame counts at Information level.
 
