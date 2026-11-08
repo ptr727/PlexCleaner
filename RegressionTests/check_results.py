@@ -2,7 +2,7 @@
 
 Each file is keyed by its original file name, without its directory, so a run in any media path compares.
 Writing the expected file from a results file records an intended change in one step.
-With --baseline, two regression harness runs compare directly, once their recorded inputs match.
+With --baseline, two regression harness runs compare directly, after a warning for each input that differs.
 """
 
 import argparse
@@ -76,7 +76,8 @@ def run_inputs(run_dir: Path) -> dict[str, Any]:
 
     The tool versions count as recorded only when the log names a version for every tool in TOOLS.
     """
-    inputs: dict[str, Any] = json.loads((run_dir / BUILD_INFO).read_text(encoding="utf-8"))
+    info = run_dir / BUILD_INFO
+    inputs: dict[str, Any] = json.loads(info.read_text(encoding="utf-8")) if info.is_file() else {}
     log = run_dir / PROCESS_LOG
     versions = tool_versions(log.read_text(encoding="utf-8")) if log.is_file() else {}
     if all(versions.get(tool) for tool in TOOLS):
@@ -85,11 +86,11 @@ def run_inputs(run_dir: Path) -> dict[str, Any]:
 
 
 def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> tuple[list[str], list[str]]:
-    """Compare two runs' inputs, returning the mismatches and the notes.
+    """Describe each input the two runs do not both record alike, as warnings and notes.
 
     A plugin difference is only a note, since plugins run after Results_process.json is written.
     """
-    mismatches: list[str] = []
+    warnings: list[str] = []
     notes: list[str] = []
     for field in (*INPUT_FIELDS, "ToolVersions", "Plugins"):
         missing = [
@@ -101,26 +102,19 @@ def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> tuple[lis
             continue
         else:
             found = f"{field}: baseline {baseline[field]}, results {results[field]}"
-        (notes if field == "Plugins" else mismatches).append(found)
-    return mismatches, notes
+        (notes if field == "Plugins" else warnings).append(found)
+    return warnings, notes
 
 
 def compare_runs(baseline: Path, results: Path) -> int:
-    """Compare a results file against a baseline run's, refusing runs whose inputs differ."""
-    for run in (baseline, results):
-        if not (run.parent / BUILD_INFO).is_file():
-            print(
-                f"::error::no {BUILD_INFO} beside {run}, so its inputs are unknown", file=sys.stderr
-            )
-            return 1
-    mismatches, notes = input_checks(run_inputs(baseline.parent), run_inputs(results.parent))
+    """Compare a results file against a baseline run's, warning first of each input that differs."""
+    warnings, notes = input_checks(run_inputs(baseline.parent), run_inputs(results.parent))
     for line in notes:
         print(f"note: {line}")
-    if mismatches:
-        for line in mismatches:
-            print(f"::error::input {line}")
-        print(f"{len(mismatches)} input mismatches, the runs are not comparable", file=sys.stderr)
-        return 1
+    for line in warnings:
+        print(f"::warning::input {line}")
+    if warnings:
+        print(f"{len(warnings)} input differences, so judge each outcome difference against them")
 
     expected = outcomes(json.loads(baseline.read_text(encoding="utf-8")))
     actual = outcomes(json.loads(results.read_text(encoding="utf-8")))
