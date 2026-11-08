@@ -219,6 +219,14 @@ class BaselineTests(unittest.TestCase):
         self.assertIn("note: Plugins:", text)
         self.assertNotIn("::warning::", text)
 
+    def test_missing_plugins_is_noted(self) -> None:
+        info = build_info()
+        del info["Plugins"]
+        code, text = self.compare(self.write_run("noplugins", info))
+        self.assertEqual(code, 0)
+        self.assertIn("note: Plugins: not recorded by the results run", text)
+        self.assertNotIn("::warning::", text)
+
     def test_tool_version_mismatch_warns(self) -> None:
         code, text = self.compare(self.write_run("tools", build_info(), ffmpeg="9.0"))
         self.assertEqual(code, 0)
