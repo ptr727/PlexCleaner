@@ -189,8 +189,9 @@ class BaselineTests(unittest.TestCase):
         return code, out.getvalue() + err.getvalue()
 
     def test_match(self) -> None:
-        code, _ = self.compare(self.write_run("same", build_info(Image="plexcleaner:b")))
+        code, text = self.compare(self.write_run("same", build_info(Image="plexcleaner:b")))
         self.assertEqual(code, 0)
+        self.assertNotIn("::warning::", text)
 
     def test_outcome_difference(self) -> None:
         code, text = self.compare(self.write_run("changed", build_info(), state="ReMuxed"))
