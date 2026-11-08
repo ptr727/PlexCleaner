@@ -26,6 +26,7 @@ INPUT_FIELDS = (
     "SettingsSha256",
     "Coverage",
 )
+TOOLS = ("FfMpeg", "FfProbe", "MkvMerge", "MkvPropEdit", "MediaInfo", "HandBrake", "SevenZip")
 TOOL_VERSION = re.compile(r'> (?P<tool>\w+) : Version: "?(?P<version>[^",]*)"?, Path: ')
 
 
@@ -42,6 +43,7 @@ def outcomes(results: dict[str, Any]) -> dict[str, Outcome]:
             "Modified": item["Modified"],
             "State": sorted(state_flags(item.get("State"))),
             "FailedOperation": item.get("FailedOperation"),
+            "InvalidReason": item.get("InvalidReason"),
         }
     return found
 
@@ -70,36 +72,37 @@ def tool_versions(log: str) -> dict[str, str]:
 
 
 def run_inputs(run_dir: Path) -> dict[str, Any]:
-    """Return a run's recorded inputs, its tool versions read from its process log."""
+    """Return a run's recorded inputs, its tool versions read from its process log.
+
+    The tool versions count as recorded only when the log names a version for every tool in TOOLS.
+    """
     inputs: dict[str, Any] = json.loads((run_dir / BUILD_INFO).read_text(encoding="utf-8"))
     log = run_dir / PROCESS_LOG
     versions = tool_versions(log.read_text(encoding="utf-8")) if log.is_file() else {}
-    if versions:
+    if all(versions.get(tool) for tool in TOOLS):
         inputs["ToolVersions"] = versions
     return inputs
 
 
-def input_checks(
-    baseline: dict[str, Any], results: dict[str, Any]
-) -> tuple[list[str], list[str], list[str]]:
-    """Compare two runs' inputs, returning the mismatches, the unverifiable fields, and notes."""
+def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """Compare two runs' inputs, returning the mismatches and the notes.
+
+    A plugin difference is only a note, since plugins run after Results_process.json is written.
+    """
     mismatches: list[str] = []
-    unverifiable: list[str] = []
     notes: list[str] = []
     for field in (*INPUT_FIELDS, "ToolVersions", "Plugins"):
         missing = [
             side for side, run in (("baseline", baseline), ("results", results)) if field not in run
         ]
         if missing:
-            unverifiable.append(f"{field}: not recorded by the {' or '.join(missing)} run")
+            found = f"{field}: not recorded by the {' or '.join(missing)} run"
         elif baseline[field] == results[field]:
             continue
-        # Plugins run after Results_process.json is written, so they cannot change what is compared.
-        elif field == "Plugins":
-            notes.append(f"{field}: baseline {baseline[field]}, results {results[field]}")
         else:
-            mismatches.append(f"{field}: baseline {baseline[field]}, results {results[field]}")
-    return mismatches, unverifiable, notes
+            found = f"{field}: baseline {baseline[field]}, results {results[field]}"
+        (notes if field == "Plugins" else mismatches).append(found)
+    return mismatches, notes
 
 
 def compare_runs(baseline: Path, results: Path) -> int:
@@ -110,11 +113,7 @@ def compare_runs(baseline: Path, results: Path) -> int:
                 f"::error::no {BUILD_INFO} beside {run}, so its inputs are unknown", file=sys.stderr
             )
             return 1
-    mismatches, unverifiable, notes = input_checks(
-        run_inputs(baseline.parent), run_inputs(results.parent)
-    )
-    for line in unverifiable:
-        print(f"::warning::unverifiable input {line}")
+    mismatches, notes = input_checks(run_inputs(baseline.parent), run_inputs(results.parent))
     for line in notes:
         print(f"note: {line}")
     if mismatches:

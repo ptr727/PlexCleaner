@@ -2,6 +2,7 @@
 
 import io
 import json
+import re
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -37,6 +38,7 @@ class OutcomesTests(unittest.TestCase):
                     "Modified": True,
                     "State": ["ReMuxed", "Verified"],
                     "FailedOperation": None,
+                    "InvalidReason": None,
                 }
             },
         )
@@ -47,6 +49,15 @@ class OutcomesTests(unittest.TestCase):
     def test_failed_operation(self) -> None:
         item = result("a.mkv", "FileDeleted", result_ok=False) | {"FailedOperation": "Verify"}
         self.assertEqual(cr.outcomes(results(item))["a.mkv"]["FailedOperation"], "Verify")
+
+    def test_invalid_reason(self) -> None:
+        item = result("a.mkv", "FileDeleted", result_ok=False) | {"InvalidReason": "Verify failed"}
+        self.assertEqual(cr.outcomes(results(item))["a.mkv"]["InvalidReason"], "Verify failed")
+        other = item | {"InvalidReason": "Decode failed"}
+        self.assertEqual(
+            cr.differences(cr.outcomes(results(item)), cr.outcomes(results(other))),
+            ["a.mkv: InvalidReason expected Verify failed, found Decode failed"],
+        )
 
     def test_duplicate_name_refused(self) -> None:
         dup = results(result("a.mkv", "Verified"), result("a.mkv", "Verified"))
@@ -110,7 +121,12 @@ class MainTests(unittest.TestCase):
 
 LOG = """\
 2026-01-01 00:00:00.000 +00:00 [INF] <1> FfMpeg : Version: "{ffmpeg}", Path: "ffmpeg"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> FfProbe : Version: "{ffmpeg}", Path: "ffprobe"
 2026-01-01 00:00:00.000 +00:00 [INF] <1> MkvMerge : Version: "1.0", Path: "mkvmerge"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> MkvPropEdit : Version: "1.0", Path: "mkvpropedit"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> MediaInfo : Version: "2.0", Path: "mediainfo"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> HandBrake : Version: "3.0", Path: "HandBrakeCLI"
+2026-01-01 00:00:00.000 +00:00 [INF] <1> SevenZip : Version: "4.0", Path: "7z"
 """
 
 
@@ -131,9 +147,16 @@ def build_info(**overrides: Any) -> dict[str, Any]:
 
 
 class ToolVersionsTests(unittest.TestCase):
+    def test_tools_match_application_tool_list(self) -> None:
+        source = Path(__file__).resolve().parents[2] / "PlexCleaner" / "Tools.cs"
+        found = re.search(r"GetToolList\(\) =>\s*\[([^\]]*)\]", source.read_text())
+        assert found is not None
+        self.assertEqual(tuple(name.strip() for name in found[1].split(",")), cr.TOOLS)
+
     def test_reads_each_tool_once(self) -> None:
         log = LOG.format(ffmpeg="8.1") + LOG.format(ffmpeg="9.0")
-        self.assertEqual(cr.tool_versions(log), {"FfMpeg": "8.1", "MkvMerge": "1.0"})
+        self.assertEqual(cr.tool_versions(log)["FfMpeg"], "8.1")
+        self.assertEqual(cr.tool_versions(log).keys(), set(cr.TOOLS))
 
 
 class BaselineTests(unittest.TestCase):
@@ -195,25 +218,57 @@ class BaselineTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("::error::input ToolVersions:", text)
 
-    def test_missing_field_is_unverifiable_not_refused(self) -> None:
+    def test_missing_field_refused(self) -> None:
         info = build_info()
         del info["CorpusSnapshot"]
         code, text = self.compare(self.write_run("older", info))
-        self.assertEqual(code, 0)
-        self.assertIn("unverifiable input CorpusSnapshot: not recorded by the results run", text)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::input CorpusSnapshot: not recorded by the results run", text)
+
+    def test_missing_tool_versions_refused(self) -> None:
+        candidate = self.write_run("nolog", build_info())
+        (candidate.parent / "PlexCleaner_process.log").unlink()
+        code, text = self.compare(candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::input ToolVersions: not recorded by the results run", text)
+
+    def test_missing_baseline_input_refused(self) -> None:
+        info = build_info()
+        del info["CorpusSnapshot"]
+        (self.baseline.parent / "buildinfo.json").write_text(json.dumps(info), encoding="utf-8")
+        (self.baseline.parent / "PlexCleaner_process.log").unlink()
+        code, text = self.compare(self.write_run("current", build_info()))
+        self.assertEqual(code, 1)
+        for field in ("CorpusSnapshot", "ToolVersions"):
+            with self.subTest(field=field):
+                self.assertIn(f"::error::input {field}: not recorded by the baseline run", text)
+
+    def test_partial_tool_versions_refused(self) -> None:
+        for run in (self.baseline, self.write_run("partial", build_info())):
+            log = run.parent / "PlexCleaner_process.log"
+            kept = [
+                line
+                for line in log.read_text(encoding="utf-8").splitlines(keepends=True)
+                if "SevenZip" not in line
+            ]
+            log.write_text("".join(kept), encoding="utf-8")
+        code, text = self.compare(self.root / "partial" / "Results_process.json")
+        self.assertEqual(code, 1)
+        self.assertIn(
+            "::error::input ToolVersions: not recorded by the baseline or results run", text
+        )
 
     def test_plugin_difference_is_noted_not_refused(self) -> None:
         code, text = self.compare(self.write_run("plugins", build_info(Plugins=["A"])))
         self.assertEqual(code, 0)
         self.assertIn("note: Plugins:", text)
 
-    def test_missing_plugins_is_unverifiable_not_noted(self) -> None:
+    def test_missing_plugins_is_noted_not_refused(self) -> None:
         info = build_info()
         del info["Plugins"]
         code, text = self.compare(self.write_run("noplugins", info))
         self.assertEqual(code, 0)
-        self.assertIn("unverifiable input Plugins: not recorded by the results run", text)
-        self.assertNotIn("note:", text)
+        self.assertIn("note: Plugins: not recorded by the results run", text)
 
     def test_missing_build_info_refused(self) -> None:
         code, text = self.compare(self.write_run("bare", None))
