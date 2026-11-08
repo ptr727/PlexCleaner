@@ -206,13 +206,18 @@ class BaselineTests(unittest.TestCase):
             "SettingsSha256": build_info(SettingsSha256="bb"),
             "Coverage": build_info(Coverage=True),
             "Mode": build_info(Mode="full"),
-            "Plugins": build_info(Plugins=["A"]),
         }
         for field, info in cases.items():
             with self.subTest(field=field):
                 code, text = self.compare(self.write_run(field, info))
                 self.assertEqual(code, 0)
                 self.assertIn(f"::warning::input {field}:", text)
+
+    def test_plugin_difference_is_noted(self) -> None:
+        code, text = self.compare(self.write_run("plugins", build_info(Plugins=["A"])))
+        self.assertEqual(code, 0)
+        self.assertIn("note: Plugins:", text)
+        self.assertNotIn("::warning::", text)
 
     def test_tool_version_mismatch_warns(self) -> None:
         code, text = self.compare(self.write_run("tools", build_info(), ffmpeg="9.0"))

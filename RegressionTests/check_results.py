@@ -85,23 +85,32 @@ def run_inputs(run_dir: Path) -> dict[str, Any]:
     return inputs
 
 
-def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> list[str]:
-    """Describe each input the two runs do not both record with the same value."""
-    found: list[str] = []
+def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """Describe each input the two runs do not both record alike, as warnings and notes.
+
+    A plugin difference is only a note, since plugins run after Results_process.json is written.
+    """
+    warnings: list[str] = []
+    notes: list[str] = []
     for field in (*INPUT_FIELDS, "ToolVersions", "Plugins"):
         missing = [
             side for side, run in (("baseline", baseline), ("results", results)) if field not in run
         ]
         if missing:
-            found.append(f"{field}: not recorded by the {' or '.join(missing)} run")
-        elif baseline[field] != results[field]:
-            found.append(f"{field}: baseline {baseline[field]}, results {results[field]}")
-    return found
+            found = f"{field}: not recorded by the {' or '.join(missing)} run"
+        elif baseline[field] == results[field]:
+            continue
+        else:
+            found = f"{field}: baseline {baseline[field]}, results {results[field]}"
+        (notes if field == "Plugins" else warnings).append(found)
+    return warnings, notes
 
 
 def compare_runs(baseline: Path, results: Path) -> int:
     """Compare a results file against a baseline run's, warning first of each input that differs."""
-    warnings = input_checks(run_inputs(baseline.parent), run_inputs(results.parent))
+    warnings, notes = input_checks(run_inputs(baseline.parent), run_inputs(results.parent))
+    for line in notes:
+        print(f"note: {line}")
     for line in warnings:
         print(f"::warning::input {line}")
     if warnings:
