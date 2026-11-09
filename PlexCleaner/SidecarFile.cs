@@ -228,6 +228,7 @@ public class SidecarFile
     public bool Open(bool modified = false)
     {
         // Open will Read, Create, Update
+        ToolInfoFailed = false;
 
         // Make sure the sidecar file has been read or created
         // If the sidecar file exists, read it
@@ -536,6 +537,7 @@ public class SidecarFile
     private bool GetToolInfo()
     {
         Log.Debug("Reading media info from tools : {FileName}", _mediaFileInfo.FullName);
+        ToolInfoFailed = false;
 
         // Read the tool data text
         if (
