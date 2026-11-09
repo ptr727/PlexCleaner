@@ -459,6 +459,20 @@ class LogComparisonTests(unittest.TestCase):
                 self.assertEqual(code, 1)
                 self.assertIn(f"::error::b.mkv: no track dump in the {side} run", text)
 
+    def test_shared_name_keeps_outcome_differences(self) -> None:
+        other = 'Reading media info from tools : "/Test/Media/b/a.mkv"'
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), other], "ReMuxed")
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::a.mkv: State expected ['Verified'], found ['ReMuxed']", text)
+        self.assertIn(
+            "::error::track dumps for /Test/Media/a.mkv and /Test/Media/b/a.mkv share a name"
+            " in the results run, so the track check is unverified\n",
+            text,
+        )
+        self.assertIn(f"::warning::log results only: [DBG] <T> {other}", text)
+
     def test_last_read_without_tracks_fails(self) -> None:
         baseline = self.write_run("base", dump(track("Video", "V_VP9")))
         candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), *dump()])

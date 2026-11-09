@@ -260,14 +260,21 @@ def compare_logs(
             f"no process log in the {' or '.join(missing)} run, so the track check is unverified"
         ]
 
-    tracks = {"baseline": output_tracks(baseline), "results": output_tracks(results)}
-    undumped = [side for side, dumps in tracks.items() if not dumps]
-    if undumped:
-        found = [
-            f"no Debug track dump in the {' or '.join(undumped)} run, so the track check is unverified"
-        ]
-    else:
-        found = track_differences(tracks["baseline"], tracks["results"])
+    tracks: dict[str, dict[str, list[str]]] = {}
+    found: list[str] = []
+    for side, log in (("baseline", baseline), ("results", results)):
+        try:
+            tracks[side] = output_tracks(log)
+        except ValueError as error:
+            found.append(f"{error} in the {side} run, so the track check is unverified")
+    if not found:
+        undumped = [side for side, dumps in tracks.items() if not dumps]
+        if undumped:
+            found = [
+                f"no Debug track dump in the {' or '.join(undumped)} run, so the track check is unverified"
+            ]
+        else:
+            found = track_differences(tracks["baseline"], tracks["results"])
 
     lines, notes = log_differences(
         normalized_lines(baseline), normalized_lines(results), bitrate_noise(expected, actual)
