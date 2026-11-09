@@ -541,7 +541,7 @@ public class ProcessFile
 
     private bool SetVerifyFailed(string operation)
     {
-        // Mark verify failed so the file is reported and no longer re-processed
+        // Mark verify failed so the file is reported
         Log.Error(
             "Verification failed, marking as VerifyFailed : {Operation} : {FileName}",
             operation,
