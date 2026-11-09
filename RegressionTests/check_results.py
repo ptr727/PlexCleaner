@@ -179,7 +179,7 @@ def track_differences(expected: dict[str, list[str]], actual: dict[str, list[str
     """Describe each file whose output tracks differ between two runs, empty when they match.
 
     A file one run dumped and the other did not differs, even where the one dump holds no tracks.
-    A file neither run dumped never had its track list read from its tools, so none compares.
+    A file in neither map is not compared.
     """
     found: list[str] = []
     for name in sorted(expected.keys() | actual.keys()):

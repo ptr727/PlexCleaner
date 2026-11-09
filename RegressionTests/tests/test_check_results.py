@@ -473,6 +473,14 @@ class LogComparisonTests(unittest.TestCase):
         )
         self.assertIn(f"::warning::log results only: [DBG] <T> {other}", text)
 
+    def test_result_no_run_dumped_compares_only_its_outcome(self) -> None:
+        code, text = self.compare(
+            self.write_run("base", dump(track("Video", "V_VP9"), name="b.mkv")),
+            self.write_run("cand", dump(track("Video", "V_VP9"), name="b.mkv")),
+        )
+        self.assertEqual(code, 0)
+        self.assertNotIn("a.mkv:", text)
+
     def test_last_read_without_tracks_fails(self) -> None:
         baseline = self.write_run("base", dump(track("Video", "V_VP9")))
         candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), *dump()])
