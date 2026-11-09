@@ -2586,7 +2586,7 @@ public class ProcessFile
         return true;
     }
 
-    // HandBrake drops the IETF tags and embedded closed captions
+    // HandBrake drops some subtitle formats such as WebVTT, the IETF tags, and embedded closed captions
     // It encodes without subtitles, MkvMerge merges the original subtitles back, and the tags are restored
     private bool ConvertUsingHandBrake(string outputName, bool deInterlace)
     {
