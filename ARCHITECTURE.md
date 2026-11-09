@@ -545,7 +545,7 @@ flowchart TD
 
 ### Metadata and Structure Repair
 
-`RepairMetadataErrors()` repairs the errors the media tools flagged while parsing. `SetVerifyFailed()` sets `VerifyFailed`, clears `Verified` and fails the file, which stops later runs from retrying the repair. An FfProbe, MkvMerge, or MediaInfo version change with `SidecarUpdateOnToolChange` on clears `VerifyFailed` and `ProcessFailed`, so a later run retries the repair of a kept file.
+`RepairMetadataErrors()` repairs the errors the media tools flagged while parsing. `SetVerifyFailed()` sets `VerifyFailed`, clears `Verified` and fails the file, which stops later runs from retrying the repair. An FfProbe, MkvMerge, or MediaInfo version change with `SidecarUpdateOnToolChange` on clears `VerifyFailed` and `ProcessFailed`. A later run then retries the repair of a file not deleted or registered.
 
 ```mermaid
 flowchart TD
