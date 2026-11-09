@@ -447,6 +447,14 @@ class LogComparisonTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("::error::a.mkv: tracks expected", text)
 
+    def test_dump_on_one_side_only_fails(self) -> None:
+        both = [*dump(track("Video", "V_VP9")), *dump(name="b.mkv")]
+        code, text = self.compare(
+            self.write_run("base", both), self.write_run("cand", dump(track("Video", "V_VP9")))
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("::error::b.mkv: no track dump in the results run", text)
+
     def test_last_read_without_tracks_fails(self) -> None:
         baseline = self.write_run("base", dump(track("Video", "V_VP9")))
         candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), *dump()])

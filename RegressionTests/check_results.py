@@ -176,12 +176,18 @@ def output_tracks(log: str) -> dict[str, list[str]]:
 
 
 def track_differences(expected: dict[str, list[str]], actual: dict[str, list[str]]) -> list[str]:
-    """Describe each file whose output tracks differ between two runs, empty when they match."""
+    """Describe each file whose output tracks differ between two runs, empty when they match.
+
+    A file one run dumped and the other did not differs, even where the one dump holds no tracks.
+    """
     found: list[str] = []
     for name in sorted(expected.keys() | actual.keys()):
-        want, got = expected.get(name, []), actual.get(name, [])
-        if want != got:
-            found.append(f"{name}: tracks expected {want}, found {got}")
+        if name not in actual:
+            found.append(f"{name}: no track dump in the results run")
+        elif name not in expected:
+            found.append(f"{name}: no track dump in the baseline run")
+        elif expected[name] != actual[name]:
+            found.append(f"{name}: tracks expected {expected[name]}, found {actual[name]}")
     return found
 
 
