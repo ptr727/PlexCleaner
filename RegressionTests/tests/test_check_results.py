@@ -318,7 +318,7 @@ class OutputTracksTests(unittest.TestCase):
         log = "\n".join(log_line(text) for text in texts)
         self.assertEqual(
             cr.output_tracks(log),
-            {'"/Test/Media/a.mkv"': ['MkvMerge : Video : Format: "F", Codec: "V_MPEG4/ISO/AVC"']},
+            {"a.mkv": ['MkvMerge : Video : Format: "F", Codec: "V_MPEG4/ISO/AVC"']},
         )
 
     def test_escaped_quote_in_format(self) -> None:
@@ -326,11 +326,7 @@ class OutputTracksTests(unittest.TestCase):
         log = "\n".join(log_line(text) for text in [*dump(), text])
         self.assertEqual(
             cr.output_tracks(log),
-            {
-                '"/Test/Media/a.mkv"': [
-                    'MkvMerge : Audio : Format: "AC-3 \\"Dolby\\"", Codec: "A_AC3"'
-                ]
-            },
+            {"a.mkv": ['MkvMerge : Audio : Format: "AC-3 \\"Dolby\\"", Codec: "A_AC3"']},
         )
 
     def test_selection_and_information_lines_skipped(self) -> None:
@@ -349,7 +345,7 @@ class NormalizedLinesTests(unittest.TestCase):
             banner = [f"Application Version : 3.24.{n}", f"Runtime Version : .NET 10.0.{n}"]
             texts = [
                 f"Settings : /Test/Config/3.24.{n}/PlexCleaner.json, ProcessId: {100 + n}",
-                f'Remuxing : "/Test/Media/a.mkv.tmp{n}" : "/Test/Media/a.mkv"',
+                f'ProcessFiles ({n}.25%) Before : "/Test/Media/a.mkv"',
                 f"{track('Video', 'V_VP9', uid=n)}",
                 f"Exception at 0x7ff{n}a0 : [12:00:0{n}] fps= {n}.5 speed={n}.2x elapsed=0:00:0{n}.10",
                 f'Process ({n}.50%) Elapsed : 00:00:0{n}.1 : After : "/Test/Media/a.mkv"',
@@ -374,13 +370,14 @@ class NormalizedLinesTests(unittest.TestCase):
     def test_bitrate_summary_gains_thread_file(self) -> None:
         log = "\n".join(
             [
-                log_line('Verify : "/Test/Media/a.mkv"', thread=3),
-                log_line('Verify : "/Test/Media/b.mkv"', thread=4),
+                log_line('ProcessFiles (0.00%) Before : "/Test/Media/a.mkv"', thread=3),
+                log_line('ProcessFiles (50.00%) Before : "/Test/Media/b.mkv"', thread=4),
+                log_line('Verify : "/Test/Media/b.mkv"', thread=3),
                 log_line('"Video" : Length: 00:00:10, Minimum: 1 Mbps', thread=3),
             ]
         )
         self.assertIn(
-            '[DBG] <T> "Video" : Length: 00:00:10, Minimum: 1 Mbps : "/Test/Media/a.mkv"',
+            '[DBG] <T> "Video" : Length: 00:00:10, Minimum: 1 Mbps : "a.mkv"',
             cr.normalized_lines(log),
         )
 
@@ -412,7 +409,14 @@ class LogComparisonTests(unittest.TestCase):
         candidate = self.write_run("cand", dump(track("Video", "V_MPEG4/ISO/AVC")))
         code, text = self.compare(baseline, candidate)
         self.assertEqual(code, 1)
-        self.assertIn('::error::"/Test/Media/a.mkv": tracks expected', text)
+        self.assertIn("::error::a.mkv: tracks expected", text)
+
+    def test_tracks_compare_by_file_name(self) -> None:
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        moved = [text.replace("/Media/", "/Media/full/") for text in dump(track("Video", "V_VP9"))]
+        code, text = self.compare(baseline, self.write_run("cand", moved))
+        self.assertEqual(code, 0)
+        self.assertNotIn("tracks expected", text)
 
     def test_track_missing_on_one_side_fails(self) -> None:
         baseline = self.write_run("base", dump(track("Video", "V_VP9"), track("Audio", "A_AC3")))
@@ -446,6 +450,7 @@ class LogComparisonTests(unittest.TestCase):
     def bitrate_runs(self, state: str, candidate_state: str = "") -> tuple[int, str]:
         def texts(peak: int) -> list[str]:
             return [
+                'ProcessFiles (0.00%) Before : "/Test/Media/a.mkv"',
                 *dump(track("Video", "V_MPEG4/ISO/AVC")),
                 f'"Video" : Length: 00:00:10, Minimum: 1 Mbps, Maximum: {peak} Mbps',
             ]

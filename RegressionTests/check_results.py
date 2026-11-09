@@ -14,7 +14,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from corpus_common import state_flags
+from corpus_common import BEFORE_RE, LINE_RE, state_flags
 
 Outcome = dict[str, Any]
 
@@ -37,7 +37,6 @@ DUMP_TRACK = re.compile(
     rf"\[DBG\] <\d+> (?P<track>MkvMerge : (?:Video|Audio|Subtitle) : "
     rf"Format: {QUOTED}, Codec: {QUOTED})"
 )
-LOG_LINE = re.compile(r"^\S+ \S+ \S+ \[\w+\] <(?P<thread>\d+)> ")
 BITRATE = re.compile(r'\[DBG\] <(?:\d+|T)> "(?:Video|Audio|Combined)" : Length: ')
 REENCODED = {"ReEncoded", "DeInterlaced"}
 NORMALIZE = tuple(
@@ -50,9 +49,9 @@ NORMALIZE = tuple(
         (r"^\[INF\] <\d+> Runtime Version : .*", "[INF] Runtime Version : <REDACTED>"),
         (r"<\d+>", "<T>"),
         (r"Uid: \d+", "Uid: U"),
-        (r"\.tmp\d+", ".tmpN"),
         (r"0x[0-9a-fA-F]+", "0xADDR"),
-        (r" \(\d+\.\d+%\) Elapsed : [\d:.]+ : After : ", " (P%) Elapsed : E : After : "),
+        (r" \(\d+\.\d+%\) ", " (P%) "),
+        (r" Elapsed : [\d:.]+ : After : ", " Elapsed : E : After : "),
         (r"Processing time : [\d:.]+$", "Processing time : E"),
         (r"\[\d{2}:\d{2}:\d{2}\]", "[HH:MM:SS]"),
         (r"fps= *[\d.]+", "fps=N"),
@@ -143,18 +142,23 @@ def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> tuple[lis
     return warnings, notes
 
 
+def quoted_name(quoted: str) -> str:
+    """Return the file name, without its directory, of a quoted path a log line ends with."""
+    return Path(quoted[1:-1]).name
+
+
 def output_tracks(log: str) -> dict[str, list[str]]:
     """Return each file's output tracks, from the last MkvMerge track dump the log holds for it.
 
     A dump is logged at Debug each time PlexCleaner reads a file, so the last one describes its output.
-    Each file is keyed by the quoted name its dump lines end with.
+    Each file is keyed by the name its dump lines end with, without its directory, as outcomes are.
     """
     dumps: dict[str, list[str]] = {}
     for line in log.splitlines():
         if start := DUMP_START.search(line):
-            dumps[start["file"]] = []
+            dumps[quoted_name(start["file"])] = []
         elif (track := DUMP_TRACK.search(line)) and (file := QUOTED_FILE.search(line)):
-            dumps.setdefault(file["file"], []).append(track["track"])
+            dumps.setdefault(quoted_name(file["file"]), []).append(track["track"])
     return {name: sorted(tracks) for name, tracks in dumps.items() if tracks}
 
 
@@ -172,17 +176,16 @@ def normalized_lines(log: str) -> Counter[str]:
     """Return a log's lines with the fields that differ between two runs of one build normalized.
 
     A parallel run interleaves files differently each time, so the lines compare as a multiset.
-    A bitrate summary names no file, so it gains the media path its thread last named.
+    A bitrate summary names no file, so it gains the file its thread last began processing.
     """
-    last_file: dict[str, str] = {}
+    thread_file: dict[str, str] = {}
     found: Counter[str] = Counter()
     for line in log.splitlines():
-        thread = LOG_LINE.match(line)
-        file = QUOTED_FILE.search(line)
-        if thread and file and file["file"].startswith('"/'):
-            last_file[thread["thread"]] = file["file"]
-        elif thread and BITRATE.search(line) and thread["thread"] in last_file:
-            line = f"{line} : {last_file[thread['thread']]}"
+        if thread := LINE_RE.match(line):
+            if before := BEFORE_RE.search(thread[2]):
+                thread_file[thread[1]] = Path(before[1]).name
+            elif BITRATE.search(line) and thread[1] in thread_file:
+                line = f'{line} : "{thread_file[thread[1]]}"'
         for pattern, repl in NORMALIZE:
             line = pattern.sub(repl, line)
         found[line] += 1
@@ -210,7 +213,7 @@ def log_differences(
     for side, lines in (("baseline", expected - actual), ("results", actual - expected)):
         for line in sorted(lines.elements()):
             file = QUOTED_FILE.search(line)
-            name = Path(file["file"].strip('"')).name if file else ""
+            name = quoted_name(file["file"]) if file else ""
             if BITRATE.search(line) and name in noise:
                 shifted.add(name)
             else:

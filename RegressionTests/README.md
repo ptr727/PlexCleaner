@@ -67,12 +67,12 @@ The comparison first checks the two runs' inputs. It reads each run's tool versi
 
 The comparison then reads the two runs' `PlexCleaner_process.log` files, for two further checks:
 
-- **Output tracks.** PlexCleaner logs a file's MkvMerge track list at `Debug` each time it reads the file, so the last dump describes the output. The comparison prints one line per file whose output track types, formats, or codecs differ. A run whose log holds no `Debug` dump leaves the track check unverified, and the comparison warns rather than passing it.
-- **Normalized log lines.** A parallel run interleaves files differently each time, so the two logs compare as multisets of lines. Each line first loses the fields that differ between two runs of one build. Those are the timestamps, thread and process ids, temp-file suffixes, the version path segment, and the regenerated track `Uid` values. They also include ASLR addresses, the version banner lines, progress percentages, elapsed and processing times, HandBrake clock stamps, and FFmpeg progress figures. The comparison warns of each normalized line one run holds more often than the other.
+- **Output tracks.** PlexCleaner logs a file's MkvMerge track list at `Debug` each time it reads the file, so the last dump describes the output. The comparison prints one line per file whose output track types, formats, or codecs differ. A run whose log holds no `Debug` dump leaves the track check unverified, and the comparison warns of that rather than reporting a match.
+- **Normalized log lines.** A parallel run interleaves files differently each time, so the two logs compare as multisets of lines. Each line first loses the fields that differ between two runs of one build. Those are the timestamps, thread and process ids, the version path segment, and the regenerated track `Uid` values. They also include ASLR addresses, the version banner lines, progress percentages, elapsed and processing times, HandBrake clock stamps, and FFmpeg progress figures. The comparison warns of each normalized line one run holds more often than the other.
 
-A re-encode is not byte-identical from run to run, so its bitrate summary can shift. A bitrate summary names no file, so the comparison attributes it to the file its thread last named. A shift is only noted when that file was re-encoded or deinterlaced and its outcome matches in both runs.
+A re-encode is not byte-identical from run to run, so its bitrate summary can shift. A bitrate summary names no file, so the comparison attributes it to the file its thread last began processing. A shift is only noted when that file was re-encoded or deinterlaced and its outcome matches in both runs.
 
-The comparison exits `0` when the outcomes and the output tracks match and `1` otherwise, whatever it warned of. Judge each difference as an intended effect of the change under test, an effect of a warned input, a regression, or noise.
+The comparison exits `1` when the outcomes or the output tracks differ, and `0` otherwise, whatever it warned of. So an unverified track check exits `0` beside its warning. Judge each difference as an intended effect of the change under test, an effect of a warned input, a regression, or noise.
 
 ### Full-file scanning
 
