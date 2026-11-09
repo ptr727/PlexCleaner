@@ -120,36 +120,6 @@ public class MediaProps(MediaTool.ToolType parser, string fileName)
             _ => throw new NotSupportedException($"Unsupported parser type: {parser}"),
         };
 
-    public void RemoveCoverArt()
-    {
-        // No video tracks nothing to do
-        if (Video.Count == 0)
-        {
-            return;
-        }
-
-        // Find all tracks with cover art
-        List<VideoProps> coverArtTracks = Video.FindAll(item => item.CoverArt);
-
-        // Are all tracks cover art
-        if (Video.Count == coverArtTracks.Count)
-        {
-            Log.Error("All video tracks are cover art : {Parser}", Parser);
-        }
-
-        // Remove all cover art tracks
-        foreach (VideoProps item in coverArtTracks)
-        {
-            Log.Warning(
-                "Ignoring cover art video track : {Parser}:{Format}:{Codec}",
-                Parser,
-                item.Format,
-                item.Codec
-            );
-            _ = Video.Remove(item);
-        }
-    }
-
     public List<TrackProps> MatchMediaInfoToMkvMerge(List<TrackProps> mediaInfoTrackList)
     {
         // This currently only works for MkvMerge

@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using PlexCleaner;
+using Serilog.Events;
 using Xunit;
 
 namespace PlexCleanerTests;
@@ -61,6 +62,67 @@ public sealed class ToolChangeSenseTests : IDisposable
         _ = sidecarFile.Read(out _).Should().BeTrue();
 
         _ = sidecarFile.IsMediaAndToolsCurrent(false).Should().Be(expectedCurrent);
+    }
+
+    [Theory]
+    [InlineData("FfProbe")]
+    [InlineData("MkvMerge")]
+    [InlineData("MediaInfo")]
+    public void IsMediaAndToolsCurrent_ToolChange_LogsTheChangedTool(string tool)
+    {
+        Program.Config.ProcessOptions.SidecarUpdateOnToolChange = true;
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        switch (tool)
+        {
+            case "FfProbe":
+                Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
+                break;
+            case "MkvMerge":
+                Tools.MkvMerge.Info = new MediaToolInfo(Tools.MkvMerge) { Version = "99.0" };
+                break;
+            default:
+                Tools.MediaInfo.Info = new MediaToolInfo(Tools.MediaInfo) { Version = "99.0" };
+                break;
+        }
+        SidecarFile sidecarFile = new(mediaFile);
+        _ = sidecarFile.Read(out _).Should().BeTrue();
+        bool current = true;
+
+        IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
+            current = sidecarFile.IsMediaAndToolsCurrent(true)
+        );
+
+        _ = current.Should().BeFalse();
+        _ = LogCapture
+            .Messages(events, LogEventLevel.Warning)
+            .Should()
+            .ContainSingle(message => message.Contains("tool version mismatch"))
+            .Which.Should()
+            .Contain($"Sidecar {tool} tool version mismatch");
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Read_ToolChange_ClearsProcessFailedOnlyWithSidecarUpdateOnToolChange(
+        bool updateOnToolChange
+    )
+    {
+        Program.Config.ProcessOptions.SidecarUpdateOnToolChange = updateOnToolChange;
+        string mediaFile = FakeTools.CopyUnverifiedSample(
+            _directory,
+            SidecarFile.StatesType.Repaired | SidecarFile.StatesType.ProcessFailed
+        );
+        Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
+
+        SidecarFile sidecarFile = new(mediaFile);
+        _ = sidecarFile.Read(out _).Should().BeTrue();
+
+        _ = sidecarFile
+            .State.HasFlag(SidecarFile.StatesType.ProcessFailed)
+            .Should()
+            .Be(!updateOnToolChange);
+        _ = sidecarFile.State.Should().HaveFlag(SidecarFile.StatesType.Repaired);
     }
 
     [Fact]

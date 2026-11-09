@@ -91,7 +91,15 @@ public sealed class PerFileExceptionTests : IDisposable
         try
         {
             _ = Process
-                .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+                .ProcessFile(
+                    mediaFile,
+                    out _,
+                    out _,
+                    out _,
+                    out _,
+                    out string? failedOperation,
+                    out _
+                )
                 .Should()
                 .BeFalse();
 

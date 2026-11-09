@@ -24,15 +24,17 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 
 ### Release Notes
 
-**Version: 3.23**:
+**Version: 3.24**:
 
 **Summary:**
 
-- Added a minimum version for every media tool, checked at startup, such as FFmpeg 8.0 and HandBrake 1.10.0.
-- Renamed the Docker image test script to `/Test/test.sh` and the version script to `/PlexCleaner/version.sh`.
-- Fixed a verify false positive that reported healthy video with an irregular frame cadence as non-monotonic DTS.
-- Stopped re-encoding to repair a non-monotonic DTS that only appears after decode, since the re-encode drops frames.
-- An exception in one file fails only that file instead of ending the run.
+- Removed code that nothing called, as the first step toward broader test coverage, with no change in processing behavior.
+- Documented how to measure code coverage locally and in the Docker image.
+- Added a CI integration test that runs the Docker image's test commands over synthetic media and checks each file's processing result.
+- `DeleteInvalidFiles` and `RegisterInvalidFiles` act only on media judged invalid in the current run, and setting both fails configuration validation.
+- With `UseSidecarFiles` on, a failed MKV file that is not deleted or registered is marked `ProcessFailed` in its sidecar. Later runs skip it until the media file changes. The next run retries an unmarked file. A cancel, a tool run that ends without a result, or a file the media tools cannot read leaves it unmarked. Run `createsidecar` on a marked file to process it again. With `SidecarUpdateOnToolChange` on, a new FFprobe, MkvMerge, or MediaInfo version also releases it.
+- A file whose video mostly fails to decode skips interlace detection with a warning, instead of failing at the interlace scan.
+- With `DeInterlace` on, each interlace scan logs its verdict and idet frame counts at Information level.
 
 See [Release History](./HISTORY.md) for complete release notes and older versions.
 
@@ -160,6 +162,8 @@ PlexCleaner is optimized for processing large media libraries efficiently. Key p
 - To improve processing performance of large media collections, the media file attributes and processing state is cached in sidecar files. (`filename.mkv` -> `filename.PlexCleaner`)
 - Sidecar files allow re-processing of the same files to be very fast as the state will be read from the sidecar vs. re-computed from the media file.
 - The sidecar maintains a hash of small parts of the media file (timestamps are unreliable), and the media file will be reprocessed when a change in the media file is detected.
+- A failed MKV file that is not deleted or registered is marked `ProcessFailed` in its sidecar. Later runs skip it until the media file changes or `createsidecar` recreates its sidecar. With `SidecarUpdateOnToolChange` on, a new FFprobe, MkvMerge, or MediaInfo version also releases it.
+- The next run retries a file instead when a cancel or a tool failure left the run unproven. It also retries a file whose rename target holds another file, and one the media tools cannot read, since its sidecar needs their output.
 
 **Processing Operations:**
 
@@ -223,7 +227,7 @@ A version with a release prefix, a HandBrake nightly (by branch or build date), 
 - See the [Docker README][docker-hub-link] for current distribution and media tool versions.
 - `ptr727/plexcleaner:latest` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `main` branch.
 - `ptr727/plexcleaner:develop` is based on [Ubuntu][ubuntu-hub-link] (`ubuntu:rolling`) built from the `develop` branch.
-- Docker images and GitHub Releases for both branches are published on a weekly schedule (and on demand), each refreshed with the latest upstream and base-image updates. Pull requests are smoke-tested only and do not publish.
+- The `main` Docker image is rebuilt weekly on the latest `ubuntu:rolling` base image, and each new `main` version also publishes a GitHub Release. Either branch publishes on demand, and `develop` publishes only then. Pull requests are smoke-tested only and do not publish.
 - The container has all the prerequisite 3rd party tools pre-installed.
 
 **Path Mapping Convention**: All examples use `/data/media` as the host path mapped to `/media` inside the container. Replace `/data/media` with your actual host media location.
@@ -719,8 +723,9 @@ Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for complete con
   - `MaximumBitrate`, `Verify`
 - If verification fails, attempt automatic repair.
   - `AutoRepair`
-- If repair fails, delete or mark file to be ignored.
+- If verify or repair judges the media invalid, delete the file or add it to the ignore list, but not both.
   - `DeleteInvalidFiles`, `RegisterInvalidFiles`
+- Mark other failed MKV files `ProcessFailed` in their sidecar, so later runs skip them.
 
 **8. Finalization:**
 
@@ -1069,7 +1074,6 @@ The third-party tools, libraries, and actions this project depends on.
 | [RFC 5646 language tags][rfc5646-link] | Language tag standard. |
 | [Serilog][serilog-link] | Structured logging library for .NET. |
 | [Utf8JsonAsyncStreamReader][utf8jsonasync-link] | Streaming JSON reader for .NET. |
-| [Xml2CSharp][xmltocsharp-link] | XML to C# class generator. |
 | [xUnit.Net][xunit-link] | Test framework for .NET. |
 
 ## Sample Media Files
@@ -1165,5 +1169,4 @@ Licensed under the [MIT License][license]\
 [visualstudio-link]: https://visualstudio.microsoft.com/downloads/
 [vscode-link]: https://code.visualstudio.com/download
 [winget-cli-issue-link]: https://github.com/microsoft/winget-cli/issues/3437
-[xmltocsharp-link]: https://xmltocsharp.azurewebsites.net/
 [xunit-link]: https://xunit.net/

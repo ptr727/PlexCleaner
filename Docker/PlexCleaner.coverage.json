@@ -1,0 +1,139 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ptr727/PlexCleaner/main/PlexCleaner.schema.json",
+  "SchemaVersion": 4,
+  "ToolsOptions": {
+    "UseSystem": false,
+    "RootPath": ".\\Tools\\",
+    "RootRelative": true,
+    "AutoUpdate": true
+  },
+  "ProcessOptions": {
+    "FileIgnoreMasks": [
+      "*.ass",
+      "*.fuse_hidden*",
+      "*.jpg",
+      "*.nfo",
+      "*.partial~",
+      "*.png",
+      "*.sample.*",
+      "*.sample",
+      "*.smi",
+      "*.srt",
+      "*.ssa",
+      "*.vtt"
+    ],
+    "KeepOriginalLanguage": true,
+    "RemoveClosedCaptions": true,
+    "SetIetfLanguageTags": true,
+    "SetTrackFlags": true,
+    "ReMuxExtensions": [
+      ".asf",
+      ".avi",
+      ".dv",
+      ".m2ts",
+      ".m4v",
+      ".mp4",
+      ".mpg",
+      ".mov",
+      ".ts",
+      ".vob",
+      ".wmv"
+    ],
+    "ReEncodeVideo": [
+      {
+        "Format": "h264",
+        "Profile": "Constrained Baseline@30"
+      },
+      {
+        "Format": "indeo5"
+      },
+      {
+        "Format": "mpeg2video"
+      },
+      {
+        "Format": "mpeg4",
+        "Codec": "dx50"
+      },
+      {
+        "Format": "msmpeg4v2",
+        "Codec": "mp42"
+      },
+      {
+        "Format": "msmpeg4v3",
+        "Codec": "div3"
+      },
+      {
+        "Format": "msrle"
+      },
+      {
+        "Format": "rawvideo"
+      },
+      {
+        "Format": "vc1"
+      },
+      {
+        "Format": "wmv3"
+      }
+    ],
+    "ReEncodeAudioFormats": [
+      "adpcm_ms",
+      "flac",
+      "mp2",
+      "opus",
+      "pcm_s16le",
+      "pcm_u8",
+      "vorbis",
+      "wmapro",
+      "wmav2"
+    ],
+    "KeepLanguages": [
+      "af",
+      "en",
+      "in",
+      "ja",
+      "ko",
+      "zh"
+    ],
+    "PreferredAudioFormats": [
+      "ac-3",
+      "dts-hd high resolution audio",
+      "dts-hd master audio",
+      "dts",
+      "e-ac-3",
+      "truehd atmos",
+      "truehd"
+    ],
+    "DeleteEmptyFolders": true,
+    "DeleteUnwantedExtensions": true,
+    "ReMux": true,
+    "DeInterlace": true,
+    "ReEncode": true,
+    "SetUnknownLanguage": true,
+    "DefaultLanguage": "en",
+    "RemoveUnwantedLanguageTracks": true,
+    "RemoveDuplicateTracks": true,
+    "RemoveTags": true,
+    "UseSidecarFiles": true,
+    "SidecarUpdateOnToolChange": true,
+    "Verify": true,
+    "RestoreFileTimestamp": true,
+    "FileIgnoreList": []
+  },
+  "ConvertOptions": {
+    "FfMpegOptions": {
+      "Video": "libx264 -crf 22 -preset medium",
+      "Audio": "ac3",
+      "Global": ""
+    },
+    "HandBrakeOptions": {
+      "Video": "x264 --quality 22 --encoder-preset medium",
+      "Audio": "copy --audio-fallback ac3"
+    }
+  },
+  "VerifyOptions": {
+    "AutoRepair": true,
+    "DeleteInvalidFiles": false,
+    "RegisterInvalidFiles": true,
+    "MaximumBitrate": 100000000
+  }
+}

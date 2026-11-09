@@ -28,8 +28,6 @@ public partial class MediaInfo
     {
         public MediaInfoOptions OutputFormat(string option) => Add($"--Output={option}");
 
-        public MediaInfoOptions OutputFormatXml() => OutputFormat("XML");
-
         public MediaInfoOptions OutputFormatJson() => OutputFormat("JSON");
 
         public MediaInfoOptions InputFile(string option) => Add($"\"{option}\"");

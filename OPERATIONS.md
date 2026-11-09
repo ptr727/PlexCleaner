@@ -14,9 +14,27 @@ Running PlexCleaner against real media tools needs none of them installed on the
 
 ## Runbooks
 
+### Ship a change
+
+A change moves from a feature branch into `develop`, then from `develop` to `main` in a promotion. Regression testing gates each step in proportion to the change's risk. The branch rules themselves are in [GOVERNANCE.md](./GOVERNANCE.md) "Branching Model".
+
+1. **Feature to `develop`.** Branch from `develop`, and squash merge a pull request back into it. A change to processing, sidecar, media-tool, or language-tag code, or to the image, is regression tested from local images first. Merge `develop` into the branch first, so the pair differs only by the change. Build an image of the committed branch and one of the `develop` commit it merged as a pair, per [RegressionTests/README.md](./RegressionTests/README.md) "Running the harness". Build each image from a worktree checked out at its commit, since a build compiles the checkout it runs in. Pass each image its own commit as `LABEL_VERSION`, which names its run's results directory. Tag each image by that commit too, so one build does not replace the other. A pair built together carries the same tools, so `check_results.py --baseline` compares their runs with no tool warning. Rebuild both images whenever either changes, since a later build can pull newer tools. A tool warning on a pair means rebuilding it, unless the change updates that tool on purpose. Then confirm in each `PlexCleaner_process.log` that only that tool differs, and continue. Iterate until the comparison shows only the differences the change intends. A `quick` run over the `reduced` corpus is the usual first pass. A run writes into the results directory named by its version label and corpus, whatever the mode. So copy an earlier run of that label and corpus aside first.
+2. **Dispatch a `develop` build.** Once `develop` holds the changes for a release, the maintainer dispatches `publish-release.yml` from `develop` per "Publish a release". An agent dispatches it only on the maintainer's explicit go-ahead. That publishes a prerelease and the `develop` image tag.
+3. **Regression test the `develop` image against the last release.** Run the harness on the `develop` tag over the `full` corpus. Use `full` mode when the changes touch remux, repair, or re-encode, or update a media tool, and `quick` mode otherwise. A `quick` run stops at the test snippet. The baseline is the release's last `full` corpus run in that mode, of the `latest` tag or of the `develop` build promoted to it. Reuse it rather than running `latest` again. A new run writes into the directory of the run of its version and corpus. So copy that run aside before any release run. Where no such run exists, run the release in that mode first. Compare the two with `check_results.py --baseline`, whose output [RegressionTests/README.md](./RegressionTests/README.md) "Comparing two runs" describes. It warns of each input that differs, or that either run does not record, such as a newer tool or a corpus refresh. Explain each outcome difference by a change on `develop` since `main`, or by a warned input. Run the release again only for a difference that neither explains. To separate a tool update from a code change, build a local image of the release's tagged commit as in step 1. Run it over the `full` corpus in the `develop` run's mode. Where its run still warns of tool versions, build the dispatched commit beside it as a pair, as in step 1. Compare those two runs. Judge every difference as intended, a regression, or noise before promoting.
+4. **Promote `develop` to `main`.** Open a `develop -> main` pull request, merged with a merge commit. A pull request into `develop` closes no issue, since GitHub closes issues from the default branch only. So the promotion pull request's body carries a closing keyword for every issue its changes fix. `develop` takes no back-merge from `main`, so content only `main` holds reaches `develop` first, in a feature pull request of its own. A promotion that still conflicts is resolved on a branch cut from `main` that merges `develop`. Take `develop`'s side only where each conflicted file differs only in line endings, or `develop` holds a superset of it. Then open that branch as the promotion's head. Any other conflict stops for the maintainer.
+5. **Fix and re-test.** A fix found during promotion goes into `develop` through step 1. Where a conflict-resolution branch heads the promotion, merge `develop` into that branch again to carry the fix. A fix of a kind step 1 tests repeats steps 2 and 3. A documentation fix, or a CI-only fix that cannot change the image, needs no new run. Any other change to the shipped binary, such as a package bump, is re-tested as the maintainer judges its risk. A change that reaches `develop` after the tested dispatch follows the same rules.
+6. **Merge and release.** The maintainer merges the promotion and dispatches `publish-release.yml` from `main`, which publishes the stable release and the `latest` image.
+
+Each step keeps the version and the release notes correct:
+
+- Only the maintainer changes the `major.minor` version in [version.json](./version.json), and only for a functional change. Nerdbank.GitVersioning sets the patch number from git height, so a release needs no version edit.
+- A version bump changes the README "Release Notes" version in the same commit. It replaces the previous version's summary there, carrying forward the highlights of changes no stable release carries yet. It adds a new top entry to [HISTORY.md](./HISTORY.md). Notes for changes no stable release carries yet move from the previous entry into the new one, and an entry left empty is removed.
+- A pull request with a notable change adds it to the current version's `HISTORY.md` entry. It also updates the README summary when the change is among that version's highlights.
+- Before promoting, confirm the README "Release Notes" version, the top `HISTORY.md` entry, and `version.json` name the same version.
+
 ### Publish a release
 
-Merges never publish. The publisher (`publish-release.yml`) runs on a weekly schedule and on manual dispatch, and each run builds the one branch it is started from: the schedule rebuilds `main` only (a stable release, the `latest` image, and a refreshed `ubuntu:rolling` base), and a dispatch publishes its own branch (`main` -> stable / `latest`, `develop` -> prerelease / `develop`). To ship the changes accumulated on `develop`, dispatch the workflow from `develop`. A dispatch from any other branch fails at the `plan` job rather than passing as a no-op. A re-run whose version is unchanged creates no duplicate release, and the Docker push still refreshes the image. Absent publish rights, nothing here can be run, and the verification falls back to the static and trace audits in [WORKFLOW.md](./WORKFLOW.md) section 5.
+Merges never publish. The publisher (`publish-release.yml`) runs on a weekly schedule and on manual dispatch, and each run builds the branch it starts from. The schedule rebuilds `main` only, as a stable release and the `latest` image on a refreshed `ubuntu:rolling` base. A dispatch from `develop` publishes the changes accumulated there as a prerelease and the `develop` image. A dispatch from `main` after a promotion publishes them as a stable release and the `latest` image. A dispatch from any other branch fails at the `plan` job rather than passing as a no-op. A re-run whose version is unchanged creates no duplicate release, and the Docker push still refreshes the image. Absent publish rights, nothing here can be run, and the verification falls back to the static and trace audits in [WORKFLOW.md](./WORKFLOW.md) section 5.
 
 ### Test the Docker image
 
@@ -63,7 +81,46 @@ docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/test" \
 
 ### Run the regression tests
 
-The regression harness under [RegressionTests/](./RegressionTests/) processes a curated collection of troublesome media through a given image tag on a ZFS clone and compares the results across versions down to the per-file processing decision. The collection and its media-specific reduction rules live with the media on a server and are never committed, so this runs on the host that holds them. [RegressionTests/README.md](./RegressionTests/README.md) is the procedure.
+The regression harness under [RegressionTests/](./RegressionTests/) processes a curated collection of troublesome media through a given image on a ZFS clone. It compares the results across versions down to the per-file processing decision. The image is a published tag, or a local image built from a branch. The collection and its media-specific reduction rules live with the media on a server and are never committed. So this runs on the host that holds them. [RegressionTests/README.md](./RegressionTests/README.md) is the procedure.
+
+### Measure code coverage
+
+[Codecov](https://app.codecov.io/gh/ptr727/PlexCleaner) merges the coverage of several runs. CI's validator uploads the .NET unit tests with no flag, and the `RegressionTests/` Python tests under a `python-<version>` flag. [codecov.yml](./codecov.yml) declares a flag for each further run. The `integration` flag is the CI integration job, which runs the image's test commands over a synthetic corpus and checks each file's result. [RegressionTests/README.md](./RegressionTests/README.md) "CI integration run" describes it. The `regression` and `windows` flags are host-specific runs. It carries each of these flags forward, since none runs on every commit. Those runs need the media collection and a Windows workstation, so their wrappers and uploads live in the private HomeAutomation-Config repository rather than here. The regression harness itself collects the `regression` reports when `REGRESSION_COVERAGE_TOOL` is set, as [RegressionTests/README.md](./RegressionTests/README.md) "Running the harness" describes.
+
+Measure the unit tests the way CI does. The reports land under `.artifacts/coverage`, which git ignores. Each run adds a report, so clear the directory first to keep an older commit's report out of the merge:
+
+```sh
+dotnet tool restore
+rm -rf ./.artifacts/coverage
+dotnet test --project PlexCleanerTests/PlexCleanerTests.csproj --coverage --coverage-output-format cobertura --results-directory ./.artifacts/coverage
+```
+
+Measure the real-tool paths in the image with `dotnet-coverage`, pinned in [.config/dotnet-tools.json](./.config/dotnet-tools.json). The image has no SDK, so mount the restored tool and run it on the image's runtime. [Docker/PlexCleaner.coverage.json](./Docker/PlexCleaner.coverage.json) is the default settings with every optional processing step turned on, `RegisterInvalidFiles` rather than `DeleteInvalidFiles` since the two cannot both be on. `test.sh` runs the Debug build, whose PDB sits beside it. The settings are copied first, since `RegisterInvalidFiles` writes to the file it reads:
+
+```sh
+version="$(jq -r '.tools["dotnet-coverage"].version' .config/dotnet-tools.json)"
+tool="$(dirname "$(find "${NUGET_PACKAGES:-$HOME/.nuget/packages}/dotnet-coverage/$version" -name dotnet-coverage.dll)")"
+cp ./Docker/PlexCleaner.coverage.json ./.artifacts/coverage/PlexCleaner.json
+docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE_TELEMETRY_OPTOUT=1 \
+  --volume "$tool:/dotnet-coverage:ro" --volume "$PWD/.artifacts/coverage:/coverage" \
+  --volume "$PWD/.artifacts/coverage/PlexCleaner.json:/Test/PlexCleaner.json" \
+  --entrypoint dotnet docker.io/ptr727/plexcleaner:develop /dotnet-coverage/dotnet-coverage.dll \
+  collect --output-format cobertura --output /coverage/image.xml /Test/test.sh
+```
+
+[RegressionTests/integration-test.sh](./RegressionTests/integration-test.sh) runs the same `dotnet-coverage collect` over the integration job's media and checks the results. Its report, `WORKDIR/out/image.xml`, takes the place of `./.artifacts/coverage/image.xml` in the rewrite below. To measure a branch, use a local image built per [Test a tool version the image does not carry](#test-a-tool-version-the-image-does-not-carry) in place of `develop`. The image report names each source file under `/Builder`, the builder stage's source root. Rewrite that prefix to the checkout into a report the merge reads, then merge the reports with the pinned ReportGenerator:
+
+```sh
+sed "s#filename=\"/Builder/#filename=\"$PWD/#" ./.artifacts/coverage/image.xml > ./.artifacts/coverage/image.cobertura.xml
+dotnet reportgenerator "-reports:./.artifacts/coverage/*.cobertura.xml" "-targetdir:./.artifacts/coverage/report" \
+  "-reporttypes:Html;TextSummary" "-filefilters:+**/PlexCleaner/*;+**/Plugins/*;-**/.artifacts/*"
+```
+
+The file filter keeps the project sources and drops the source-generated files under `.artifacts/obj`, which Codecov also drops. Codecov's total also holds the Python coverage of `RegressionTests/`, so compare against its .NET files alone. The merged rate still reads higher than Codecov's .NET rate. ReportGenerator counts a line with partly covered branches as covered, while Codecov counts it as a partial, which lowers its rate. A comparison holds only when every report comes from the same commit. A published image's `--version` ends in its commit's short SHA, and a local image is the checkout it was built from.
+
+A carried-forward flag holds no data for a line changed or added since its upload. Codecov moves the flag's unchanged lines through the diff and drops the changed ones. So a commit's total measures changed code with that commit's own uploads alone. Compare it with another total only where both commits uploaded every carried-forward flag.
+
+On Windows, run the `win-x64` folder of the release archive under `dotnet-coverage collect`. It is framework-dependent with its PDB beside it, not a single-file executable, so it instruments as shipped. A `develop` prerelease carries the Debug build, a `main` release carries the Release build, and `PlexCleaner.exe --version` names the commit.
 
 ## Backup and Recovery
 

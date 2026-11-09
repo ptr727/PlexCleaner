@@ -10,12 +10,35 @@ public class Monitor
 
     private readonly Lock _watchLock = new();
 
+    internal TimeSpan SettleTime { get; init; } = TimeSpan.FromSeconds(60);
+
     private static void LogMonitorMessage() => Log.Information("Monitoring folders ...");
 
-    public bool MonitorFolders(List<string> folders)
-    {
-        const int MonitorWaitTime = 60;
+    internal Action<FileSystemWatcher>? WatcherCreated { get; init; }
 
+    public bool MonitorFolders(List<string> folders, CancellationToken cancelToken)
+    {
+        try
+        {
+            return WatchFolders(folders, cancelToken);
+        }
+        finally
+        {
+            _watcher.ForEach(item =>
+            {
+                item.EnableRaisingEvents = false;
+                item.Dispose();
+            });
+            _watcher.Clear();
+        }
+    }
+
+    private bool WatchFolders(List<string> folders, CancellationToken cancelToken)
+    {
+        using CancellationTokenSource stopSource = CancellationTokenSource.CreateLinkedTokenSource(
+            cancelToken,
+            Program.CancelToken()
+        );
         LogMonitorMessage();
 
         // Trim quotes around input paths
@@ -35,6 +58,7 @@ public class Monitor
             Log.Information("Monitoring : {Folder}", folder);
             FileSystemWatcher watch = new();
             _watcher.Add(watch);
+            WatcherCreated?.Invoke(watch);
             watch.Path = folder;
             watch.NotifyFilter =
                 NotifyFilters.Size
@@ -65,13 +89,13 @@ public class Monitor
                 foreach (string folder in folders)
                 {
                     Log.Information("Adding folder to processing queue : {Folder}", folder);
-                    _watchFolders.Add(folder, DateTime.UtcNow.AddSeconds(-MonitorWaitTime));
+                    _watchFolders.Add(folder, DateTime.UtcNow - SettleTime);
                 }
             }
         }
 
         // Wait for exit to be signaled
-        while (!Program.WaitForCancel(1000))
+        while (!stopSource.Token.WaitHandle.WaitOne(1000))
         {
             // Lock and process the list of folders
             List<string> watchList = [];
@@ -82,7 +106,7 @@ public class Monitor
                 if (_watchFolders.Count != 0)
                 {
                     // Evaluate all folders in the watch list
-                    DateTime settleTime = DateTime.UtcNow.AddSeconds(-MonitorWaitTime);
+                    DateTime settleTime = DateTime.UtcNow - SettleTime;
                     foreach ((string folder, DateTime timeStamp) in _watchFolders)
                     {
                         // Settled down, i.e. not modified in last wait time
@@ -147,10 +171,6 @@ public class Monitor
             LogMonitorMessage();
         }
 
-        // Disable event watching
-        _watcher.ForEach(item => item.EnableRaisingEvents = false);
-        _watcher.Clear();
-
         // Done
         return true;
     }
@@ -206,7 +226,7 @@ public class Monitor
         return true;
     }
 
-    private void OnChanged(FileSystemEventArgs e)
+    internal void OnChanged(FileSystemEventArgs e)
     {
         // Registered for Changed, Created, Deleted
         Log.Verbose("OnChanged : {ChangeType} : {FullPath}", e.ChangeType, e.FullPath);
@@ -229,7 +249,7 @@ public class Monitor
         }
     }
 
-    private void OnRenamed(RenamedEventArgs e)
+    internal void OnRenamed(RenamedEventArgs e)
     {
         // Registered for Renamed
         Log.Verbose(
