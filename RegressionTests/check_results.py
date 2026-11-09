@@ -155,7 +155,7 @@ def output_tracks(log: str) -> dict[str, list[str]]:
     """Return each file's output tracks, from the last MkvMerge track dump the log holds for it.
 
     A dump is logged at Debug each time PlexCleaner reads a file, so the last one describes its output.
-    Its tracks keep their logged order, so a reorder differs, and a read that logged none keeps none.
+    Tracks keep their logged order, so a reorder within a type differs, and a read logging none keeps none.
     Each file is keyed by the name its dump lines end with, without its directory, as outcomes are.
     Two paths sharing a name would mix their dumps, so that refuses.
     """

@@ -67,12 +67,12 @@ The comparison first checks the two runs' inputs. It reads each run's tool versi
 
 The comparison then reads the two runs' `PlexCleaner_process.log` files, for two further checks:
 
-- **Output tracks.** PlexCleaner logs a file's MkvMerge track list at `Debug` each time it reads the file, so the last dump describes the output. The comparison prints one line per file whose output track types, formats, or codecs differ. Each file's tracks keep their logged order, so a reorder differs. A run with no log, or whose log holds no `Debug` dump, leaves the track check unverified. That fails the comparison rather than reading as a match.
+- **Output tracks.** PlexCleaner logs a file's MkvMerge track list at `Debug` each time it reads the file, so the last dump describes the output. The comparison prints one line per file whose output track types, formats, or codecs differ. PlexCleaner logs the video, audio, and subtitle tracks in that order, each in file order, so a reorder within a track type differs. A run with no log, or whose log holds no `Debug` dump, leaves the track check unverified. That fails the comparison rather than reading as a match.
 - **Normalized log lines.** A parallel run interleaves files differently each time, so the two logs compare as multisets of lines. Each line first loses the fields that differ between two runs of one build. Those are the timestamps, thread and process ids, the version path segment, and the regenerated track `Uid` values. They also include ASLR addresses, the version banner lines, progress percentages, elapsed and processing times, HandBrake clock stamps, and FFmpeg progress figures. The comparison warns of each normalized line one run holds more often than the other.
 
 A re-encode is not byte-identical from run to run, so its bitrate summary can shift. A bitrate summary names no file, so the comparison attributes it to the file its thread last began processing. A shift in the summary or in a bitrate warning is only noted for such a file. That file was re-encoded, deinterlaced, or repaired, and its outcome matches in both runs.
 
-The comparison exits `1` when the outcomes or the output tracks differ, or the track check is unverified, and `0` otherwise, whatever it warned of. Judge each difference as an intended effect of the change under test, an effect of a warned input, a regression, or noise.
+The comparison exits `1` when the outcomes or the output tracks differ, or the track check is unverified, and `0` otherwise, whatever it warned of. Two logged paths sharing a file name refuse with an error, since their dumps cannot be told apart. Judge each difference as an intended effect of the change under test, an effect of a warned input, a regression, or noise.
 
 ### Full-file scanning
 
