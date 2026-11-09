@@ -467,6 +467,7 @@ class LogComparisonTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("::error::a.mkv: State expected ['Verified'], found ['ReMuxed']", text)
         self.assertIn("share a name in the results run, so the track check is unverified", text)
+        self.assertIn(f"::warning::log results only: [DBG] <T> {other}", text)
 
     def test_last_read_without_tracks_fails(self) -> None:
         baseline = self.write_run("base", dump(track("Video", "V_VP9")))
