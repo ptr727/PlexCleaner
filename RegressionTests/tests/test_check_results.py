@@ -475,11 +475,13 @@ class LogComparisonTests(unittest.TestCase):
 
     def test_result_no_run_dumped_compares_only_its_outcome(self) -> None:
         code, text = self.compare(
-            self.write_run("base", dump(track("Video", "V_VP9"), name="b.mkv")),
-            self.write_run("cand", dump(track("Video", "V_VP9"), name="b.mkv")),
+            self.write_run("base", dump(track("Video", "V_VP9", name="b.mkv"), name="b.mkv")),
+            self.write_run("cand", dump(track("Video", "V_VP9", name="b.mkv"), name="b.mkv")),
         )
         self.assertEqual(code, 0)
         self.assertNotIn("a.mkv:", text)
+        log = (self.root / "base" / "PlexCleaner_process.log").read_text(encoding="utf-8")
+        self.assertEqual(cr.output_tracks(log).keys(), {"b.mkv"})
 
     def test_last_read_without_tracks_fails(self) -> None:
         baseline = self.write_run("base", dump(track("Video", "V_VP9")))
