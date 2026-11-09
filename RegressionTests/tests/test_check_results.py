@@ -459,6 +459,37 @@ class LogComparisonTests(unittest.TestCase):
                 self.assertEqual(code, 1)
                 self.assertIn(f"::error::b.mkv: no track dump in the {side} run", text)
 
+    def two_results(self, name: str, b_state: str) -> Path:
+        run = self.write_run(name, dump(track("Video", "V_VP9")))
+        both = results(result("a.mkv", "Verified"), result("b.mkv", b_state))
+        run.write_text(json.dumps(both), encoding="utf-8")
+        return run
+
+    def test_result_without_dump_in_either_run_fails(self) -> None:
+        code, text = self.compare(
+            self.two_results("base", "Verified"), self.two_results("cand", "Verified")
+        )
+        self.assertEqual(code, 1)
+        for side in ("baseline", "results"):
+            with self.subTest(side=side):
+                self.assertIn(f"::error::b.mkv: no track dump in the {side} run", text)
+
+    def test_deleted_result_needs_no_dump(self) -> None:
+        code, text = self.compare(
+            self.two_results("base", "FileDeleted"), self.two_results("cand", "FileDeleted")
+        )
+        self.assertEqual(code, 0)
+        self.assertNotIn("::error::", text)
+
+    def test_shared_name_keeps_outcome_differences(self) -> None:
+        other = 'Reading media info from tools : "/Test/Media/b/a.mkv"'
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), other], "ReMuxed")
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::a.mkv: State expected ['Verified'], found ['ReMuxed']", text)
+        self.assertIn("share a name, so the track check is unverified", text)
+
     def test_last_read_without_tracks_fails(self) -> None:
         baseline = self.write_run("base", dump(track("Video", "V_VP9")))
         candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), *dump()])
