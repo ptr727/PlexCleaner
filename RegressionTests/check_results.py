@@ -155,6 +155,7 @@ def output_tracks(log: str) -> dict[str, list[str]]:
     """Return each file's output tracks, from the last MkvMerge track dump the log holds for it.
 
     A dump is logged at Debug each time PlexCleaner reads a file, so the last one describes its output.
+    Its tracks keep their logged order, so a reorder differs, and a read that logged none keeps none.
     Each file is keyed by the name its dump lines end with, without its directory, as outcomes are.
     Two paths sharing a name would mix their dumps, so that refuses.
     """
@@ -171,7 +172,7 @@ def output_tracks(log: str) -> dict[str, list[str]]:
             dumps[name] = []
         elif track := DUMP_TRACK.search(line):
             dumps.setdefault(name, []).append(track["track"])
-    return {name: sorted(tracks) for name, tracks in dumps.items() if tracks}
+    return dumps
 
 
 def track_differences(expected: dict[str, list[str]], actual: dict[str, list[str]]) -> list[str]:
@@ -241,23 +242,24 @@ def compare_logs(
     expected: dict[str, Outcome],
     actual: dict[str, Outcome],
 ) -> list[str]:
-    """Compare two runs' process logs, printing each finding, and return the track differences."""
+    """Compare two runs' process logs, printing each log finding, and return the track failures.
+
+    A track check that cannot run is a failure, so a run with no track evidence never reads as a match.
+    """
     if baseline is None or results is None:
         missing = [
             side for side, log in (("baseline", baseline), ("results", results)) if log is None
         ]
-        print(
-            f"::warning::no process log in the {' or '.join(missing)} run, so the log checks are unverified"
-        )
-        return []
+        return [
+            f"no process log in the {' or '.join(missing)} run, so the track check is unverified"
+        ]
 
     tracks = {"baseline": output_tracks(baseline), "results": output_tracks(results)}
-    found: list[str] = []
     undumped = [side for side, dumps in tracks.items() if not dumps]
     if undumped:
-        print(
-            f"::warning::no Debug track dump in the {' or '.join(undumped)} run, so the track checks are unverified"
-        )
+        found = [
+            f"no Debug track dump in the {' or '.join(undumped)} run, so the track check is unverified"
+        ]
     else:
         found = track_differences(tracks["baseline"], tracks["results"])
 

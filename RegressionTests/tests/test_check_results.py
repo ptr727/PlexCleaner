@@ -256,7 +256,7 @@ class BaselineTests(unittest.TestCase):
         candidate = self.write_run("nolog", build_info())
         (candidate.parent / "PlexCleaner_process.log").unlink()
         code, text = self.compare(candidate)
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 1)
         self.assertIn("::warning::input ToolVersions: not recorded by the results run", text)
 
     def test_missing_baseline_input_warns(self) -> None:
@@ -265,7 +265,7 @@ class BaselineTests(unittest.TestCase):
         (self.baseline.parent / "buildinfo.json").write_text(json.dumps(info), encoding="utf-8")
         (self.baseline.parent / "PlexCleaner_process.log").unlink()
         code, text = self.compare(self.write_run("current", build_info()))
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 1)
         for field in ("CorpusSnapshot", "ToolVersions"):
             with self.subTest(field=field):
                 self.assertIn(f"::warning::input {field}: not recorded by the baseline run", text)
@@ -428,16 +428,47 @@ class LogComparisonTests(unittest.TestCase):
         baseline = self.write_run("base", dump(track("Video", "V_VP9")))
         candidate = self.write_run("cand", ['Verify : "/Test/Media/a.mkv"'])
         code, text = self.compare(baseline, candidate)
-        self.assertEqual(code, 0)
-        self.assertIn("::warning::no Debug track dump in the results run", text)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::no Debug track dump in the results run", text)
 
     def test_missing_log_is_unverified(self) -> None:
         baseline = self.write_run("base", dump(track("Video", "V_VP9")))
         candidate = self.write_run("cand", dump(track("Video", "V_VP9")))
         (candidate.parent / "PlexCleaner_process.log").unlink()
         code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::no process log in the results run", text)
+
+    def test_track_reorder_fails(self) -> None:
+        aac, ac3 = track("Audio", "A_AAC"), track("Audio", "A_AC3")
+        code, text = self.compare(
+            self.write_run("base", dump(aac, ac3)), self.write_run("cand", dump(ac3, aac))
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("::error::a.mkv: tracks expected", text)
+
+    def test_last_read_without_tracks_fails(self) -> None:
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), *dump()])
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("found []", text)
+
+    def test_renamed_bitrate_warning_shift_is_noted(self) -> None:
+        state = "BitrateExceeded, ReEncoded, Verified"
+        runs = []
+        for name, peak in (("base", 5), ("cand", 6)):
+            run = self.write_run(name, dump(track("Video", "V_VP9")), state)
+            moved = results(result("a.avi", state, new_name="a.mkv"))
+            run.write_text(json.dumps(moved), encoding="utf-8")
+            warning = f'Maximum bitrate exceeded : {peak} Mbps > 4 Mbps : "/Test/Media/a.mkv"'
+            with (run.parent / "PlexCleaner_process.log").open("a", encoding="utf-8") as log:
+                log.write(log_line(warning, level="WRN") + "\n")
+            runs.append(run)
+        code, text = self.compare(*runs)
         self.assertEqual(code, 0)
-        self.assertIn("::warning::no process log in the results run", text)
+        self.assertIn("note: bitrate figures of a.mkv shifted", text)
+        self.assertNotIn("::warning::log", text)
 
     def test_log_difference_warns(self) -> None:
         baseline = self.write_run("base", [*dump(track("Video", "V_VP9")), "Warning : one"])
