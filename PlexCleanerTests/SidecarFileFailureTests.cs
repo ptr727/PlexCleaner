@@ -112,4 +112,17 @@ public sealed class SidecarFileFailureTests : IDisposable
         _ = sidecarFile.Create().Should().BeTrue();
         _ = sidecarFile.ToolInfoFailed.Should().BeFalse();
     }
+
+    [Fact]
+    public void Open_AfterFailedToolRead_WithCurrentSidecar_ClearsToolInfoFailed()
+    {
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory);
+        FakeTools.WriteScript(Tools.MediaInfo.GetToolPath(), "exit 1\n");
+        SidecarFile sidecarFile = new(mediaFile);
+        _ = sidecarFile.Create().Should().BeFalse();
+        _ = sidecarFile.ToolInfoFailed.Should().BeTrue();
+
+        _ = sidecarFile.Open().Should().BeTrue();
+        _ = sidecarFile.ToolInfoFailed.Should().BeFalse();
+    }
 }
