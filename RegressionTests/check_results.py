@@ -3,12 +3,14 @@
 Each file is keyed by its original file name, without its directory, so a run in any media path compares.
 Writing the expected file from a results file records an intended change in one step.
 With --baseline, two regression harness runs compare directly, after a warning for each input that differs.
+The two runs' process logs then compare too, for each file's output tracks and as normalized line sets.
 """
 
 import argparse
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +30,36 @@ INPUT_FIELDS = (
 )
 TOOLS = ("FfMpeg", "FfProbe", "MkvMerge", "MkvPropEdit", "MediaInfo", "HandBrake", "SevenZip")
 TOOL_VERSION = re.compile(r'> (?P<tool>\w+) : Version: "?(?P<version>[^",]*)"?, Path: ')
+QUOTED = r'"(?:[^"\\]|\\.)*"'
+QUOTED_FILE = re.compile(rf": (?P<file>{QUOTED})$")
+DUMP_START = re.compile(rf" Reading media info from tools : (?P<file>{QUOTED})$")
+DUMP_TRACK = re.compile(
+    rf"\[DBG\] <\d+> (?P<track>MkvMerge : (?:Video|Audio|Subtitle) : "
+    rf"Format: {QUOTED}, Codec: {QUOTED})"
+)
+LOG_LINE = re.compile(r"^\S+ \S+ \S+ \[\w+\] <(?P<thread>\d+)> ")
+BITRATE = re.compile(r'\[DBG\] <(?:\d+|T)> "(?:Video|Audio|Combined)" : Length: ')
+REENCODED = {"ReEncoded", "DeInterlaced"}
+NORMALIZE = tuple(
+    (re.compile(pattern), repl)
+    for pattern, repl in (
+        (r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+ [+-]\d{2}:\d{2} ", ""),
+        (r"ProcessId: \d+", "ProcessId: N"),
+        (r'/Test/Config/[^/ "]+/', "/Test/Config/VER/"),
+        (r"^\[INF\] <\d+> Application Version : .*", "[INF] Application Version : <REDACTED>"),
+        (r"^\[INF\] <\d+> Runtime Version : .*", "[INF] Runtime Version : <REDACTED>"),
+        (r"<\d+>", "<T>"),
+        (r"Uid: \d+", "Uid: U"),
+        (r"\.tmp\d+", ".tmpN"),
+        (r"0x[0-9a-fA-F]+", "0xADDR"),
+        (r" \(\d+\.\d+%\) Elapsed : [\d:.]+ : After : ", " (P%) Elapsed : E : After : "),
+        (r"Processing time : [\d:.]+$", "Processing time : E"),
+        (r"\[\d{2}:\d{2}:\d{2}\]", "[HH:MM:SS]"),
+        (r"fps= *[\d.]+", "fps=N"),
+        (r"speed= *[\d.]+x", "speed=Nx"),
+        (r"elapsed=[\d:.]+", "elapsed=E"),
+    )
+)
 
 
 def outcomes(results: dict[str, Any]) -> dict[str, Outcome]:
@@ -71,15 +103,20 @@ def tool_versions(log: str) -> dict[str, str]:
     return found
 
 
-def run_inputs(run_dir: Path) -> dict[str, Any]:
+def read_log(run_dir: Path) -> str | None:
+    """Return a run's process log text, or None when the run wrote no log."""
+    log = run_dir / PROCESS_LOG
+    return log.read_text(encoding="utf-8") if log.is_file() else None
+
+
+def run_inputs(run_dir: Path, log: str | None) -> dict[str, Any]:
     """Return a run's recorded inputs, its tool versions read from its process log.
 
     The tool versions count as recorded only when the log names a version for every tool in TOOLS.
     """
     info = run_dir / BUILD_INFO
     inputs: dict[str, Any] = json.loads(info.read_text(encoding="utf-8")) if info.is_file() else {}
-    log = run_dir / PROCESS_LOG
-    versions = tool_versions(log.read_text(encoding="utf-8")) if log.is_file() else {}
+    versions = tool_versions(log) if log is not None else {}
     if all(versions.get(tool) for tool in TOOLS):
         inputs["ToolVersions"] = versions
     return inputs
@@ -106,9 +143,130 @@ def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> tuple[lis
     return warnings, notes
 
 
+def output_tracks(log: str) -> dict[str, list[str]]:
+    """Return each file's output tracks, from the last MkvMerge track dump the log holds for it.
+
+    A dump is logged at Debug each time PlexCleaner reads a file, so the last one describes its output.
+    Each file is keyed by the quoted name its dump lines end with.
+    """
+    dumps: dict[str, list[str]] = {}
+    for line in log.splitlines():
+        if start := DUMP_START.search(line):
+            dumps[start["file"]] = []
+        elif (track := DUMP_TRACK.search(line)) and (file := QUOTED_FILE.search(line)):
+            dumps.setdefault(file["file"], []).append(track["track"])
+    return {name: sorted(tracks) for name, tracks in dumps.items() if tracks}
+
+
+def track_differences(expected: dict[str, list[str]], actual: dict[str, list[str]]) -> list[str]:
+    """Describe each file whose output tracks differ between two runs, empty when they match."""
+    found: list[str] = []
+    for name in sorted(expected.keys() | actual.keys()):
+        want, got = expected.get(name, []), actual.get(name, [])
+        if want != got:
+            found.append(f"{name}: tracks expected {want}, found {got}")
+    return found
+
+
+def normalized_lines(log: str) -> Counter[str]:
+    """Return a log's lines with the fields that differ between two runs of one build normalized.
+
+    A parallel run interleaves files differently each time, so the lines compare as a multiset.
+    A bitrate summary names no file, so it gains the media path its thread last named.
+    """
+    last_file: dict[str, str] = {}
+    found: Counter[str] = Counter()
+    for line in log.splitlines():
+        thread = LOG_LINE.match(line)
+        file = QUOTED_FILE.search(line)
+        if thread and file and file["file"].startswith('"/'):
+            last_file[thread["thread"]] = file["file"]
+        elif thread and BITRATE.search(line) and thread["thread"] in last_file:
+            line = f"{line} : {last_file[thread['thread']]}"
+        for pattern, repl in NORMALIZE:
+            line = pattern.sub(repl, line)
+        found[line] += 1
+    return found
+
+
+def bitrate_noise(expected: dict[str, Outcome], actual: dict[str, Outcome]) -> set[str]:
+    """Return the names of the re-encoded files whose outcome matches in both runs.
+
+    A re-encode is not byte-identical from run to run, so such a file's bitrate summary can shift.
+    """
+    found: set[str] = set()
+    for name in expected.keys() & actual.keys():
+        if expected[name] == actual[name] and REENCODED & set(expected[name]["State"]):
+            found |= {name, expected[name]["NewFileName"]}
+    return found
+
+
+def log_differences(
+    expected: Counter[str], actual: Counter[str], noise: set[str]
+) -> tuple[list[str], list[str]]:
+    """Describe each normalized log line one run holds more often, as differences and noise notes."""
+    found: list[str] = []
+    shifted: set[str] = set()
+    for side, lines in (("baseline", expected - actual), ("results", actual - expected)):
+        for line in sorted(lines.elements()):
+            file = QUOTED_FILE.search(line)
+            name = Path(file["file"].strip('"')).name if file else ""
+            if BITRATE.search(line) and name in noise:
+                shifted.add(name)
+            else:
+                found.append(f"{side} only: {line}")
+    notes = [
+        f"bitrate summary of {name} shifted, and its outcome matches" for name in sorted(shifted)
+    ]
+    return found, notes
+
+
+def compare_logs(
+    baseline: str | None,
+    results: str | None,
+    expected: dict[str, Outcome],
+    actual: dict[str, Outcome],
+) -> list[str]:
+    """Compare two runs' process logs, printing each finding, and return the track differences."""
+    if baseline is None or results is None:
+        missing = [
+            side for side, log in (("baseline", baseline), ("results", results)) if log is None
+        ]
+        print(
+            f"::warning::no process log in the {' or '.join(missing)} run, so the log checks are unverified"
+        )
+        return []
+
+    tracks = {"baseline": output_tracks(baseline), "results": output_tracks(results)}
+    found: list[str] = []
+    undumped = [side for side, dumps in tracks.items() if not dumps]
+    if undumped:
+        print(
+            f"::warning::no Debug track dump in the {' or '.join(undumped)} run, so the track checks are unverified"
+        )
+    else:
+        found = track_differences(tracks["baseline"], tracks["results"])
+
+    lines, notes = log_differences(
+        normalized_lines(baseline), normalized_lines(results), bitrate_noise(expected, actual)
+    )
+    for line in notes:
+        print(f"note: {line}")
+    for line in lines:
+        print(f"::warning::log {line}")
+    if lines:
+        print(
+            f"{len(lines)} normalized log lines differ, so judge each against the change under test"
+        )
+    return found
+
+
 def compare_runs(baseline: Path, results: Path) -> int:
     """Compare a results file against a baseline run's, warning first of each input that differs."""
-    warnings, notes = input_checks(run_inputs(baseline.parent), run_inputs(results.parent))
+    baseline_log, results_log = read_log(baseline.parent), read_log(results.parent)
+    warnings, notes = input_checks(
+        run_inputs(baseline.parent, baseline_log), run_inputs(results.parent, results_log)
+    )
     for line in notes:
         print(f"note: {line}")
     for line in warnings:
@@ -119,6 +277,7 @@ def compare_runs(baseline: Path, results: Path) -> int:
     expected = outcomes(json.loads(baseline.read_text(encoding="utf-8")))
     actual = outcomes(json.loads(results.read_text(encoding="utf-8")))
     found = differences(expected, actual)
+    found += compare_logs(baseline_log, results_log, expected, actual)
     for line in found:
         print(f"::error::{line}")
     if found:
