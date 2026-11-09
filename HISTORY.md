@@ -16,11 +16,12 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - A file whose video mostly fails to decode skips interlace detection with a warning, instead of failing at the interlace scan.
     - When a repair or a video re-encode then rewrites the file, the file is scanned again and deinterlaced if it is interlaced. A file whose scan fails, or is skipped again, is kept and marked `ProcessFailed` rather than `Verified`.
   - With `DeInterlace` on, each interlace scan logs its verdict and idet frame counts at Information level, so processing a collection surveys its field orders.
+  - With `SidecarUpdateOnToolChange` on, a new FFprobe, MkvMerge, or MediaInfo version verifies only the files that failed again. It clears `VerifyFailed`, `RepairFailed`, and `ProcessFailed`, and keeps `Verified` and the scan states. Recreate a sidecar with `createsidecar` to verify a verified file again.
   - `DeleteInvalidFiles` and `RegisterInvalidFiles` act only on media judged invalid in the current run, and setting both fails configuration validation.
     - Media is judged invalid when verify or repair fails, the media tools cannot read the file, or neither MkvMerge nor FFmpeg can remux it.
     - A file that fails any other way is kept, such as one with no video track or one a tool fails to write.
     - A file an earlier version marked `VerifyFailed` is kept too.
-    - A failed MKV file that is not deleted or registered is marked `ProcessFailed` in its sidecar. Later runs skip it until the media file changes. With `SidecarUpdateOnToolChange` on, a new FFprobe, MkvMerge, or MediaInfo version also releases it. Run `createsidecar` on a file to process it again.
+    - A failed MKV file that is not deleted or registered is marked `ProcessFailed` in its sidecar. Later runs skip it until the media file changes. With `SidecarUpdateOnToolChange` on, a new FFprobe, MkvMerge, or MediaInfo version also releases it. That release clears its `VerifyFailed` and `RepairFailed` states too, so the new tools verify it again. Run `createsidecar` on a file to process it again.
     - The next run retries a file when a cancel or a tool failure left the run unproven. It also retries one whose rename target holds another file, or that the media tools cannot read.
     - The results file records why each file was judged invalid, and `RegisterInvalidFiles` adds only those files to the `FileIgnoreList`.
 - Version 3.23:

@@ -168,14 +168,11 @@ public class SidecarFile
         {
             current = false;
             const StatesType toolStates =
-                StatesType.Verified
-                | StatesType.ScannedInterlace
-                | StatesType.ScannedCaptions
-                | StatesType.ProcessFailed;
+                StatesType.VerifyFailed | StatesType.RepairFailed | StatesType.ProcessFailed;
             if ((State & toolStates) != 0)
             {
                 Log.Warning(
-                    "Sidecar out of sync with tools, clearing Verified, Scanned and ProcessFailed flags : {FileName}",
+                    "Sidecar out of sync with tools, clearing VerifyFailed, RepairFailed and ProcessFailed flags : {FileName}",
                     _sidecarFileInfo.FullName
                 );
                 State &= ~toolStates;

@@ -104,24 +104,34 @@ public sealed class ToolChangeSenseTests : IDisposable
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Read_ToolChange_ClearsProcessFailedOnlyWithSidecarUpdateOnToolChange(
+    public void Read_ToolChange_ClearsFailureStatesOnlyWithSidecarUpdateOnToolChange(
         bool updateOnToolChange
     )
     {
         Program.Config.ProcessOptions.SidecarUpdateOnToolChange = updateOnToolChange;
         string mediaFile = FakeTools.CopyUnverifiedSample(
             _directory,
-            SidecarFile.StatesType.Repaired | SidecarFile.StatesType.ProcessFailed
+            SidecarFile.StatesType.Repaired
+                | SidecarFile.StatesType.VerifyFailed
+                | SidecarFile.StatesType.RepairFailed
+                | SidecarFile.StatesType.ProcessFailed
         );
         Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
 
         SidecarFile sidecarFile = new(mediaFile);
         _ = sidecarFile.Read(out _).Should().BeTrue();
 
-        _ = sidecarFile
-            .State.HasFlag(SidecarFile.StatesType.ProcessFailed)
-            .Should()
-            .Be(!updateOnToolChange);
+        foreach (
+            SidecarFile.StatesType state in new[]
+            {
+                SidecarFile.StatesType.VerifyFailed,
+                SidecarFile.StatesType.RepairFailed,
+                SidecarFile.StatesType.ProcessFailed,
+            }
+        )
+        {
+            _ = sidecarFile.State.HasFlag(state).Should().Be(!updateOnToolChange);
+        }
         _ = sidecarFile.State.Should().HaveFlag(SidecarFile.StatesType.Repaired);
     }
 

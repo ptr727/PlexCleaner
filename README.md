@@ -31,6 +31,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
 - Removed code that nothing called, as the first step toward broader test coverage, with no change in processing behavior.
 - Documented how to measure code coverage locally and in the Docker image.
 - Added a CI integration test that runs the Docker image's test commands over synthetic media and checks each file's processing result.
+- With `SidecarUpdateOnToolChange` on, a media tool update verifies only the files that failed again, and keeps the `Verified` and scan states of the rest.
 - `DeleteInvalidFiles` and `RegisterInvalidFiles` act only on media judged invalid in the current run, and setting both fails configuration validation.
 - With `UseSidecarFiles` on, a failed MKV file that is not deleted or registered is marked `ProcessFailed` in its sidecar. Later runs skip it until the media file changes. The next run retries an unmarked file. A cancel, a tool run that ends without a result, or a file the media tools cannot read leaves it unmarked. Run `createsidecar` on a marked file to process it again. With `SidecarUpdateOnToolChange` on, a new FFprobe, MkvMerge, or MediaInfo version also releases it.
 - A file whose video mostly fails to decode skips interlace detection with a warning, instead of failing at the interlace scan.
