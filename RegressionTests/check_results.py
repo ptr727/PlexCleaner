@@ -14,7 +14,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from corpus_common import BEFORE_RE, LINE_RE, state_flags
+from corpus_common import BEFORE_RE, LINE_FILE_RE, LINE_RE, state_flags
 
 Outcome = dict[str, Any]
 
@@ -31,14 +31,17 @@ INPUT_FIELDS = (
 TOOLS = ("FfMpeg", "FfProbe", "MkvMerge", "MkvPropEdit", "MediaInfo", "HandBrake", "SevenZip")
 TOOL_VERSION = re.compile(r'> (?P<tool>\w+) : Version: "?(?P<version>[^",]*)"?, Path: ')
 QUOTED = r'"(?:[^"\\]|\\.)*"'
-QUOTED_FILE = re.compile(rf": (?P<file>{QUOTED})$")
-DUMP_START = re.compile(rf" Reading media info from tools : (?P<file>{QUOTED})$")
+DUMP_START = " Reading media info from tools : "
 DUMP_TRACK = re.compile(
     rf"\[DBG\] <\d+> (?P<track>MkvMerge : (?:Video|Audio|Subtitle) : "
     rf"Format: {QUOTED}, Codec: {QUOTED})"
 )
-BITRATE = re.compile(r'\[DBG\] <(?:\d+|T)> "(?:Video|Audio|Combined)" : Length: ')
-REENCODED = {"ReEncoded", "DeInterlaced"}
+BITRATE_SUMMARY = re.compile(r'\[DBG\] <(?:\d+|T)> "(?:Video|Audio|Combined)" : Length: ')
+BITRATE = re.compile(
+    rf"{BITRATE_SUMMARY.pattern}|\[WRN\] <(?:\d+|T)> "
+    r"(?:Maximum bitrate exceeded|Audio bitrate exceeds Video bitrate) : "
+)
+REENCODED = {"ReEncoded", "DeInterlaced", "Repaired"}
 NORMALIZE = tuple(
     (re.compile(pattern), repl)
     for pattern, repl in (
@@ -49,7 +52,7 @@ NORMALIZE = tuple(
         (r"^\[INF\] <\d+> Runtime Version : .*", "[INF] Runtime Version : <REDACTED>"),
         (r"<\d+>", "<T>"),
         (r"Uid: \d+", "Uid: U"),
-        (r"0x[0-9a-fA-F]+", "0xADDR"),
+        (r"\b0x[0-9a-fA-F]+", "0xADDR"),
         (r" \(\d+\.\d+%\) ", " (P%) "),
         (r" Elapsed : [\d:.]+ : After : ", " Elapsed : E : After : "),
         (r"Processing time : [\d:.]+$", "Processing time : E"),
@@ -142,9 +145,10 @@ def input_checks(baseline: dict[str, Any], results: dict[str, Any]) -> tuple[lis
     return warnings, notes
 
 
-def quoted_name(quoted: str) -> str:
-    """Return the file name, without its directory, of a quoted path a log line ends with."""
-    return Path(quoted[1:-1]).name
+def line_name(line: str) -> str | None:
+    """Return the file name, without its directory, of the quoted path a log line ends with."""
+    file = LINE_FILE_RE.search(line)
+    return Path(file[1]).name if file else None
 
 
 def output_tracks(log: str) -> dict[str, list[str]]:
@@ -152,13 +156,21 @@ def output_tracks(log: str) -> dict[str, list[str]]:
 
     A dump is logged at Debug each time PlexCleaner reads a file, so the last one describes its output.
     Each file is keyed by the name its dump lines end with, without its directory, as outcomes are.
+    Two paths sharing a name would mix their dumps, so that refuses.
     """
     dumps: dict[str, list[str]] = {}
+    paths: dict[str, str] = {}
     for line in log.splitlines():
-        if start := DUMP_START.search(line):
-            dumps[quoted_name(start["file"])] = []
-        elif (track := DUMP_TRACK.search(line)) and (file := QUOTED_FILE.search(line)):
-            dumps.setdefault(quoted_name(file["file"]), []).append(track["track"])
+        file = LINE_FILE_RE.search(line)
+        if file is None:
+            continue
+        name = Path(file[1]).name
+        if DUMP_START in line:
+            if paths.setdefault(name, file[1]) != file[1]:
+                raise ValueError(f"track dumps for {paths[name]} and {file[1]} share a name")
+            dumps[name] = []
+        elif track := DUMP_TRACK.search(line):
+            dumps.setdefault(name, []).append(track["track"])
     return {name: sorted(tracks) for name, tracks in dumps.items() if tracks}
 
 
@@ -184,7 +196,7 @@ def normalized_lines(log: str) -> Counter[str]:
         if thread := LINE_RE.match(line):
             if before := BEFORE_RE.search(thread[2]):
                 thread_file[thread[1]] = Path(before[1]).name
-            elif BITRATE.search(line) and thread[1] in thread_file:
+            elif BITRATE_SUMMARY.search(line) and thread[1] in thread_file:
                 line = f'{line} : "{thread_file[thread[1]]}"'
         for pattern, repl in NORMALIZE:
             line = pattern.sub(repl, line)
@@ -212,14 +224,13 @@ def log_differences(
     shifted: set[str] = set()
     for side, lines in (("baseline", expected - actual), ("results", actual - expected)):
         for line in sorted(lines.elements()):
-            file = QUOTED_FILE.search(line)
-            name = quoted_name(file["file"]) if file else ""
-            if BITRATE.search(line) and name in noise:
+            name = line_name(line)
+            if name is not None and name in noise and BITRATE.search(line):
                 shifted.add(name)
             else:
                 found.append(f"{side} only: {line}")
     notes = [
-        f"bitrate summary of {name} shifted, and its outcome matches" for name in sorted(shifted)
+        f"bitrate figures of {name} shifted, and its outcome matches" for name in sorted(shifted)
     ]
     return found, notes
 

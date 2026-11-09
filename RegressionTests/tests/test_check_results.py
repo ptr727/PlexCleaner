@@ -462,7 +462,7 @@ class LogComparisonTests(unittest.TestCase):
     def test_reencoded_bitrate_shift_is_noted(self) -> None:
         code, text = self.bitrate_runs("DeInterlaced, Verified")
         self.assertEqual(code, 0)
-        self.assertIn("note: bitrate summary of a.mkv shifted, and its outcome matches", text)
+        self.assertIn("note: bitrate figures of a.mkv shifted, and its outcome matches", text)
         self.assertNotIn("::warning::log", text)
 
     def test_bitrate_shift_without_reencode_warns(self) -> None:
@@ -474,6 +474,35 @@ class LogComparisonTests(unittest.TestCase):
         code, text = self.bitrate_runs("DeInterlaced, Verified", "ReEncoded, Verified")
         self.assertEqual(code, 1)
         self.assertIn('::warning::log results only: [DBG] <T> "Video" : Length:', text)
+
+    def test_repaired_bitrate_shift_is_noted(self) -> None:
+        code, text = self.bitrate_runs("Repaired, Verified")
+        self.assertEqual(code, 0)
+        self.assertIn("note: bitrate figures of a.mkv shifted", text)
+
+    def test_bitrate_warning_shift_is_noted(self) -> None:
+        state = "BitrateExceeded, ReEncoded, Verified"
+        runs = []
+        for name, peak in (("base", 5), ("cand", 6)):
+            run = self.write_run(name, dump(track("Video", "V_MPEG4/ISO/AVC")), state)
+            warning = f'Maximum bitrate exceeded : {peak} Mbps > 4 Mbps : "/Test/Media/a.mkv"'
+            with (run.parent / "PlexCleaner_process.log").open("a", encoding="utf-8") as log:
+                log.write(log_line(warning, level="WRN") + "\n")
+            runs.append(run)
+        code, text = self.compare(*runs)
+        self.assertEqual(code, 0)
+        self.assertIn("note: bitrate figures of a.mkv shifted", text)
+        self.assertNotIn("::warning::log", text)
+
+    def test_resolution_not_read_as_address(self) -> None:
+        lines = cr.normalized_lines(log_line('Size : 720x480 at 0x7ffd : "/Test/Media/a.mkv"'))
+        self.assertIn('[DBG] <T> Size : 720x480 at 0xADDR : "/Test/Media/a.mkv"', lines)
+
+    def test_shared_name_refused(self) -> None:
+        other = 'Reading media info from tools : "/Test/Media/b/a.mkv"'
+        texts = [*dump(track("Video", "V_VP9")), other]
+        with self.assertRaises(ValueError):
+            cr.output_tracks("\n".join(log_line(text) for text in texts))
 
 
 if __name__ == "__main__":
