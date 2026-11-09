@@ -115,6 +115,8 @@ public sealed class ToolChangeSenseTests : IDisposable
                 | SidecarFile.StatesType.VerifyFailed
                 | SidecarFile.StatesType.RepairFailed
                 | SidecarFile.StatesType.PostDecodeTimestamps
+                | SidecarFile.StatesType.ScannedInterlace
+                | SidecarFile.StatesType.ScannedCaptions
                 | SidecarFile.StatesType.ProcessFailed
         );
         Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
@@ -128,6 +130,8 @@ public sealed class ToolChangeSenseTests : IDisposable
                 SidecarFile.StatesType.VerifyFailed,
                 SidecarFile.StatesType.RepairFailed,
                 SidecarFile.StatesType.PostDecodeTimestamps,
+                SidecarFile.StatesType.ScannedInterlace,
+                SidecarFile.StatesType.ScannedCaptions,
                 SidecarFile.StatesType.ProcessFailed,
             }
         )

@@ -416,7 +416,7 @@ flowchart TD
   M1 -->|no| M2["State becomes FileModified, all other flags reset"]
   M1 -->|yes| T1
   M2 --> T1{"SidecarUpdateOnToolChange on and IsToolsCurrent() false?"}
-  T1 -->|yes| T2["Clear VerifyFailed, RepairFailed, PostDecodeTimestamps and ProcessFailed"]
+  T1 -->|yes| T2["On a failed file, clear VerifyFailed, RepairFailed, PostDecodeTimestamps, ProcessFailed and the scan flags"]
   T1 -->|no| SD
   T2 --> SD["SidecarFile.Open(): add back the flags the state held before the read"]
   SD --> T3{"Media changed, or the tool change above applied?"}
@@ -892,7 +892,7 @@ The table lists the `StatesType` flags each step sets, and the flags it clears. 
 | `RepairDefaultFlags()` | `ClearedDefaultFlags` | |
 | `ReEncode()` | `ReEncoded`, `ReMuxed` | `SidecarFile.VerifyStates` |
 | `VerifyAndRepair()` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` | `Verified`, `VerifyFailed`, `Repaired`, `RepairFailed`, `PostDecodeTimestamps`, `BitrateExceeded` |
-| `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed, `VerifyFailed`, `RepairFailed`, `PostDecodeTimestamps` and `ProcessFailed` on a tool change with `SidecarUpdateOnToolChange` on |
+| `SidecarFile.Read()` | `FileModified` when the media changed | every other flag when the media changed. On a tool change with `SidecarUpdateOnToolChange` on, a failed file's failure and scan flags |
 
 ### Suspect Branches
 

@@ -175,10 +175,10 @@ public class SidecarFile
             if ((State & toolStates) != 0)
             {
                 Log.Warning(
-                    "Sidecar out of sync with tools, clearing VerifyFailed, RepairFailed, PostDecodeTimestamps and ProcessFailed flags : {FileName}",
+                    "Sidecar out of sync with tools, clearing failure and scan flags to retry : {FileName}",
                     _sidecarFileInfo.FullName
                 );
-                State &= ~toolStates;
+                State &= ~(toolStates | StatesType.ScannedInterlace | StatesType.ScannedCaptions);
             }
         }
 
