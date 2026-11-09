@@ -119,7 +119,7 @@ class MainTests(unittest.TestCase):
         self.assertNotEqual(raised.exception.code, 0)
 
 
-LOG = """\
+TOOLS_LOG = """\
 2026-01-01 00:00:00.000 +00:00 [INF] <1> FfMpeg : Version: "{ffmpeg}", Path: "ffmpeg"
 2026-01-01 00:00:00.000 +00:00 [INF] <1> FfProbe : Version: "{ffmpeg}", Path: "ffprobe"
 2026-01-01 00:00:00.000 +00:00 [INF] <1> MkvMerge : Version: "1.0", Path: "mkvmerge"
@@ -128,6 +128,13 @@ LOG = """\
 2026-01-01 00:00:00.000 +00:00 [INF] <1> HandBrake : Version: "3.0", Path: "HandBrakeCLI"
 2026-01-01 00:00:00.000 +00:00 [INF] <1> SevenZip : Version: "4.0", Path: "7z"
 """
+LOG = TOOLS_LOG + "".join(
+    f"2026-01-01 00:00:01.000 +00:00 [DBG] <2> {text}\n"
+    for text in (
+        'Reading media info from tools : "/Test/Media/a.mkv"',
+        'MkvMerge : Video : Format: "AVC", Codec: "V_MPEG4/ISO/AVC", Uid: 1 : "/Test/Media/a.mkv"',
+    )
+)
 
 
 def build_info(**overrides: Any) -> dict[str, Any]:
@@ -249,7 +256,7 @@ class BaselineTests(unittest.TestCase):
         candidate = self.write_run("nolog", build_info())
         (candidate.parent / "PlexCleaner_process.log").unlink()
         code, text = self.compare(candidate)
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 1)
         self.assertIn("::warning::input ToolVersions: not recorded by the results run", text)
 
     def test_missing_baseline_input_warns(self) -> None:
@@ -258,7 +265,7 @@ class BaselineTests(unittest.TestCase):
         (self.baseline.parent / "buildinfo.json").write_text(json.dumps(info), encoding="utf-8")
         (self.baseline.parent / "PlexCleaner_process.log").unlink()
         code, text = self.compare(self.write_run("current", build_info()))
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 1)
         for field in ("CorpusSnapshot", "ToolVersions"):
             with self.subTest(field=field):
                 self.assertIn(f"::warning::input {field}: not recorded by the baseline run", text)
@@ -285,6 +292,284 @@ class BaselineTests(unittest.TestCase):
         with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as raised:
             cr.main(["--baseline", str(self.baseline), "--results", str(candidate), "--write"])
         self.assertNotEqual(raised.exception.code, 0)
+
+
+def log_line(text: str, thread: int = 2, level: str = "DBG", second: int = 0) -> str:
+    return f"2026-01-01 00:00:{second:02d}.123 -07:00 [{level}] <{thread}> {text}"
+
+
+def track(kind: str, codec: str, uid: int = 1, name: str = "a.mkv") -> str:
+    return (
+        f'MkvMerge : {kind} : Format: "F", Codec: "{codec}", Language: "eng", '
+        f'Uid: {uid}, Container: "Matroska" : "/Test/Media/{name}"'
+    )
+
+
+def dump(*tracks: str, name: str = "a.mkv") -> list[str]:
+    return [f'Reading media info from tools : "/Test/Media/{name}"', *tracks]
+
+
+class OutputTracksTests(unittest.TestCase):
+    def test_last_dump_wins(self) -> None:
+        texts = [
+            *dump(track("Video", "V_MPEG2"), track("Audio", "A_AC3")),
+            *dump(track("Video", "V_MPEG4/ISO/AVC")),
+        ]
+        log = "\n".join(log_line(text) for text in texts)
+        self.assertEqual(
+            cr.output_tracks(log),
+            {"a.mkv": ['MkvMerge : Video : Format: "F", Codec: "V_MPEG4/ISO/AVC"']},
+        )
+
+    def test_escaped_quote_in_format(self) -> None:
+        text = 'MkvMerge : Audio : Format: "AC-3 \\"Dolby\\"", Codec: "A_AC3" : "/Test/Media/a.mkv"'
+        log = "\n".join(log_line(text) for text in [*dump(), text])
+        self.assertEqual(
+            cr.output_tracks(log),
+            {"a.mkv": ['MkvMerge : Audio : Format: "AC-3 \\"Dolby\\"", Codec: "A_AC3"']},
+        )
+
+    def test_selection_and_information_lines_skipped(self) -> None:
+        log = "\n".join(
+            [
+                log_line(f'"Keep" : {track("Video", "V_VP9")}', level="INF"),
+                log_line(track("Video", "V_VP9"), level="INF"),
+            ]
+        )
+        self.assertEqual(cr.output_tracks(log), {})
+
+
+class NormalizedLinesTests(unittest.TestCase):
+    def test_run_noise_normalized(self) -> None:
+        def run(n: int) -> str:
+            banner = [f"Application Version : 3.24.{n}", f"Runtime Version : .NET 10.0.{n}"]
+            texts = [
+                f"Settings : /Test/Config/3.24.{n}/PlexCleaner.json, ProcessId: {100 + n}",
+                f'ProcessFiles ({n}.25%) Before : "/Test/Media/a.mkv"',
+                f"{track('Video', 'V_VP9', uid=n)}",
+                f"Exception at 0x7ff{n}a0 : [12:00:0{n}] fps= {n}.5 speed={n}.2x elapsed=0:00:0{n}.10",
+                f'Process ({n}.50%) Elapsed : 00:00:0{n}.1 : After : "/Test/Media/a.mkv"',
+                f"Processing time : 00:0{n}:00.5",
+            ]
+            lines = [log_line(text, thread=n, level="INF", second=n) for text in banner]
+            lines += [log_line(text, thread=n, second=n) for text in texts]
+            return "\n".join(lines)
+
+        self.assertEqual(cr.normalized_lines(run(1)), cr.normalized_lines(run(2)))
+
+    def test_order_ignored_and_change_kept(self) -> None:
+        first = [log_line('ReMux : "/Test/Media/a.mkv"'), log_line('Verify : "/Test/Media/b.mkv"')]
+        self.assertEqual(
+            cr.normalized_lines("\n".join(first)), cr.normalized_lines("\n".join(reversed(first)))
+        )
+        changed = [first[0], log_line('ReEncode : "/Test/Media/b.mkv"')]
+        self.assertNotEqual(
+            cr.normalized_lines("\n".join(first)), cr.normalized_lines("\n".join(changed))
+        )
+
+    def test_bitrate_summary_gains_thread_file(self) -> None:
+        log = "\n".join(
+            [
+                log_line('ProcessFiles (0.00%) Before : "/Test/Media/a.mkv"', thread=3),
+                log_line('ProcessFiles (50.00%) Before : "/Test/Media/b.mkv"', thread=4),
+                log_line('Verify : "/Test/Media/b.mkv"', thread=3),
+                log_line('"Video" : Length: 00:00:10, Minimum: 1 Mbps', thread=3),
+            ]
+        )
+        self.assertIn(
+            '[DBG] <T> "Video" : Length: 00:00:10, Minimum: 1 Mbps : "a.mkv"',
+            cr.normalized_lines(log),
+        )
+
+
+class LogComparisonTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._dir.cleanup)
+        self.root = Path(self._dir.name)
+
+    def write_run(self, name: str, texts: list[str], state: str = "Verified") -> Path:
+        run = self.root / name
+        run.mkdir()
+        (run / "buildinfo.json").write_text(json.dumps(build_info()), encoding="utf-8")
+        log = TOOLS_LOG.format(ffmpeg="8.1") + "\n".join(log_line(text) for text in texts) + "\n"
+        (run / "PlexCleaner_process.log").write_text(log, encoding="utf-8")
+        found = run / "Results_process.json"
+        found.write_text(json.dumps(results(result("a.mkv", state))), encoding="utf-8")
+        return found
+
+    def compare(self, baseline: Path, candidate: Path) -> tuple[int, str]:
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = cr.main(["--baseline", str(baseline), "--results", str(candidate)])
+        return code, out.getvalue() + err.getvalue()
+
+    def test_codec_difference_fails(self) -> None:
+        baseline = self.write_run("base", dump(track("Video", "V_MPEG2")))
+        candidate = self.write_run("cand", dump(track("Video", "V_MPEG4/ISO/AVC")))
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::a.mkv: tracks expected", text)
+
+    def test_tracks_compare_by_file_name(self) -> None:
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        moved = [text.replace("/Media/", "/Media/full/") for text in dump(track("Video", "V_VP9"))]
+        code, text = self.compare(baseline, self.write_run("cand", moved))
+        self.assertEqual(code, 0)
+        self.assertNotIn("tracks expected", text)
+
+    def test_track_missing_on_one_side_fails(self) -> None:
+        baseline = self.write_run("base", dump(track("Video", "V_VP9"), track("Audio", "A_AC3")))
+        candidate = self.write_run("cand", dump(track("Video", "V_VP9")))
+        code, _ = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+
+    def test_side_without_dump_is_unverified(self) -> None:
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        candidate = self.write_run("cand", ['Verify : "/Test/Media/a.mkv"'])
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::no Debug track dump in the results run", text)
+
+    def test_missing_log_is_unverified(self) -> None:
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        candidate = self.write_run("cand", dump(track("Video", "V_VP9")))
+        (candidate.parent / "PlexCleaner_process.log").unlink()
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::no process log in the results run", text)
+
+    def test_track_reorder_fails(self) -> None:
+        aac, ac3 = track("Audio", "A_AAC"), track("Audio", "A_AC3")
+        code, text = self.compare(
+            self.write_run("base", dump(aac, ac3)), self.write_run("cand", dump(ac3, aac))
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("::error::a.mkv: tracks expected", text)
+
+    def test_dump_on_one_side_only_fails(self) -> None:
+        one = dump(track("Video", "V_VP9"))
+        both = [*one, *dump(name="b.mkv")]
+        for side, baseline, candidate in (("results", both, one), ("baseline", one, both)):
+            with self.subTest(side=side):
+                code, text = self.compare(
+                    self.write_run(f"base-{side}", baseline),
+                    self.write_run(f"cand-{side}", candidate),
+                )
+                self.assertEqual(code, 1)
+                self.assertIn(f"::error::b.mkv: no track dump in the {side} run", text)
+
+    def test_shared_name_keeps_outcome_differences(self) -> None:
+        other = 'Reading media info from tools : "/Test/Media/b/a.mkv"'
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), other], "ReMuxed")
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::a.mkv: State expected ['Verified'], found ['ReMuxed']", text)
+        self.assertIn(
+            "::error::track dumps for /Test/Media/a.mkv and /Test/Media/b/a.mkv share a name"
+            " in the results run, so the track check is unverified\n",
+            text,
+        )
+        self.assertIn(f"::warning::log results only: [DBG] <T> {other}", text)
+
+    def test_result_no_run_dumped_compares_only_its_outcome(self) -> None:
+        code, text = self.compare(
+            self.write_run("base", dump(track("Video", "V_VP9", name="b.mkv"), name="b.mkv")),
+            self.write_run("cand", dump(track("Video", "V_VP9", name="b.mkv"), name="b.mkv")),
+        )
+        self.assertEqual(code, 0)
+        self.assertNotIn("a.mkv:", text)
+        log = (self.root / "base" / "PlexCleaner_process.log").read_text(encoding="utf-8")
+        self.assertEqual(cr.output_tracks(log).keys(), {"b.mkv"})
+
+    def test_last_read_without_tracks_fails(self) -> None:
+        baseline = self.write_run("base", dump(track("Video", "V_VP9")))
+        candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), *dump()])
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 1)
+        self.assertIn("found []", text)
+
+    def test_renamed_bitrate_warning_shift_is_noted(self) -> None:
+        state = "BitrateExceeded, ReEncoded, Verified"
+        runs = []
+        for name, peak in (("base", 5), ("cand", 6)):
+            run = self.write_run(name, dump(track("Video", "V_VP9")), state)
+            moved = results(result("a.avi", state, new_name="a.mkv"))
+            run.write_text(json.dumps(moved), encoding="utf-8")
+            warning = f'Maximum bitrate exceeded : {peak} Mbps > 4 Mbps : "/Test/Media/a.mkv"'
+            with (run.parent / "PlexCleaner_process.log").open("a", encoding="utf-8") as log:
+                log.write(log_line(warning, level="WRN") + "\n")
+            runs.append(run)
+        code, text = self.compare(*runs)
+        self.assertEqual(code, 0)
+        self.assertIn("note: bitrate figures of a.mkv shifted", text)
+        self.assertNotIn("::warning::log", text)
+
+    def test_log_difference_warns(self) -> None:
+        baseline = self.write_run("base", [*dump(track("Video", "V_VP9")), "Warning : one"])
+        candidate = self.write_run("cand", [*dump(track("Video", "V_VP9")), "Warning : two"])
+        code, text = self.compare(baseline, candidate)
+        self.assertEqual(code, 0)
+        self.assertIn("::warning::log baseline only: [DBG] <T> Warning : one", text)
+        self.assertIn("::warning::log results only: [DBG] <T> Warning : two", text)
+
+    def bitrate_runs(self, state: str, candidate_state: str = "") -> tuple[int, str]:
+        def texts(peak: int) -> list[str]:
+            return [
+                'ProcessFiles (0.00%) Before : "/Test/Media/a.mkv"',
+                *dump(track("Video", "V_MPEG4/ISO/AVC")),
+                f'"Video" : Length: 00:00:10, Minimum: 1 Mbps, Maximum: {peak} Mbps',
+            ]
+
+        baseline = self.write_run("base", texts(5), state)
+        candidate = self.write_run("cand", texts(6), candidate_state or state)
+        return self.compare(baseline, candidate)
+
+    def test_reencoded_bitrate_shift_is_noted(self) -> None:
+        code, text = self.bitrate_runs("DeInterlaced, Verified")
+        self.assertEqual(code, 0)
+        self.assertIn("note: bitrate figures of a.mkv shifted, and its outcome matches", text)
+        self.assertNotIn("::warning::log", text)
+
+    def test_bitrate_shift_without_reencode_warns(self) -> None:
+        code, text = self.bitrate_runs("ReMuxed, Verified")
+        self.assertEqual(code, 0)
+        self.assertIn('::warning::log baseline only: [DBG] <T> "Video" : Length:', text)
+
+    def test_bitrate_shift_with_changed_outcome_warns(self) -> None:
+        code, text = self.bitrate_runs("DeInterlaced, Verified", "ReEncoded, Verified")
+        self.assertEqual(code, 1)
+        self.assertIn('::warning::log results only: [DBG] <T> "Video" : Length:', text)
+
+    def test_repaired_bitrate_shift_is_noted(self) -> None:
+        code, text = self.bitrate_runs("Repaired, Verified")
+        self.assertEqual(code, 0)
+        self.assertIn("note: bitrate figures of a.mkv shifted", text)
+
+    def test_bitrate_warning_shift_is_noted(self) -> None:
+        state = "BitrateExceeded, ReEncoded, Verified"
+        runs = []
+        for name, peak in (("base", 5), ("cand", 6)):
+            run = self.write_run(name, dump(track("Video", "V_MPEG4/ISO/AVC")), state)
+            warning = f'Maximum bitrate exceeded : {peak} Mbps > 4 Mbps : "/Test/Media/a.mkv"'
+            with (run.parent / "PlexCleaner_process.log").open("a", encoding="utf-8") as log:
+                log.write(log_line(warning, level="WRN") + "\n")
+            runs.append(run)
+        code, text = self.compare(*runs)
+        self.assertEqual(code, 0)
+        self.assertIn("note: bitrate figures of a.mkv shifted", text)
+        self.assertNotIn("::warning::log", text)
+
+    def test_resolution_not_read_as_address(self) -> None:
+        lines = cr.normalized_lines(log_line('Size : 720x480 at 0x7ffd : "/Test/Media/a.mkv"'))
+        self.assertIn('[DBG] <T> Size : 720x480 at 0xADDR : "/Test/Media/a.mkv"', lines)
+
+    def test_shared_name_refused(self) -> None:
+        other = 'Reading media info from tools : "/Test/Media/b/a.mkv"'
+        texts = [*dump(track("Video", "V_VP9")), other]
+        with self.assertRaises(ValueError):
+            cr.output_tracks("\n".join(log_line(text) for text in texts))
 
 
 if __name__ == "__main__":
