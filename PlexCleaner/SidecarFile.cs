@@ -536,6 +536,7 @@ public class SidecarFile
     private bool GetToolInfo()
     {
         Log.Debug("Reading media info from tools : {FileName}", _mediaFileInfo.FullName);
+        ToolInfoFailed = false;
 
         // Read the tool data text
         if (
