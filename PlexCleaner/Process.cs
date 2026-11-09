@@ -18,7 +18,8 @@ public static class Process
         out bool ignored,
         out SidecarFile.StatesType state,
         out string processName,
-        out string? failedOperation
+        out string? failedOperation,
+        out string? invalidReason
     )
     {
         // Init
@@ -27,6 +28,7 @@ public static class Process
         state = SidecarFile.StatesType.None;
         processName = fileName;
         failedOperation = null;
+        invalidReason = null;
         ProcessFile? processFile = null;
         bool result;
         bool skipped = false;
@@ -152,7 +154,7 @@ public static class Process
 
                 // Read the media info
                 operation = nameof(processFile.GetMediaProps);
-                if (!processFile.GetMediaProps() || Program.IsCancelled())
+                if (!processFile.GetMediaProps(true) || Program.IsCancelled())
                 {
                     // Error
                     result = false;
@@ -330,6 +332,12 @@ public static class Process
                 // Split so the reported operation names the actual failing step
                 if (modified)
                 {
+                    operation = nameof(processFile.DeInterlaceAfterRepair);
+                    if (!processFile.DeInterlaceAfterRepair(ref modified) || Program.IsCancelled())
+                    {
+                        result = false;
+                        break;
+                    }
                     operation = nameof(processFile.RemoveCoverArt);
                     if (!processFile.RemoveCoverArt(ref modified) || Program.IsCancelled())
                     {
@@ -433,11 +441,11 @@ public static class Process
         // Update state if we opened a file for processing
         if (processFile != null)
         {
-            // Delete files that failed processing
-            // Conditional on DeleteInvalidFiles
+            // Delete, register, or mark a failed file so it is not processed again
             if (!result && !skipped)
             {
-                _ = processFile.DeleteFailedFile(operation ?? nameof(ProcessFile));
+                _ = processFile.HandleFailedFile(operation ?? nameof(ProcessFile));
+                invalidReason = processFile.InvalidReason;
             }
 
             // Return current state and file info
@@ -563,7 +571,8 @@ public static class Process
                     out bool ignored,
                     out SidecarFile.StatesType state,
                     out string processName,
-                    out string? failedOperation
+                    out string? failedOperation,
+                    out string? invalidReason
                 );
 
                 // Cancelled
@@ -601,6 +610,7 @@ public static class Process
                             Modified = modified,
                             State = state,
                             FailedOperation = failedOperation,
+                            InvalidReason = invalidReason,
                         }
                     );
                 }
@@ -663,7 +673,10 @@ public static class Process
         // Updated ignore file list
         if (
             Program.Config.VerifyOptions.RegisterInvalidFiles
-            && !RegisterInvalidFiles(failedResults, Program.Options.SettingsFile)
+            && !RegisterInvalidFiles(
+                [.. resultsJson.Results.Results.Where(item => item.InvalidReason != null)],
+                Program.Options.SettingsFile
+            )
         )
         {
             writesSucceeded = false;
@@ -719,18 +732,14 @@ public static class Process
     internal static bool s_ignoreListWritePending;
 
     internal static bool RegisterInvalidFiles(
-        List<ProcessResultJsonSchema.ProcessResult> failedResults,
+        List<ProcessResultJsonSchema.ProcessResult> invalidResults,
         string settingsFile
     )
     {
-        // Add failed items to the ignore list, a deleted file no longer exists to be ignored
+        // Add invalid items to the ignore list
         HashSet<string> ignoreList = Program.Config.ProcessOptions.FileIgnoreList;
         bool modified = false;
-        foreach (
-            ProcessResultJsonSchema.ProcessResult item in failedResults.Where(item =>
-                !item.State.HasFlag(SidecarFile.StatesType.FileDeleted)
-            )
-        )
+        foreach (ProcessResultJsonSchema.ProcessResult item in invalidResults)
         {
             modified |= ignoreList.Add(item.NewFileName);
         }

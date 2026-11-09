@@ -172,9 +172,9 @@
   "VerifyOptions": {
     // If verify fails attempt media repair by re-encoding
     "AutoRepair": true,
-    // Delete files that fail verification
+    // Delete media files judged invalid, such as failing verify and repair, cannot be set with RegisterInvalidFiles
     "DeleteInvalidFiles": false,
-    // Add media files that fail verification to the FileIgnoreList
+    // Add media files judged invalid to the FileIgnoreList, cannot be set with DeleteInvalidFiles
     "RegisterInvalidFiles": false,
     // Warn when bitrate in bits per second is exceeded
     "MaximumBitrate": 100000000

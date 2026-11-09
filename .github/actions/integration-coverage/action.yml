@@ -1,0 +1,43 @@
+name: Integration coverage
+description: Build the image from the checked-out tree, run its test commands under coverage over the synthetic corpus, check the results, and upload the coverage under the integration flag.
+
+inputs:
+  codecov-token:
+    description: Codecov upload token, empty for a run that has none, such as a fork pull request.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+
+    - name: Setup .NET SDK step
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        dotnet-version: 10.x
+
+    # The image has no SDK, so the integration script mounts the restored dotnet-coverage into it.
+    - name: Restore .NET tools step
+      shell: bash
+      run: dotnet tool restore
+
+    # Single platform with --load, since the run needs the image locally and the smoke build pushes nothing.
+    - name: Build Docker image step
+      shell: bash
+      run: docker buildx build --load --pull --tag plexcleaner:integration --file ./Docker/Dockerfile .
+
+    - name: Run integration test step
+      shell: bash
+      run: ./RegressionTests/integration-test.sh plexcleaner:integration "$RUNNER_TEMP/integration"
+
+    # Best-effort like the validator's uploads, so a missing token never reds the gate.
+    # The report names its sources under /Builder, which codecov.yml's fixes rule maps to the repository root.
+    - name: Upload coverage to Codecov step
+      continue-on-error: true
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+      with:
+        token: ${{ inputs.codecov-token }}
+        files: ${{ runner.temp }}/integration/out/image.xml
+        disable_search: true
+        flags: integration
+        fail_ci_if_error: false

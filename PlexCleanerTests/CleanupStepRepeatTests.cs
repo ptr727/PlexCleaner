@@ -442,7 +442,8 @@ public sealed class CleanupStepRepeatTests : IDisposable
             out _,
             out _,
             out _,
-            out string? failedOperation
+            out string? failedOperation,
+            out _
         );
 
         _ = result.Should().BeTrue();

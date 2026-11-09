@@ -74,6 +74,9 @@ public record ProcessResultJsonSchema
 
         // Failing step; null on success, omitted from JSON when null
         public string? FailedOperation { get; set; }
+
+        // Why this run judged the media invalid, omitted from JSON when null
+        public string? InvalidReason { get; set; }
     }
 
     public class ProcessSummary

@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace PlexCleaner;
@@ -65,8 +64,15 @@ public record VerifyOptions2 : VerifyOptions1
         MaximumBitrate = 100 * 1000 * 1000;
     }
 
-    [SuppressMessage("Performance", "CA1822:Mark members as static")]
-    public bool VerifyValues() =>
-        // Nothing to do
-        true;
+    public bool VerifyValues()
+    {
+        if (DeleteInvalidFiles && RegisterInvalidFiles)
+        {
+            Log.Error(
+                "VerifyOptions:DeleteInvalidFiles and RegisterInvalidFiles cannot both be enabled"
+            );
+            return false;
+        }
+        return true;
+    }
 }

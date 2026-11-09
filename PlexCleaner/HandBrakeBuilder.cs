@@ -31,16 +31,6 @@ public partial class HandBrake
 
         public InputOptions InputFile(string option) => Input().Add($"\"{option}\"");
 
-        public InputOptions SeekStartStop(TimeSpan timeStart, TimeSpan timeStop) =>
-            timeStart == TimeSpan.Zero || timeStop == TimeSpan.Zero
-                ? this
-                : SeekStart(timeStart).SeekStop(timeStop);
-
-        public InputOptions SeekStart(TimeSpan timeSpan) =>
-            timeSpan == TimeSpan.Zero
-                ? this
-                : Add("--start-at").Add($"seconds:{(int)timeSpan.TotalSeconds}");
-
         public InputOptions SeekStop(TimeSpan timeSpan) =>
             timeSpan == TimeSpan.Zero
                 ? this
@@ -94,12 +84,6 @@ public partial class HandBrake
 
         public OutputOptions Add(bool enable, Func<OutputOptions, OutputOptions> func) =>
             enable ? func(this) : this;
-
-        public OutputOptions Add(
-            bool condition,
-            Func<OutputOptions, OutputOptions> func1,
-            Func<OutputOptions, OutputOptions> func2
-        ) => condition ? func1(this) : func2(this);
 
         public OutputOptions Add(string option) => Add(option, false);
 

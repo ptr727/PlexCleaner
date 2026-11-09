@@ -54,7 +54,7 @@ public sealed class DeleteFailedFileTests : IDisposable
         string sidecarFile = CreateFile("name.PlexCleaner");
 
         _ = Process
-            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation, out _)
             .Should()
             .BeFalse();
 
@@ -70,7 +70,7 @@ public sealed class DeleteFailedFileTests : IDisposable
         string sidecarFile = CreateFile("name.PlexCleaner", readOnly: true);
 
         _ = Process
-            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation, out _)
             .Should()
             .BeFalse();
 
@@ -129,7 +129,7 @@ public sealed class DeleteFailedFileTests : IDisposable
         string sidecarFile = CreateFile("name.PlexCleaner");
 
         IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
-            new ProcessFile(mediaFile).DeleteFailedFile(nameof(ProcessFile.VerifyAndRepair))
+            new ProcessFile(mediaFile).DeleteFailedFile("Verify failed, VerifyAndRepair")
         );
 
         _ = LogCapture
@@ -137,7 +137,7 @@ public sealed class DeleteFailedFileTests : IDisposable
             .Should()
             .ContainSingle()
             .Which.Should()
-            .StartWith("Deleting media file : Failed VerifyAndRepair : ")
+            .StartWith("Deleting media file : Verify failed, VerifyAndRepair : ")
             .And.Contain(mediaFile);
         _ = LogCapture
             .Messages(events, LogEventLevel.Information)
@@ -167,7 +167,7 @@ public sealed class DeleteFailedFileTests : IDisposable
             {
                 ToolErrorScope.Record();
             }
-            deleted = new ProcessFile(mediaFile).DeleteFailedFile(
+            deleted = new ProcessFile(mediaFile).HandleFailedFile(
                 nameof(ProcessFile.VerifyAndRepair)
             );
         });

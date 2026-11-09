@@ -530,13 +530,16 @@ public partial class FfMpeg
                 && (result.ExitCode == 0 || LogFailedResult(result, inputName));
         }
 
-        public bool GetIdetText(string fileName, out string text)
+        private const int DecodeErrorRateExceededExitCode = 69;
+
+        public bool GetIdetText(string fileName, out string text, out bool decodeErrorRateExceeded)
         {
             // Use Idet to get frame statistics
             // https://ffmpeg.org/ffmpeg-filters.html#idet
 
             // Build command line
             text = string.Empty;
+            decodeErrorRateExceeded = false;
             Command command = GetBuilder()
                 // Leave loglevel at default to get idet output, do not use -loglevel error
                 // Counting can report stream errors, keep going, do not use -xerror
@@ -557,6 +560,15 @@ public partial class FfMpeg
             }
             Metrics.OpCompleted();
             text = result.StandardError.Trim();
+            if (result.ExitCode == DecodeErrorRateExceededExitCode)
+            {
+                Log.Warning(
+                    "Decode error rate exceeded, skipping interlace detection : {FileName}",
+                    fileName
+                );
+                decodeErrorRateExceeded = true;
+                return true;
+            }
             return result.ExitCode == 0 || LogFailedResult(result, fileName);
         }
 

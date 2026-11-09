@@ -114,7 +114,8 @@ public sealed class RenameCollisionTests : IDisposable
                 out _,
                 out _,
                 out string processName,
-                out string? failedOperation
+                out string? failedOperation,
+                out _
             )
             .Should()
             .BeFalse();
@@ -140,7 +141,8 @@ public sealed class RenameCollisionTests : IDisposable
                 out _,
                 out _,
                 out string processName,
-                out string? failedOperation
+                out string? failedOperation,
+                out _
             )
             .Should()
             .BeFalse();
@@ -222,7 +224,7 @@ public sealed class RenameCollisionTests : IDisposable
         string stepFile = ProcessFile.GetRenameStepName(Path.Combine(_directory, "name.mkv"));
         File.WriteAllText(stepFile, "step");
 
-        _ = Process.ProcessFile(stepFile, out _, out _, out _, out _, out _);
+        _ = Process.ProcessFile(stepFile, out _, out _, out _, out _, out _, out _);
 
         _ = File.ReadAllText(stepFile).Should().Be("step");
     }
@@ -254,7 +256,15 @@ public sealed class RenameCollisionTests : IDisposable
         bool result = true;
         string? failedOperation = null;
         IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
-            result = Process.ProcessFile(mediaFile, out _, out _, out _, out _, out failedOperation)
+            result = Process.ProcessFile(
+                mediaFile,
+                out _,
+                out _,
+                out _,
+                out _,
+                out failedOperation,
+                out _
+            )
         );
 
         _ = result.Should().BeFalse();
@@ -288,7 +298,7 @@ public sealed class RenameCollisionTests : IDisposable
         );
 
         _ = Process
-            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation)
+            .ProcessFile(mediaFile, out _, out _, out _, out _, out string? failedOperation, out _)
             .Should()
             .BeFalse();
 

@@ -33,6 +33,7 @@ public class SidecarFile
         PostDecodeTimestamps = 1 << 18,
         ScannedInterlace = 1 << 19,
         ScannedCaptions = 1 << 20,
+        ProcessFailed = 1 << 21,
     }
 
     // Verify results describe one media file, a rewrite or a changed file needs them measured again
@@ -41,7 +42,8 @@ public class SidecarFile
         | StatesType.VerifyFailed
         | StatesType.RepairFailed
         | StatesType.BitrateExceeded
-        | StatesType.PostDecodeTimestamps;
+        | StatesType.PostDecodeTimestamps
+        | StatesType.ProcessFailed;
 
     private const string SidecarExtension = ".PlexCleaner";
     private const string MkvExtension = ".mkv";
@@ -83,6 +85,9 @@ public class SidecarFile
     public MediaProps MediaInfoProps { get; private set; }
 
     public StatesType State { get; set; }
+
+    // A media tool that cannot read or describe the file judges the media, unlike a sidecar write failure
+    public bool ToolInfoFailed { get; private set; }
 
     public bool Create()
     {
@@ -163,14 +168,17 @@ public class SidecarFile
         {
             current = false;
             const StatesType toolStates =
-                StatesType.Verified | StatesType.ScannedInterlace | StatesType.ScannedCaptions;
+                StatesType.VerifyFailed
+                | StatesType.RepairFailed
+                | StatesType.PostDecodeTimestamps
+                | StatesType.ProcessFailed;
             if ((State & toolStates) != 0)
             {
                 Log.Warning(
-                    "Sidecar out of sync with tools, clearing Verified and Scanned flags : {FileName}",
+                    "Sidecar out of sync with tools, clearing failure and scan flags to retry : {FileName}",
                     _sidecarFileInfo.FullName
                 );
-                State &= ~toolStates;
+                State &= ~(toolStates | StatesType.ScannedInterlace | StatesType.ScannedCaptions);
             }
         }
 
@@ -220,6 +228,7 @@ public class SidecarFile
     public bool Open(bool modified = false)
     {
         // Open will Read, Create, Update
+        ToolInfoFailed = false;
 
         // Make sure the sidecar file has been read or created
         // If the sidecar file exists, read it
@@ -528,6 +537,7 @@ public class SidecarFile
     private bool GetToolInfo()
     {
         Log.Debug("Reading media info from tools : {FileName}", _mediaFileInfo.FullName);
+        ToolInfoFailed = false;
 
         // Read the tool data text
         if (
@@ -537,6 +547,7 @@ public class SidecarFile
         )
         {
             Log.Error("Failed to read media properties : {FileName}", _mediaFileInfo.FullName);
+            ToolInfoFailed = true;
             return false;
         }
 
@@ -560,6 +571,7 @@ public class SidecarFile
         )
         {
             Log.Error("Failed to de-serialize tool data : {FileName}", _mediaFileInfo.FullName);
+            ToolInfoFailed = true;
             return false;
         }
 
@@ -647,9 +659,6 @@ public class SidecarFile
         }
     }
 
-    public static bool IsSidecarFile(string sidecarName) =>
-        IsSidecarExtension(Path.GetExtension(sidecarName));
-
     public static bool IsSidecarFile(FileInfo sidecarFileInfo) =>
         IsSidecarExtension(sidecarFileInfo.Extension);
 
@@ -668,9 +677,6 @@ public class SidecarFile
 
     public static string GetSidecarName(FileInfo mkvFileInfo) =>
         Path.ChangeExtension(mkvFileInfo.FullName, SidecarExtension);
-
-    public static string GetMkvName(string sidecarName) =>
-        Path.ChangeExtension(sidecarName, MkvExtension);
 
     public static string GetMkvName(FileInfo sidecarFileInfo) =>
         Path.ChangeExtension(sidecarFileInfo.FullName, MkvExtension);
