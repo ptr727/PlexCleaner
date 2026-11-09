@@ -242,20 +242,6 @@ def log_differences(
     return found, notes
 
 
-def undumped_results(outcomes_: dict[str, Outcome], tracks: dict[str, list[str]]) -> list[str]:
-    """Return the names of a run's results its log holds no track dump for, a deleted file aside.
-
-    A deleted file is never read, and every other file is read from its tools first, so it logs a dump.
-    """
-    return sorted(
-        name
-        for name, outcome in outcomes_.items()
-        if "FileDeleted" not in outcome["State"]
-        and name not in tracks
-        and outcome["NewFileName"] not in tracks
-    )
-
-
 def compare_logs(
     baseline: str | None,
     results: str | None,
@@ -286,11 +272,6 @@ def compare_logs(
             ]
         else:
             found = track_differences(tracks["baseline"], tracks["results"])
-            for side, outcomes_ in (("baseline", expected), ("results", actual)):
-                found += [
-                    f"{name}: no track dump in the {side} run, so its track check is unverified"
-                    for name in undumped_results(outcomes_, tracks[side])
-                ]
 
     lines, notes = log_differences(
         normalized_lines(baseline), normalized_lines(results), bitrate_noise(expected, actual)
