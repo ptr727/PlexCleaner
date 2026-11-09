@@ -466,6 +466,7 @@ class LogComparisonTests(unittest.TestCase):
         code, text = self.compare(baseline, candidate)
         self.assertEqual(code, 1)
         self.assertIn("::error::a.mkv: State expected ['Verified'], found ['ReMuxed']", text)
+        self.assertIn("::error::track dumps for /Test/Media/a.mkv and /Test/Media/b/a.mkv", text)
         self.assertIn("share a name in the results run, so the track check is unverified", text)
         self.assertIn(f"::warning::log results only: [DBG] <T> {other}", text)
 
