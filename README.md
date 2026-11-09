@@ -726,7 +726,7 @@ Refer to [PlexCleaner.defaults.json](PlexCleaner.defaults.json) for complete con
   - `AutoRepair`
 - If verify or repair judges the media invalid, delete the file or add it to the ignore list, but not both.
   - `DeleteInvalidFiles`, `RegisterInvalidFiles`
-- Mark other failed MKV files `ProcessFailed` in their sidecar, so later runs skip them until the media changes. An FFprobe, MkvMerge, or MediaInfo update also retries them.
+- Mark other failed MKV files `ProcessFailed` in their sidecar, so later runs skip them until the media changes. With `SidecarUpdateOnToolChange` on, an FFprobe, MkvMerge, or MediaInfo update also retries them.
   - `SidecarUpdateOnToolChange`
 
 **8. Finalization:**
