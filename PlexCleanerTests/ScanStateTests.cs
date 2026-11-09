@@ -204,21 +204,20 @@ public sealed class ScanStateTests : IDisposable
     }
 
     [Fact]
-    public void Read_ToolChange_ClearsVerifiedAndScannedFlags()
+    public void Read_ToolChange_KeepsVerifiedAndScannedFlags()
     {
         Program.Config.ProcessOptions.SidecarUpdateOnToolChange = true;
-        string mediaFile = FakeTools.CopyUnverifiedSample(
-            _directory,
+        const SidecarFile.StatesType stored =
             SidecarFile.StatesType.SetLanguage
-                | SidecarFile.StatesType.Verified
-                | SidecarFile.StatesType.ScannedInterlace
-                | SidecarFile.StatesType.ScannedCaptions
-        );
+            | SidecarFile.StatesType.Verified
+            | SidecarFile.StatesType.ScannedInterlace
+            | SidecarFile.StatesType.ScannedCaptions;
+        string mediaFile = FakeTools.CopyUnverifiedSample(_directory, stored);
         Tools.FfProbe.Info = new MediaToolInfo(Tools.FfProbe) { Version = "99.0" };
 
         SidecarFile sidecarFileState = new(mediaFile);
         _ = sidecarFileState.Read(out bool current).Should().BeTrue();
         _ = current.Should().BeFalse();
-        _ = sidecarFileState.State.Should().Be(SidecarFile.StatesType.SetLanguage);
+        _ = sidecarFileState.State.Should().Be(stored);
     }
 }
