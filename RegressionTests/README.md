@@ -72,7 +72,7 @@ The comparison then reads the two runs' `PlexCleaner_process.log` files, for two
 
 A re-encode is not byte-identical from run to run, so its bitrate summary can shift. A bitrate summary names no file, so the comparison attributes it to the file its thread last began processing. A shift in the summary or in a bitrate warning is only noted for a file that was re-encoded, deinterlaced, or repaired. Its outcome must also match in both runs.
 
-The comparison exits `1` when the outcomes or the output tracks differ, or the track check is unverified, and `0` otherwise, whatever it warned of. Two results sharing a file name refuse with an error. A converted file can still share a dump name with another result's file. Their dumps cannot be told apart, so that leaves the track check unverified. Judge each difference as an intended effect of the change under test, an effect of a warned input, a regression, or noise.
+The comparison exits `1` when the outcomes or the output tracks differ, or the track check is unverified, and `0` otherwise, whatever it warned of. Two results sharing an original file name refuse with an error. A converted file can still share a dump name with another result's file. Their dumps cannot be told apart, so that leaves the track check unverified. Judge each difference as an intended effect of the change under test, an effect of a warned input, a regression, or noise.
 
 ### Full-file scanning
 
