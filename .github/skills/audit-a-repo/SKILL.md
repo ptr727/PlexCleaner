@@ -1,7 +1,16 @@
 ---
 name: audit-a-repo
 description: >-
-  Drives AUDIT.md's read-only measurement of a named ptr727 fleet repo against the fleet ground truth. It ends in a committed report, never an edit to the repo being measured. Use this whenever asked to audit, measure, or verify conformance of a named repo. Use it also whenever asked to judge a conformance claim someone else made, or to decide whether an onboarding is actually complete. Run from a hub checkout of ptr727/ProjectTemplate against the named target. Triggers even when the repo believes it is conformant, because conformance asserted without a committed report is conformance nobody can check. It is also because that case, a repo believing it is conformant, is the one most often skipped. This completes the procedure triangle: standup-a-repo creates a repo, resync-a-repo applies findings to one already stood up, and this skill measures. By contrast, check-this-repo is the in-repo self-check with no named target and no standing hub checkout. AUDIT.md keeps authority over the procedure, this skill is the summary that routes into it.
+  Drives AUDIT.md's read-only measurement of a named ptr727 fleet repo against the fleet ground
+  truth. It ends in a committed report, never an edit to the repo being measured. Use this whenever
+  asked to audit, measure, or verify conformance of a named repo, or to judge a conformance claim
+  someone else made. Use it also to decide whether an onboarding is actually complete. Run from a
+  hub checkout of ptr727/ProjectTemplate against the named target. Triggers even when the repo
+  believes it is conformant, because conformance asserted without a committed report is conformance
+  nobody can check. That case is also the one most often skipped. This completes the procedure
+  triangle: standup-a-repo creates a repo, resync-a-repo applies findings to one already stood up,
+  and this skill measures. check-this-repo is the in-repo self-check with no named target and no
+  standing hub checkout. AUDIT.md keeps authority over the procedure, and this skill routes into it.
 ---
 
 # Audit a Repo

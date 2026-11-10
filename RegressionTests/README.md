@@ -251,7 +251,7 @@ uvx mypy@latest
 uvx coverage@latest run -m unittest discover -s tests
 ```
 
-These run the latest tools and are available as VSCode tasks. CI runs the same latest tools through the hub's reusable validator. Python source is LF, matching the repository's default line-ending convention.
+These run the latest tools and are available as VSCode tasks. CI runs them through the hub's reusable validator, mypy and coverage at their latest and ruff at the version the validator pins. Python source is LF, matching the repository's default line-ending convention.
 
 <!-- Repo -->
 

@@ -1,20 +1,17 @@
 ---
 name: workflow-ci-contract
 description: >-
-  Governs the WORKFLOW.md CI/CD behavioral contract for every ptr727/ProjectTemplate fleet repo:
-  the D1-D9 guarantees, the output seam by destination (a GitHub release file, a package-registry
-  push, an image-registry push, or a filesystem on a host the project owns), the artifact
-  lifecycle, NBGV versioning and classification, validate-at-entry, and the 5A/5B/5C test
-  methodology. Use this whenever writing or editing anything under .github/workflows/ or a
-  composite action under .github/actions/, editing version.json, adding or dropping a release
-  target, auditing a repo's workflows, or tracing which job, input, or condition made a publish
-  run or skip. This is the YAML half of the pipeline, and `branching-and-release-model` keeps the
-  git half, which branch a change targets and which events may publish at all. Triggers even when
-  the edit looks mechanical, such as bumping an action, renaming a job, or adding one upload step,
-  because SHA pinning, the ruleset-bound aggregator name, smoke gating on uploads, and
-  retention-days are each easy to break in a one-line diff that no build fails on. WORKFLOW.md
-  keeps authority, and GOVERNANCE.md's Workflow YAML Conventions and Release Model sections win
-  where those two overlap.
+  Governs the WORKFLOW.md CI/CD contract for ptr727/ProjectTemplate fleet repos: the D1-D9
+  guarantees, the output seam by destination, the artifact lifecycle, NBGV versioning and
+  classification, validate-at-entry, and the 5A/5B/5C test methodology. Use this whenever writing or
+  editing anything under .github/workflows/ or a composite action under .github/actions/, editing
+  version.json, adding or dropping a release target, auditing a repo's workflows, or tracing which
+  job, input, or condition made a publish run or skip. Triggers even when the edit looks mechanical,
+  such as bumping an action or adding one upload step, because SHA pinning, the aggregator name,
+  upload smoke gating, and retention-days each break silently in a one-line diff. This is the YAML
+  half, and `branching-and-release-model` keeps the git half, which branch a change targets and
+  which events may publish. WORKFLOW.md keeps authority, and GOVERNANCE.md's Workflow YAML
+  Conventions and Release Model sections win where those two overlap.
 ---
 
 # Workflow CI Contract

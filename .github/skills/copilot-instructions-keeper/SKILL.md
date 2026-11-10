@@ -6,15 +6,12 @@ description: >-
   "Disproved Claims" ledger entries during a resync. Use this whenever about to edit, overwrite,
   re-vendor, or carry .github/copilot-instructions.md into a repo, whenever checking a repo's copy
   for drift against the hub, whenever GitHub Copilot's review mechanics in this file look stale,
-  wrong, or missing something the fleet runbook should cover, or whenever standing up a new repo
-  and carrying this file for the first time. Also triggers on "why isn't the audit catching that
-  this file is out of date," since the fleet's mechanical audit checks this file, at intent
-  fidelity, for file presence and each named section's heading, never for content drift inside a
-  section, so nothing else notices a stale section here except a live check like this one. An
-  `audit-a-repo` run checks this file's presence, headings, and a date-based staleness hint
-  without judging its content, so content drift in it stays this skill's, and a resync fires it
-  beside `resync-a-repo` and `carried-instruction-file-guard`, which guards the other carried
-  instruction files.
+  wrong, or incomplete, or whenever standing up a new repo and carrying this file for the first
+  time. Also triggers on "why isn't the audit catching that this file is out of date," since the
+  audit checks only this file's presence, its section headings, and a date-based staleness hint,
+  never content drift inside a section. So content drift here stays this skill's after an
+  `audit-a-repo` run, and a resync fires it beside `resync-a-repo` and
+  `carried-instruction-file-guard`, which guards the other carried files.
 ---
 
 # Copilot Instructions Keeper
