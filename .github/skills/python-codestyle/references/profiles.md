@@ -47,8 +47,8 @@ Tool configuration alone marks the lint-only one:
   pytest from it as `.venv/bin/python -m pytest`. A directory declared in the hub validator's
   `python-directories` input runs ruff and the type checker from that environment where it
   installs them. It otherwise runs them through `uvx`, with the checker pointed at that
-  environment. The undeclared default root runs `uvx ruff@latest` and a bare
-  `uvx <checker>@latest`, with nothing installed.
+  environment. The undeclared default root runs ruff through `uvx` at the pinned version the
+  lint-only profile below names, and a bare `uvx <checker>@latest`, with nothing installed.
 - **Scripts** (the `lint-only` profile): stdlib-only utility scripts (e.g. a
   Python tooling subtree of a `csharp` app). Run the tools with `uvx` (no project install,
   no lockfile). The `pyproject.toml` carries only tool config (`[tool.ruff]`, `[tool.mypy]`, and
@@ -56,12 +56,16 @@ Tool configuration alone marks the lint-only one:
   `uv.lock` (that metadata would misrepresent it as a shippable package). mypy is the type-check
   gate (there is no first-party package for pyright strict to anchor on). A `[tool.pyright]`
   block in standard mode keeps Pylance quiet in the editor, the same mypy-gate/pyright-editor
-  split the build profile uses. There is no lockfile, and a `uvx <tool>@<ver>` pin in a `run:`
-  step is not something Dependabot tracks. So CI runs `uvx ruff@latest` / `uvx mypy@latest` rather
-  than a manual pin that would silently go stale. The fleet rule is to pin only what Dependabot
-  auto-updates (SHA-pinned actions, package deps) and otherwise run latest. So the VS Code tasks,
-  README, and CI all run the unpinned latest here. `.py` files follow the repo's LF line-ending
-  default (per GOVERNANCE.md's "Line Endings" section). There is no pytest suite, and `unittest` is
+  split the build profile uses. There is no lockfile, and a `uvx <tool>@<ver>` literal in a `run:`
+  step is not something Dependabot tracks. The fleet rule is to pin only what Dependabot
+  auto-updates (SHA-pinned actions, package deps) and otherwise run latest. A manual pin would
+  silently go stale. So CI runs ruff at the version the hub validator's
+  `python-tool-pins` action reads from the `requirements.txt` beside it, which the hub's
+  Dependabot pip ecosystem bumps. A caller reaches that version at the hub commit its workflow
+  pins, so a ruff release reaches its lint only through a hub release. CI runs `uvx mypy@latest`,
+  and a carrier's VS Code tasks and README run the unpinned latest of every tool. The hub's own
+  tasks and hook take that `requirements.txt` as a requirement instead. `.py` files follow the
+  repo's LF line-ending default (per GOVERNANCE.md's "Line Endings" section). There is no pytest suite, and `unittest` is
   the runner instead. The directory still owes tests, written with the standard
   library's `unittest` so they need no test runner installed. Each is a `test_<script>.py`
   under a `tests/` directory beside the scripts it exercises and their `pyproject.toml`
@@ -72,7 +76,7 @@ Tool configuration alone marks the lint-only one:
   owes the same gates whatever its profile: lint, format, a type check, a test suite, and a
   coverage report to Codecov. The hub validator runs them in each directory the caller declares
   in its `python-directories` input, which the registry's `pythonDirectories` mirrors. From inside
-  a lint-only directory it runs `uvx ruff@latest check`, `uvx ruff@latest format --check`,
+  a lint-only directory it runs `uvx ruff@<pin> check`, `uvx ruff@<pin> format --check`,
   `uvx mypy@latest`, and `uvx coverage@latest run -m unittest discover -s tests`. It adds
   `--with-requirements tests/requirements.txt` to that last where the directory carries one. It then
   writes `coverage.xml` and uploads it best-effort per `WORKFLOW.md` D1.6, with no threshold

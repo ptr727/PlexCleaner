@@ -2,18 +2,16 @@
 name: python-codestyle
 description: >-
   Governs Python code style for ptr727/ProjectTemplate fleet repos: the build-versus-lint-only
-  profile split, the uv/ruff/pyright/mypy/pytest toolchain, src layout, formatting and linting,
-  comment and docstring conventions, type hints, naming, imports, patterns to avoid, test
-  conventions, versioning, and the --help and unknown-argument rule for a script. Use this
-  whenever writing, reviewing, or editing a .py file, a pyproject.toml, or a uv.lock, whenever
-  running or choosing a Python formatting, lint, type-check, or test command, whenever deciding
-  whether a Python subtree is a shippable project or a lint-only scripts tree, whenever choosing
-  pyright versus mypy for a repo's CI gate, or whenever writing or reviewing a Python test.
-  Triggers even when the task looks like a small local fix ("just add a helper function", "silence
-  this lint warning", "add a dependency") or verification step ("run the tests"), because choosing
-  pytest before reading the profile turns an intentional unittest suite into a false
-  missing-dependency diagnosis. Applies only to a repo's Python side, a repo with no Python has no
-  use for this Skill.
+  profile split, the uv/ruff/pyright/mypy/pytest toolchain, src layout, comment and docstring
+  conventions, type hints, naming, imports, patterns to avoid, test conventions, versioning, and the
+  --help and unknown-argument rule for a script. Use this whenever writing, reviewing, or editing a
+  .py file, a pyproject.toml, or a uv.lock, whenever running or choosing a Python formatting, lint,
+  type-check, or test command, pyright versus mypy included, whenever deciding whether a Python
+  subtree is a shippable project or a lint-only scripts tree, or whenever writing or reviewing a
+  Python test. Triggers even when the task looks like a small local fix ("just add a helper
+  function", "add a dependency") or a verification step ("run the tests"), because choosing pytest
+  before reading the profile turns an intentional unittest suite into a false missing-dependency
+  diagnosis. Applies only to a repo's Python side.
 ---
 
 # Python Codestyle
@@ -163,7 +161,9 @@ form that the fleet baseline expects. Its header names the pip-form and lint-onl
 `dependsOn`-only. Neither chains with `&&`, so the mirror runs the same on any task shell.
 
 CI runs these same commands as the authoritative backstop in every directory the hub validator's
-`python-directories` input declares. A repo declaring none has its root gated only where it tracks
+`python-directories` input declares. Its `uvx` ruff runs at the version the hub's `python-tool-pins`
+action pins rather than at `@latest`. So a ruff release can make a local run and CI disagree until
+the caller's hub pin moves to a release carrying the new version. A repo declaring none has its root gated only where it tracks
 a root `pyproject.toml`, per `WORKFLOW.md` D1.2. That undeclared root is gated more loosely. CI
 reads its type-checker configuration only from the `[tool.mypy]` or `[tool.pyright]` section of its
 `pyproject.toml`. It skips the type check where neither is there,
@@ -285,8 +285,8 @@ Before pushing or opening a PR:
 
 A command-line script is one a person or an agent runs by name. A hook its host runs, taking its input from that host rather than from a command line, is not one.
 
-- **Every command-line script answers `--help` and `-h`** with the same text on stdout, then exits 0, changing nothing. That text opens on a usage line naming the script. An agent learns a script's interface by asking it, so a script that reads `--help` as an input acts in a way nobody predicted.
-- **An argument the script does not recognize is refused**, with a non-zero exit before any read or write. The refusal names it as an unknown or unrecognized option, argument, flag, or parameter, and PowerShell's own refusal of a parameter it cannot bind counts. An unrecognized first argument is never taken as a default mode or as a target.
+- **Every command-line script answers `--help` and `-h`** with the same text on stdout, then exits 0, changing nothing. That text opens on a usage line naming the script. An agent learns a script's interface by asking it, so a script that reads `--help` as an input acts in a way nobody predicted. A PowerShell script declaring its own parameters answers `-Help` and `-h` instead, from a `-Help` switch carrying an `h` alias. That form follows PowerShell's own parameter convention, so such a script owes no answer to a literal `--help`. A wrapper that forwards its arguments to another script answers whatever that script answers.
+- **An argument the script does not recognize is refused**, with a non-zero exit before any read or write. The refusal names it as an unknown or unrecognized option, argument, flag, or parameter, and PowerShell's own refusal of a parameter it cannot bind counts. So a PowerShell script declaring its own parameters refuses a literal `--help` like any other unrecognized argument. Where no parameter takes the remaining arguments, the binder's refusal does that. A script with such a parameter refuses a dash-prefixed leftover itself. An unrecognized first argument is never taken as a default mode or as a target.
 
 <!-- /include -->
 

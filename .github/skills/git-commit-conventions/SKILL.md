@@ -4,15 +4,14 @@ description: >-
   Governs how an agent stages, commits, signs, and pushes in a ptr727/ProjectTemplate fleet repo:
   default-to-staging vs. explicit commit authorization, why "commit" means commit-and-push, the
   mandatory signed-commit and noreply-identity checks, never force-pushing, how a history rewrite
-  must re-identify a commit that is not the agent's own, and the destructive-git-command ban. Use
-  this whenever about to run git add/commit/push, whenever authorization to commit is ambiguous
-  ("fix this" versus "commit this"), whenever about to configure or verify commit signing or
-  git user.email, whenever a merge conflict or a stale branch tempts a force-push or a hard reset,
-  and whenever rewriting history (filter-repo, an interactive rebase equivalent) touches a commit
-  authored or committed by someone else. Triggers even when the task looks like routine
-  housekeeping, such as "clean up this branch" or "just push it", because a scope-widened commit
-  authorization, an unsigned commit, a fabricated identity, or a force-push are each easy to do by
-  habit and each one is a hard-to-reverse mistake on a shared branch.
+  must re-identify a commit not the agent's own, and the destructive-git-command ban. Use this
+  whenever about to run git add/commit/push, whenever authorization to commit is ambiguous ("fix
+  this" versus "commit this"), whenever about to configure or verify commit signing or git
+  user.email, whenever a merge conflict or a stale branch tempts a force-push or a hard reset, and
+  whenever a history rewrite touches a commit authored or committed by someone else. Triggers even
+  when the task looks like routine housekeeping, such as "clean up this branch" or "just push it",
+  because a scope-widened authorization, an unsigned commit, a fabricated identity, or a force-push
+  is easy to do by habit and hard to reverse on a shared branch.
 ---
 
 # Git Commit Conventions
@@ -44,6 +43,8 @@ scope-widened commit, a rewritten shared history, a destructive reset).
   the same way. Whoever the author is, a change this session did not make is never bundled. Ask whether to include it, or leave it unstaged and say so, rather than committing half-finished
   work or stranding it in an unrelated commit. An unexpected change in the tree is also the
   signal to re-check isolation per the `repo-worktree` skill. That is because an unexpected change may mean another task is live in this checkout.
+- **A direct push to `develop` on an operational-model repository names its issues in its commit
+  message**, per `branching-and-release-model` "Operational repositories (the complete delta)".
 
 ## Signing, verified not configured
 
@@ -140,4 +141,4 @@ any rewrite. See `references/history-rewrite.md` for the full rule.
 
 ## Never run destructive git commands without being asked
 
-`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`, and other commands that discard work require explicit developer instruction. Never use them as a convenience inside a larger task. One narrow cleanup exception applies to `git branch -D <exact-task-branch>` after a squash merge. It requires live proof, per `repo-worktree`, that the pull request for that exact branch merged. The same proof must show that the worktree is clean and the branch is at the verified head SHA or behind it. The exception never applies to `develop`, an unmerged branch, an unresolved pull request, or a branch with uncommitted work.
+`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`, and other commands that discard work require explicit developer instruction. Never use them as a convenience inside a larger task. One narrow cleanup exception applies to `git branch -D <exact-task-branch>` after a squash merge. It requires live proof, per `repo-worktree`, that the pull request for that exact branch merged. The same proof must show that the worktree is clean and the branch is at the verified head SHA or behind it. The exception never applies to `develop`, an unmerged branch, an unresolved pull request, or a branch with uncommitted work. A `backlog-burndown` orchestrator has that instruction for the linked worktree of a worker it told to abandon, once that worker has ended. That skill's "Cleanup Is the Orchestrator's" states it. The orchestrator runs `git reset --hard` and then `git clean -fd` in that worktree, and nowhere else.

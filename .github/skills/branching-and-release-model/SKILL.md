@@ -1,19 +1,16 @@
 ---
 name: branching-and-release-model
 description: >-
-  Governs how a ptr727/ProjectTemplate fleet repo branches, promotes, and publishes: the feature
-  -> develop -> main flow, squash-only vs. merge-commit-only branch protection, the promotion
-  traps (never delete develop, EOL-only conflicts), the two-phase publish model (PRs smoke-test
-  only, a human merge never auto-publishes), NBGV versioning, and the operational-repo delta
-  (direct-to-develop commits, advisory CI, dispatch-only release) that applies whenever the
-  registry's workflowModel reads operational. Use this whenever choosing a target branch,
-  promoting develop to main, resolving a promotion conflict, deciding whether a config change
-  needs a PR or can commit straight to develop, bumping version.json, adding or dropping a release
-  target, or reasoning about why a merge did or didn't publish. Triggers even when the request
-  sounds like ordinary git housekeeping ("just push this config fix", "merge develop into main"),
-  because the two workflow models genuinely differ and a step correct in one is a rule violation
-  in the other. This is the git policy: `workflow-ci-contract` keeps the YAML half, and performing
-  a promotion merge or a release dispatch is `merge-and-release`, which wins where both fire.
+  Governs how a ptr727/ProjectTemplate fleet repo branches, promotes, and publishes: the feature ->
+  develop -> main flow, squash-only vs. merge-commit-only branch protection, the promotion traps,
+  the two-phase publish model, NBGV versioning, and the operational-repo delta. Use this whenever
+  choosing a target branch, promoting develop to main, resolving a promotion conflict, deciding
+  whether a config change needs a PR or can commit straight to develop, bumping version.json, adding
+  or dropping a release target, or reasoning about why a merge did or didn't publish. Triggers even
+  when the request sounds like ordinary git housekeeping ("just push this config fix", "merge
+  develop into main"), because a step correct in one workflow model is a rule violation in the
+  other. This is the git policy: `workflow-ci-contract` keeps the YAML half, and performing a
+  promotion merge or a release dispatch is `merge-and-release`, which wins where both fire.
 ---
 
 # Branching and Release Model
@@ -105,9 +102,8 @@ rather than guessing from the repo's contents.
   build height. That height is both wrong (the real height differs) and a maintenance trap.
   "Correcting" `1.0` to `1.0.0` is a defect.
 - **A no-op publish (unchanged NBGV `SemVer2`) on a schedule or push trigger re-pushes nothing to
-  any target keyed on the version string.** Docker is the exception: it always re-pushes (a dispatch
-  refreshes the release instead of skipping) to pick up upstream base-image
-  refreshes. Full guarantee and the `version.json` `pathFilters` boundary:
+  any target keyed on the version string.** Docker is the exception: it always re-pushes to pick up
+  upstream base-image refreshes. Full guarantee and the `version.json` `pathFilters` boundary:
   `references/release-publish-mechanics.md`.
 - **A package push can fail after the release is already cut**, since it runs after the release
   task and no gate covers it. A full re-run is always available inside its bounded
@@ -134,6 +130,16 @@ stays the same:
   bless a known-good snapshot. The `develop` ruleset drops the PR and status-check gate, so direct
   signed pushes are allowed (force-push, deletion, and unsigned commits are still blocked). CI
   runs on the push as **advisory** feedback that never rejects a commit.
+- **The commit is made in place, by the maintainer and an agent alike.** It lands in the live
+  checkout the running service reads, on `develop`, so the maintainer sees it where he edits. An
+  agent may take a worktree or a pull request into `develop` instead, and neither is required.
+  The host write guard allows the in-place commit only once the repository's
+  `.github/agent-policy.json` on `main` lists `develop` in its `guard` section. The maintainer's
+  merge to `main` therefore grants the exemption, and until then the guard denies it.
+- **A direct push names the issues it fixes in its commit message**, as one line such as
+  `Closes on promotion: #N, #M`. The words `on promotion:` keep GitHub from reading the line as a closing keyword. The promotion
+  PR carrying the push puts a closing keyword in its own body for each issue the line names, per the
+  closing-keyword bullet above. Its body takes no closing keyword for a push without the line.
 - **A PR into `develop` stays available, and CI runs on it, reported but not required.** Dropping
   the requirement permits the direct push. It does not withdraw the pull request, so a change worth
   reviewing takes one and both paths into `develop` are legitimate.

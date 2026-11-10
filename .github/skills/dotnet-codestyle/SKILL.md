@@ -1,20 +1,17 @@
 ---
 name: dotnet-codestyle
 description: >-
-  Governs C#/.NET code style for ptr727/ProjectTemplate fleet repos: the zero-warnings build
-  policy and its clean-compile task chain, central Directory.Build.props/
-  Directory.Packages.props configuration, C# language and naming conventions, XML documentation,
-  analyzer suppression scope, the library-versus-application logging split, async and
-  error-handling patterns, xUnit v3 + AwesomeAssertions testing conventions, and AOT-compatible
-  project configuration. Use this whenever writing, reviewing, or editing a .cs file, a .csproj,
-  Directory.Build.props, or Directory.Packages.props, whenever choosing where to suppress an
-  analyzer diagnostic, whenever a NuGet library needs to log without depending on Serilog
-  directly, or whenever writing or reviewing an xUnit test. Triggers even when the task looks
-  like a small local fix ("just silence this warning", "add a quick log line", "bump a package
-  version"), because the zero-warnings policy, the suppression-scope order, the central-package-
-  management rule, and the library/application logging split are each easy to violate one file at
-  a time without the pattern ever showing up as a single obvious diff. Applies only to a repo's
-  .NET side, a repo with no .NET projects has no use for this Skill.
+  Governs C#/.NET code style for ptr727/ProjectTemplate fleet repos: the zero-warnings build policy
+  and its clean-compile task chain, central Directory.Build.props and Directory.Packages.props, C#
+  language and naming conventions, XML documentation, analyzer suppression scope, the
+  library-versus-application logging split, async and error-handling patterns, xUnit v3 and
+  AwesomeAssertions testing, and AOT-compatible project configuration. Use this whenever writing,
+  reviewing, or editing a .cs file, a .csproj, Directory.Build.props, or Directory.Packages.props,
+  whenever choosing where to suppress an analyzer diagnostic, whenever a NuGet library needs to log
+  without depending on Serilog directly, or whenever writing or reviewing an xUnit test. Triggers
+  even when the task looks like a small local fix ("just silence this warning", "add a quick log
+  line"), because each of these rules erodes one file at a time and never as one obvious diff.
+  Applies only to a repo's .NET side.
 ---
 
 # .NET Codestyle
