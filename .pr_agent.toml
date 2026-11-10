@@ -1,2 +1,5 @@
 [config]
 disable_auto_feedback = false
+
+[ignore]
+glob = [".github/skills/**", "lib/fleet/sh/**"]
