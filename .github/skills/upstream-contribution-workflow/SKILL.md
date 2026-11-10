@@ -1,20 +1,17 @@
 ---
 name: upstream-contribution-workflow
 description: >-
-  Governs how the maintainer contributes to a third-party repository he does not control (for
-  example esphome/esphome), distinct from the fleet's own internal branching model: a dirty work
-  branch on his own fork for the actual work and review iteration, its fork-internal PR kept open
-  and never merged, squashed once clean to a second branch that carries only the intended minimal
-  history, that clean branch opened as the PR against the upstream repo, and reviewer feedback
-  applied to the dirty branch first, then re-squashed into the clean one. Use this whenever about
-  to open a pull request against a repository outside the ptr727 fleet, whenever forking a
-  third-party project to contribute a fix or feature, whenever an upstream reviewer requests
-  changes on a PR opened this way, whenever a fork-internal iteration PR looks ready to merge or
-  close, whenever the upstream base branch moves under a contribution in flight, and whenever
-  deciding which issue or PR template to use for a third-party repository. Triggers regardless of
-  the target repo's own type or workflow model, since this skill is about the shape of a
-  contribution to someone else's repo, not the target repo's own internal conventions, which this
-  skill does not attempt to state and are never assumed to match the fleet's.
+  Governs how the maintainer contributes to a third-party repository he does not control, distinct
+  from the fleet's own branching model: a dirty work branch on his fork for the work and review
+  iteration, its fork-internal PR kept open and never merged, squashed once clean to a second branch
+  carrying only the intended history, that clean branch opened as the upstream PR, and reviewer
+  feedback applied to the dirty branch first, then re-squashed. Use this whenever about to open a
+  pull request against a repository outside the ptr727 fleet, whenever forking a third-party project
+  to contribute, whenever an upstream reviewer requests changes on a PR opened this way, whenever a
+  fork-internal iteration PR looks ready to merge or close, whenever the upstream base branch moves
+  under a contribution in flight, and whenever choosing an issue or PR template for such a
+  repository. Triggers regardless of the target repo's own type or workflow model, whose conventions
+  this skill never assumes match the fleet's.
 ---
 
 # Upstream Contribution Workflow

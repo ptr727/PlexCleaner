@@ -5,14 +5,13 @@ description: >-
   current against the ptr727/ProjectTemplate hub, and safely self-applies what it can. Use this
   whenever asked to check if this repo is up to date with the hub, whenever a fleet rule or Skill
   seems to not be applying and the cause is unclear, or whenever about to work in a fleet repo and
-  wanting to confirm the ground under that work is current before trusting it. Needs no standing
-  hub checkout of its own and no named target repo, only the repo the session is already in,
-  though the check itself fetches a hub checkout to reach scripts/skills_install.py, since
-  scripts/ is hub-hosted rather than carried. This is the counterpart to resync-a-repo, which
-  needs both a hub checkout already in hand and a named external target to drive change from the
-  hub side instead. Also triggers on "why do I have to keep restating this rule every session,"
-  since a stale or missing Skills install is the most common cause and the cheapest one to rule
-  out first.
+  wanting to confirm the ground under that work is current before trusting it. Needs no standing hub
+  checkout and no named target repo, only the repo the session is already in, though the check
+  itself fetches a hub checkout to reach scripts/skills_install.py. This is the counterpart to
+  resync-a-repo, which needs a hub checkout already in hand and a named external target to drive
+  change from the hub side instead. Also triggers on "why do I have to keep restating this rule
+  every session," since a stale or missing Skills install is the most common cause and the cheapest
+  one to rule out first.
 ---
 
 # Check This Repo

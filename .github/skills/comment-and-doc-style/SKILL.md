@@ -3,19 +3,14 @@ name: comment-and-doc-style
 description: >-
   Governs prose, comment, Markdown, character-set, line-ending, and PR-title/commit-message
   conventions for every ptr727/ProjectTemplate fleet repo. Use this whenever writing or editing a
-  code comment, workflow comment, Markdown doc, commit message, or PR title, whenever choosing
-  which characters to type in agent-authored text, whenever the file being edited is CRLF, and
-  whenever naming a tool in prose or docs. Triggers even when the task looks purely mechanical,
-  such as "just fix a typo" or "add a one-line comment", because the fleet's ASCII character-set
-  tiers, no-semicolon rule, comment-growth discipline, and CRLF-preservation rule are each easy to
-  violate without noticing: an em dash slipped into a sentence, a comment that grew by one more
-  clause, or a text-mode edit that silently flattens a CRLF file to LF. Also triggers when
-  authoring a new Markdown file (reference-style links, Table of Contents, present tense), when a
-  carried instruction file (AGENTS.md, GOVERNANCE.md, CODESTYLE.md, WORKFLOW.md,
-  .github/copilot-instructions.md) is being edited (no coordination references to the template or
-  a sibling repo), and when writing a PR title or commit message (imperative subject, no vague
-  titles, no unsolicited Co-Authored-By, no release-bump magnitude). Also triggers when text
-  states how many items a list or a table holds, since that count goes stale.
+  code comment, workflow comment, Markdown doc, commit message, or PR title, whenever choosing which
+  characters to type in agent-authored text, whenever the file being edited is CRLF, whenever naming
+  a tool in prose or docs, whenever authoring a new Markdown file, whenever editing a carried
+  instruction file (AGENTS.md, GOVERNANCE.md, CODESTYLE.md, WORKFLOW.md,
+  .github/copilot-instructions.md), and whenever text states how many items a list or a table holds.
+  Triggers even when the task looks purely mechanical, such as "just fix a typo" or "add a one-line
+  comment", because an em dash slipped into a sentence, a comment that grew by one more clause, or a
+  text-mode edit that silently flattens a CRLF file to LF are each easy to miss.
 ---
 
 # Comment and Doc Style
@@ -131,9 +126,8 @@ incrementally, and this section names each check as it ships.
 
 - **Short sentences: at most 25 words in one sentence**, ASD-STE100's descriptive cap, checked by
   the `sentence-length` rule in `prose_lint.py`. The rule reads Markdown prose, code comments, and
-  docstrings. The check is opt-in like `sentence-split`, because the existing corpus predates the
-  cap and a default gate would fail whole files nobody is editing. Write new prose under the cap,
-  and scope a run to a change with `--check sentence-length --diff <base>`.
+  docstrings. It runs by default, so a bare run checks it. A run with `--diff <base>` checks each
+  sentence a changed line belongs to, in full. Write new prose under the cap.
 - **One instruction per sentence.** A procedure step states one action, and a second action is a
   second step. No pattern reaches this, so it is authoring discipline with no check.
 - **Active voice, imperative mood for procedure steps.** Write "run the gate", never "the gate
@@ -190,9 +184,10 @@ gate. It reports a prose comment that opens its own line, in the diff's scope. A
 modified line as an added one, so rewording one and re-indenting one each report it. That is the
 rule's cost and the label is its answer, since a comment worth keeping takes the same label as a
 comment worth writing. A trailing comment is out of scope. That is because which mid-line marker
-opens a comment differs by language in ways a gate cannot settle from the marker alone. A docstring is not
-a comment line, an instruction to a tool is not a comment the rule reads, and Markdown is out of
-scope.
+opens a comment differs by language in ways a gate cannot settle from the marker alone. A line
+holding code after a block comment's closer is out of scope too, since deleting it deletes that
+code. A docstring is not a comment line, an instruction to a tool is not a comment the rule reads,
+and Markdown is out of scope.
 
 Deleting the comment is the ordinary answer, since the bullets above already say what one has to
 earn. Where a comment is genuinely owed, and a rule requiring one is the clearest case of that, the
