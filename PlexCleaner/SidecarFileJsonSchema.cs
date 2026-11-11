@@ -245,11 +245,10 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
     private static SidecarFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase =
-            JsonSerializer.Deserialize(
-                json,
-                SidecarFileJsonContext.Default.SidecarFileJsonSchemaBase
-            ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchemaBase");
+        SidecarFileJsonSchemaBase sidecarFileJsonSchemaBase = JsonSerializer.Deserialize(
+            json,
+            SidecarFileJsonContext.Default.SidecarFileJsonSchemaBase
+        ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchemaBase");
 
         if (sidecarFileJsonSchemaBase.SchemaVersion != Version)
         {
@@ -264,41 +263,36 @@ public record SidecarFileJsonSchema5 : SidecarFileJsonSchema4
         switch (sidecarFileJsonSchemaBase.SchemaVersion)
         {
             case SidecarFileJsonSchema1.Version:
-                SidecarFileJsonSchema1 sidecarFileJsonSchema1 =
-                    JsonSerializer.Deserialize(
-                        json,
-                        SidecarFileJsonContext.Default.SidecarFileJsonSchema1
-                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema1");
+                SidecarFileJsonSchema1 sidecarFileJsonSchema1 = JsonSerializer.Deserialize(
+                    json,
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema1
+                ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema1");
                 return new SidecarFileJsonSchema(sidecarFileJsonSchema1);
 
             case SidecarFileJsonSchema2.Version:
-                SidecarFileJsonSchema2 sidecarFileJsonSchema2 =
-                    JsonSerializer.Deserialize(
-                        json,
-                        SidecarFileJsonContext.Default.SidecarFileJsonSchema2
-                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema2");
+                SidecarFileJsonSchema2 sidecarFileJsonSchema2 = JsonSerializer.Deserialize(
+                    json,
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema2
+                ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema2");
                 return new SidecarFileJsonSchema(sidecarFileJsonSchema2);
             case SidecarFileJsonSchema3.Version:
-                SidecarFileJsonSchema3 sidecarFileJsonSchema3 =
-                    JsonSerializer.Deserialize(
-                        json,
-                        SidecarFileJsonContext.Default.SidecarFileJsonSchema3
-                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema3");
+                SidecarFileJsonSchema3 sidecarFileJsonSchema3 = JsonSerializer.Deserialize(
+                    json,
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema3
+                ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema3");
                 return new SidecarFileJsonSchema(sidecarFileJsonSchema3);
 
             case SidecarFileJsonSchema4.Version:
-                SidecarFileJsonSchema4 sidecarFileJsonSchema4 =
-                    JsonSerializer.Deserialize(
-                        json,
-                        SidecarFileJsonContext.Default.SidecarFileJsonSchema4
-                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema4");
+                SidecarFileJsonSchema4 sidecarFileJsonSchema4 = JsonSerializer.Deserialize(
+                    json,
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema4
+                ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema4");
                 return new SidecarFileJsonSchema(sidecarFileJsonSchema4);
             case Version:
-                SidecarFileJsonSchema sidecarFileJsonSchema =
-                    JsonSerializer.Deserialize(
-                        json,
-                        SidecarFileJsonContext.Default.SidecarFileJsonSchema5
-                    ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema5");
+                SidecarFileJsonSchema sidecarFileJsonSchema = JsonSerializer.Deserialize(
+                    json,
+                    SidecarFileJsonContext.Default.SidecarFileJsonSchema5
+                ) ?? throw new JsonException("Failed to deserialize SidecarFileJsonSchema5");
                 return sidecarFileJsonSchema;
             default:
                 throw new NotSupportedException(

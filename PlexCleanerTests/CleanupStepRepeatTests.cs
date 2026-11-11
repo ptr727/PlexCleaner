@@ -217,9 +217,8 @@ public sealed class CleanupStepRepeatTests : IDisposable
     public void RepairMetadataErrors_TrackFlagsDoNotStick_SetsOnceAcrossRuns()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
-        ProcessFile processFile = CreateProcessFile(
-            SidecarFile.StatesType.None,
-            mkvMerge: data => AudioProperties(data)["track_name"] = "Commentary"
+        ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None, mkvMerge: data =>
+            AudioProperties(data)["track_name"] = "Commentary"
         );
 
         bool modified = false;
@@ -253,29 +252,26 @@ public sealed class CleanupStepRepeatTests : IDisposable
         Program.Config.ProcessOptions.ReMux = option != "ReMux";
         Program.Config.ProcessOptions.SetIetfLanguageTags = option != "SetIetfLanguageTags";
         Program.Config.ProcessOptions.SetTrackFlags = option != "SetTrackFlags";
-        ProcessFile processFile = CreateProcessFile(
-            SidecarFile.StatesType.None,
-            mkvMerge: data =>
+        ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None, mkvMerge: data =>
+        {
+            JsonNode properties = AudioProperties(data);
+            switch (option)
             {
-                JsonNode properties = AudioProperties(data);
-                switch (option)
-                {
-                    // A language tag that does not match its IETF tag needs a remux
-                    case "ReMux":
-                        properties["language"] = "eng";
-                        properties["language_ietf"] = "de";
-                        break;
-                    // A language tag with no IETF tag needs one set
-                    case "SetIetfLanguageTags":
-                        properties["language"] = "eng";
-                        _ = properties.AsObject().Remove("language_ietf");
-                        break;
-                    default:
-                        properties["track_name"] = "Commentary";
-                        break;
-                }
+                // A language tag that does not match its IETF tag needs a remux
+                case "ReMux":
+                    properties["language"] = "eng";
+                    properties["language_ietf"] = "de";
+                    break;
+                // A language tag with no IETF tag needs one set
+                case "SetIetfLanguageTags":
+                    properties["language"] = "eng";
+                    _ = properties.AsObject().Remove("language_ietf");
+                    break;
+                default:
+                    properties["track_name"] = "Commentary";
+                    break;
             }
-        );
+        });
 
         bool modified = false;
         IReadOnlyList<LogEvent> events = LogCapture.Capture(() =>
@@ -300,16 +296,13 @@ public sealed class CleanupStepRepeatTests : IDisposable
         Assert.SkipWhen(OperatingSystem.IsWindows(), "The fake tools are shell scripts");
         Program.Config.ProcessOptions.ReMux = false;
         Program.Config.ProcessOptions.SetTrackFlags = false;
-        ProcessFile processFile = CreateProcessFile(
-            SidecarFile.StatesType.None,
-            mkvMerge: data =>
-            {
-                JsonNode properties = AudioProperties(data);
-                properties["language"] = "eng";
-                properties["language_ietf"] = "de";
-                properties["track_name"] = "Commentary";
-            }
-        );
+        ProcessFile processFile = CreateProcessFile(SidecarFile.StatesType.None, mkvMerge: data =>
+        {
+            JsonNode properties = AudioProperties(data);
+            properties["language"] = "eng";
+            properties["language_ietf"] = "de";
+            properties["track_name"] = "Commentary";
+        });
         _ = processFile
             .MkvMergeProps.Audio.Single()
             .Actions.Should()
