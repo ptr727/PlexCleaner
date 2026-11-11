@@ -558,66 +558,61 @@ public static class Process
         // Process all the files
         ProcessResultJsonSchema resultsJson = new();
         Lock resultLock = new();
-        bool ret = ProcessDriver.ProcessFiles(
-            fileList,
-            nameof(ProcessFiles),
-            false,
-            fileName =>
+        bool ret = ProcessDriver.ProcessFiles(fileList, nameof(ProcessFiles), false, fileName =>
+        {
+            // Process the file
+            bool processResult = ProcessFile(
+                fileName,
+                out bool modified,
+                out bool ignored,
+                out SidecarFile.StatesType state,
+                out string processName,
+                out string? failedOperation,
+                out string? invalidReason
+            );
+
+            // Cancelled
+            if (Program.IsCancelled())
             {
-                // Process the file
-                bool processResult = ProcessFile(
-                    fileName,
-                    out bool modified,
-                    out bool ignored,
-                    out SidecarFile.StatesType state,
-                    out string processName,
-                    out string? failedOperation,
-                    out string? invalidReason
-                );
+                return false;
+            }
 
-                // Cancelled
-                if (Program.IsCancelled())
-                {
-                    return false;
-                }
-
-                // Ignored do not add to results
-                if (ignored)
-                {
-                    return processResult;
-                }
-
-                // Per-outcome metrics: this is the only place the State flags are known
-                Metrics.RecordStates(state);
-                if (modified)
-                {
-                    Metrics.RecordModified();
-                }
-                if ((state & SidecarFile.StatesType.VerifyFailed) != 0)
-                {
-                    Metrics.RecordVerifyFailed();
-                }
-
-                // Save result
-                lock (resultLock)
-                {
-                    resultsJson.Results.Results.Add(
-                        new()
-                        {
-                            Result = processResult,
-                            OriginalFileName = fileName,
-                            NewFileName = processName,
-                            Modified = modified,
-                            State = state,
-                            FailedOperation = failedOperation,
-                            InvalidReason = invalidReason,
-                        }
-                    );
-                }
-
+            // Ignored do not add to results
+            if (ignored)
+            {
                 return processResult;
             }
-        );
+
+            // Per-outcome metrics: this is the only place the State flags are known
+            Metrics.RecordStates(state);
+            if (modified)
+            {
+                Metrics.RecordModified();
+            }
+            if ((state & SidecarFile.StatesType.VerifyFailed) != 0)
+            {
+                Metrics.RecordVerifyFailed();
+            }
+
+            // Save result
+            lock (resultLock)
+            {
+                resultsJson.Results.Results.Add(
+                    new()
+                    {
+                        Result = processResult,
+                        OriginalFileName = fileName,
+                        NewFileName = processName,
+                        Modified = modified,
+                        State = state,
+                        FailedOperation = failedOperation,
+                        InvalidReason = invalidReason,
+                    }
+                );
+            }
+
+            return processResult;
+        });
 
         writeFailed = !FinishProcessing(resultsJson);
         return ret;

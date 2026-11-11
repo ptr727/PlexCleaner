@@ -283,61 +283,56 @@ public static class ProcessDriver
         TagMapSet mkTags = new();
         TagMapSet miTags = new();
         Lock tagLock = new();
-        bool ret = ProcessFiles(
-            fileList,
-            nameof(GetTagMap),
-            true,
-            fileName =>
+        bool ret = ProcessFiles(fileList, nameof(GetTagMap), true, fileName =>
+        {
+            // Get media information
+            ProcessFile processFile = new(fileName);
+            if (!processFile.GetMediaProps())
             {
-                // Get media information
-                ProcessFile processFile = new(fileName);
-                if (!processFile.GetMediaProps())
-                {
-                    return false;
-                }
-
-                // Remove cover art in video tracks
-                _ = processFile.MediaInfoProps.Video.RemoveAll(track => track.CoverArt);
-                _ = processFile.FfProbeProps.Video.RemoveAll(track => track.CoverArt);
-                _ = processFile.MkvMergeProps.Video.RemoveAll(track => track.CoverArt);
-
-                // Skip media with errors
-                if (
-                    processFile.MediaInfoProps.HasErrors
-                    || processFile.FfProbeProps.HasErrors
-                    || processFile.MkvMergeProps.HasErrors
-                )
-                {
-                    Log.Warning(
-                        "Skipping media with errors : {FileName}",
-                        processFile.FileInfo.FullName
-                    );
-                    return false;
-                }
-
-                // Add all the tags
-                lock (tagLock)
-                {
-                    ffTags.Add(
-                        processFile.FfProbeProps,
-                        processFile.MkvMergeProps,
-                        processFile.MediaInfoProps
-                    );
-                    mkTags.Add(
-                        processFile.MkvMergeProps,
-                        processFile.FfProbeProps,
-                        processFile.MediaInfoProps
-                    );
-                    miTags.Add(
-                        processFile.MediaInfoProps,
-                        processFile.FfProbeProps,
-                        processFile.MkvMergeProps
-                    );
-                }
-
-                return true;
+                return false;
             }
-        );
+
+            // Remove cover art in video tracks
+            _ = processFile.MediaInfoProps.Video.RemoveAll(track => track.CoverArt);
+            _ = processFile.FfProbeProps.Video.RemoveAll(track => track.CoverArt);
+            _ = processFile.MkvMergeProps.Video.RemoveAll(track => track.CoverArt);
+
+            // Skip media with errors
+            if (
+                processFile.MediaInfoProps.HasErrors
+                || processFile.FfProbeProps.HasErrors
+                || processFile.MkvMergeProps.HasErrors
+            )
+            {
+                Log.Warning(
+                    "Skipping media with errors : {FileName}",
+                    processFile.FileInfo.FullName
+                );
+                return false;
+            }
+
+            // Add all the tags
+            lock (tagLock)
+            {
+                ffTags.Add(
+                    processFile.FfProbeProps,
+                    processFile.MkvMergeProps,
+                    processFile.MediaInfoProps
+                );
+                mkTags.Add(
+                    processFile.MkvMergeProps,
+                    processFile.FfProbeProps,
+                    processFile.MediaInfoProps
+                );
+                miTags.Add(
+                    processFile.MediaInfoProps,
+                    processFile.FfProbeProps,
+                    processFile.MkvMergeProps
+                );
+            }
+
+            return true;
+        });
         if (!ret)
         {
             return false;
@@ -355,174 +350,157 @@ public static class ProcessDriver
     }
 
     public static bool GetMediaInfo(List<string> fileList) =>
-        ProcessFiles(
-            fileList,
-            nameof(GetMediaInfo),
-            true,
-            fileName =>
+        ProcessFiles(fileList, nameof(GetMediaInfo), true, fileName =>
+        {
+            // Get media information
+            ProcessFile processFile = new(fileName);
+            if (!processFile.GetMediaProps())
             {
-                // Get media information
-                ProcessFile processFile = new(fileName);
-                if (!processFile.GetMediaProps())
-                {
-                    return false;
-                }
-
-                // Print info
-                Log.Information("{FileName}", fileName);
-                processFile.MediaInfoProps.WriteLine();
-                processFile.MkvMergeProps.WriteLine();
-                processFile.FfProbeProps.WriteLine();
-
-                return true;
+                return false;
             }
-        );
+
+            // Print info
+            Log.Information("{FileName}", fileName);
+            processFile.MediaInfoProps.WriteLine();
+            processFile.MkvMergeProps.WriteLine();
+            processFile.FfProbeProps.WriteLine();
+
+            return true;
+        });
 
     public static bool TestMediaInfo(List<string> fileList) =>
-        ProcessFiles(
-            fileList,
-            nameof(TestMediaInfo),
-            false,
-            fileName =>
+        ProcessFiles(fileList, nameof(TestMediaInfo), false, fileName =>
+        {
+            // Process MKV files or files in the Remux list
+            FileInfo fileInfo = new(fileName);
+            if (
+                !SidecarFile.IsMkvFile(fileName)
+                && !Program.Config.ProcessOptions.ReMuxExtensions.Contains(
+                    Path.GetExtension(fileName)
+                )
+            )
             {
-                // Process MKV files or files in the Remux list
-                FileInfo fileInfo = new(fileName);
-                if (
-                    !SidecarFile.IsMkvFile(fileName)
-                    && !Program.Config.ProcessOptions.ReMuxExtensions.Contains(
-                        Path.GetExtension(fileName)
-                    )
-                )
-                {
-                    return true;
-                }
-
-                // Get media information
-                Log.Debug("Reading media information : {FileName}", fileName);
-                int ret = 0;
-                if (Tools.MediaInfo.GetMediaProps(fileInfo.FullName, out MediaProps mediaInfoProps))
-                {
-                    mediaInfoProps.WriteLine();
-                    ret++;
-                }
-                if (Tools.MkvMerge.GetMediaProps(fileInfo.FullName, out MediaProps mkvMergeProps))
-                {
-                    mkvMergeProps.WriteLine();
-                    ret++;
-                }
-                if (Tools.FfProbe.GetMediaProps(fileInfo.FullName, out MediaProps ffProbeProps))
-                {
-                    ffProbeProps.WriteLine();
-                    ret++;
-                }
-                if (ret != 3)
-                {
-                    return false;
-                }
-
-                // Skip further validation if any errors
-                if (mediaInfoProps.HasErrors || ffProbeProps.HasErrors || mkvMergeProps.HasErrors)
-                {
-                    Log.Warning("Media metadata has errors : {FileName}", fileInfo.FullName);
-                    return true;
-                }
-
-                // Remove cover art in video tracks
-                _ = mediaInfoProps.Video.RemoveAll(track => track.CoverArt);
-                _ = ffProbeProps.Video.RemoveAll(track => track.CoverArt);
-                _ = mkvMergeProps.Video.RemoveAll(track => track.CoverArt);
-
-                // Do the track counts match
-                if (
-                    ffProbeProps.Audio.Count != mkvMergeProps.Audio.Count
-                    || mkvMergeProps.Audio.Count != mediaInfoProps.Audio.Count
-                    || ffProbeProps.Video.Count != mkvMergeProps.Video.Count
-                    || mkvMergeProps.Video.Count != mediaInfoProps.Video.Count
-                    || ffProbeProps.Subtitle.Count != mkvMergeProps.Subtitle.Count
-                    || mkvMergeProps.Subtitle.Count != mediaInfoProps.Subtitle.Count
-                )
-                {
-                    Log.Warning("Tool track count discrepancy : {FileName}", fileInfo.FullName);
-                }
-
-                // If Matroska container then MkvMerge and MediaInfo track Uid's should match
-                if (mkvMergeProps.IsContainerMkv())
-                {
-                    if (
-                        mkvMergeProps.Video.Any(mkvItem =>
-                            mediaInfoProps.Video.Find(mediaInfoItem =>
-                                mediaInfoItem.Uid == mkvItem.Uid
-                            ) == null
-                        )
-                    )
-                    {
-                        Log.Warning(
-                            "MkvMerge video track Uid mismatch : {FileName}",
-                            fileInfo.FullName
-                        );
-                    }
-                    if (
-                        mkvMergeProps.Audio.Any(mkvItem =>
-                            mediaInfoProps.Audio.Find(mediaInfoItem =>
-                                mediaInfoItem.Uid == mkvItem.Uid
-                            ) == null
-                        )
-                    )
-                    {
-                        Log.Warning(
-                            "MkvMerge audio track Uid mismatch : {FileName}",
-                            fileInfo.FullName
-                        );
-                    }
-                    if (
-                        mkvMergeProps.Subtitle.Any(mkvItem =>
-                            mediaInfoProps.Subtitle.Find(mediaInfoItem =>
-                                mediaInfoItem.Uid == mkvItem.Uid
-                            ) == null
-                        )
-                    )
-                    {
-                        Log.Warning(
-                            "MkvMerge subtitle track Uid mismatch : {FileName}",
-                            fileInfo.FullName
-                        );
-                    }
-                }
-
                 return true;
             }
-        );
+
+            // Get media information
+            Log.Debug("Reading media information : {FileName}", fileName);
+            int ret = 0;
+            if (Tools.MediaInfo.GetMediaProps(fileInfo.FullName, out MediaProps mediaInfoProps))
+            {
+                mediaInfoProps.WriteLine();
+                ret++;
+            }
+            if (Tools.MkvMerge.GetMediaProps(fileInfo.FullName, out MediaProps mkvMergeProps))
+            {
+                mkvMergeProps.WriteLine();
+                ret++;
+            }
+            if (Tools.FfProbe.GetMediaProps(fileInfo.FullName, out MediaProps ffProbeProps))
+            {
+                ffProbeProps.WriteLine();
+                ret++;
+            }
+            if (ret != 3)
+            {
+                return false;
+            }
+
+            // Skip further validation if any errors
+            if (mediaInfoProps.HasErrors || ffProbeProps.HasErrors || mkvMergeProps.HasErrors)
+            {
+                Log.Warning("Media metadata has errors : {FileName}", fileInfo.FullName);
+                return true;
+            }
+
+            // Remove cover art in video tracks
+            _ = mediaInfoProps.Video.RemoveAll(track => track.CoverArt);
+            _ = ffProbeProps.Video.RemoveAll(track => track.CoverArt);
+            _ = mkvMergeProps.Video.RemoveAll(track => track.CoverArt);
+
+            // Do the track counts match
+            if (
+                ffProbeProps.Audio.Count != mkvMergeProps.Audio.Count
+                || mkvMergeProps.Audio.Count != mediaInfoProps.Audio.Count
+                || ffProbeProps.Video.Count != mkvMergeProps.Video.Count
+                || mkvMergeProps.Video.Count != mediaInfoProps.Video.Count
+                || ffProbeProps.Subtitle.Count != mkvMergeProps.Subtitle.Count
+                || mkvMergeProps.Subtitle.Count != mediaInfoProps.Subtitle.Count
+            )
+            {
+                Log.Warning("Tool track count discrepancy : {FileName}", fileInfo.FullName);
+            }
+
+            // If Matroska container then MkvMerge and MediaInfo track Uid's should match
+            if (mkvMergeProps.IsContainerMkv())
+            {
+                if (
+                    mkvMergeProps.Video.Any(mkvItem =>
+                        mediaInfoProps.Video.Find(mediaInfoItem => mediaInfoItem.Uid == mkvItem.Uid)
+                        == null
+                    )
+                )
+                {
+                    Log.Warning(
+                        "MkvMerge video track Uid mismatch : {FileName}",
+                        fileInfo.FullName
+                    );
+                }
+                if (
+                    mkvMergeProps.Audio.Any(mkvItem =>
+                        mediaInfoProps.Audio.Find(mediaInfoItem => mediaInfoItem.Uid == mkvItem.Uid)
+                        == null
+                    )
+                )
+                {
+                    Log.Warning(
+                        "MkvMerge audio track Uid mismatch : {FileName}",
+                        fileInfo.FullName
+                    );
+                }
+                if (
+                    mkvMergeProps.Subtitle.Any(mkvItem =>
+                        mediaInfoProps.Subtitle.Find(mediaInfoItem =>
+                            mediaInfoItem.Uid == mkvItem.Uid
+                        ) == null
+                    )
+                )
+                {
+                    Log.Warning(
+                        "MkvMerge subtitle track Uid mismatch : {FileName}",
+                        fileInfo.FullName
+                    );
+                }
+            }
+
+            return true;
+        });
 
     public static bool GetToolInfo(List<string> fileList) =>
-        ProcessFiles(
-            fileList,
-            nameof(GetToolInfo),
-            true,
-            fileName =>
+        ProcessFiles(fileList, nameof(GetToolInfo), true, fileName =>
+        {
+            // Get media tool information
+            if (
+                !Tools.MediaInfo.GetMediaPropsJson(fileName, out string mediaInfoXml)
+                || !Tools.MkvMerge.GetMediaPropsJson(fileName, out string mkvMergeJson)
+                || !Tools.FfProbe.GetMediaPropsJson(fileName, out string ffProbeJson)
+            )
             {
-                // Get media tool information
-                if (
-                    !Tools.MediaInfo.GetMediaPropsJson(fileName, out string mediaInfoXml)
-                    || !Tools.MkvMerge.GetMediaPropsJson(fileName, out string mkvMergeJson)
-                    || !Tools.FfProbe.GetMediaPropsJson(fileName, out string ffProbeJson)
-                )
-                {
-                    Log.Error("Failed to read media tool info : {FileName}", fileName);
-                    return false;
-                }
-
-                // Print and log info
-                Log.Information("{FileName}", fileName);
-                Log.Information("FfProbe: {FfProbeJson}", ffProbeJson);
-                Console.Write(ffProbeJson);
-                Log.Information("MkvMerge: {MkvMergeJson}", mkvMergeJson);
-                Console.Write(mkvMergeJson);
-                Log.Information("MediaInfo: {MediaInfoXml}", mediaInfoXml);
-                Console.Write(mediaInfoXml);
-
-                return true;
+                Log.Error("Failed to read media tool info : {FileName}", fileName);
+                return false;
             }
-        );
+
+            // Print and log info
+            Log.Information("{FileName}", fileName);
+            Log.Information("FfProbe: {FfProbeJson}", ffProbeJson);
+            Console.Write(ffProbeJson);
+            Log.Information("MkvMerge: {MkvMergeJson}", mkvMergeJson);
+            Console.Write(mkvMergeJson);
+            Log.Information("MediaInfo: {MediaInfoXml}", mediaInfoXml);
+            Console.Write(mediaInfoXml);
+
+            return true;
+        });
 
     internal static string FormatDuration(TimeSpan value) =>
         // Consistent HH:mm:ss.fff across log entries; hours from TotalHours so a multi-day run never wraps

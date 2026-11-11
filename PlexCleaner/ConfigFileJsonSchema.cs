@@ -266,9 +266,10 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
     private static ConfigFileJsonSchema FromJson(string json)
     {
         // Deserialize the base class to get the schema version
-        ConfigFileJsonSchemaBase configFileJsonSchemaBase =
-            JsonSerializer.Deserialize(json, ConfigFileJsonContext.Default.ConfigFileJsonSchemaBase)
-            ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchemaBase");
+        ConfigFileJsonSchemaBase configFileJsonSchemaBase = JsonSerializer.Deserialize(
+            json,
+            ConfigFileJsonContext.Default.ConfigFileJsonSchemaBase
+        ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchemaBase");
 
         if (configFileJsonSchemaBase.SchemaVersion != Version)
         {
@@ -283,32 +284,28 @@ public record ConfigFileJsonSchema4 : ConfigFileJsonSchema3
         switch (configFileJsonSchemaBase.SchemaVersion)
         {
             case ConfigFileJsonSchema1.Version:
-                ConfigFileJsonSchema1 configFileJsonSchema1 =
-                    JsonSerializer.Deserialize(
-                        json,
-                        ConfigFileJsonContext.Default.ConfigFileJsonSchema1
-                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema1");
+                ConfigFileJsonSchema1 configFileJsonSchema1 = JsonSerializer.Deserialize(
+                    json,
+                    ConfigFileJsonContext.Default.ConfigFileJsonSchema1
+                ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema1");
                 return new ConfigFileJsonSchema(configFileJsonSchema1);
             case ConfigFileJsonSchema2.Version:
-                ConfigFileJsonSchema2 configFileJsonSchema2 =
-                    JsonSerializer.Deserialize(
-                        json,
-                        ConfigFileJsonContext.Default.ConfigFileJsonSchema2
-                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema2");
+                ConfigFileJsonSchema2 configFileJsonSchema2 = JsonSerializer.Deserialize(
+                    json,
+                    ConfigFileJsonContext.Default.ConfigFileJsonSchema2
+                ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema2");
                 return new ConfigFileJsonSchema(configFileJsonSchema2);
             case ConfigFileJsonSchema3.Version:
-                ConfigFileJsonSchema3 configFileJsonSchema3 =
-                    JsonSerializer.Deserialize(
-                        json,
-                        ConfigFileJsonContext.Default.ConfigFileJsonSchema3
-                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema3");
+                ConfigFileJsonSchema3 configFileJsonSchema3 = JsonSerializer.Deserialize(
+                    json,
+                    ConfigFileJsonContext.Default.ConfigFileJsonSchema3
+                ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema3");
                 return new ConfigFileJsonSchema(configFileJsonSchema3);
             case Version:
-                ConfigFileJsonSchema configFileJsonSchema4 =
-                    JsonSerializer.Deserialize(
-                        json,
-                        ConfigFileJsonContext.Default.ConfigFileJsonSchema4
-                    ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema4");
+                ConfigFileJsonSchema configFileJsonSchema4 = JsonSerializer.Deserialize(
+                    json,
+                    ConfigFileJsonContext.Default.ConfigFileJsonSchema4
+                ) ?? throw new JsonException("Failed to deserialize ConfigFileJsonSchema4");
                 return configFileJsonSchema4;
             default:
                 throw new NotSupportedException(
