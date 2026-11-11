@@ -63,7 +63,7 @@ jobs:
               - 'version.json'
               - '.config/dotnet-tools.json'
               - '.github/actions/integration-coverage/**'
-              - 'codecov.yml'
+              - '.codecov.yml'
               - 'RegressionTests/check_results.py'
               - 'RegressionTests/corpus_common.py'
               - 'RegressionTests/integration-test.sh'
