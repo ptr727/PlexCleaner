@@ -380,6 +380,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   fail". It requires `changes` and `validate` to succeed, passes a skipped `smoke-build` or `integration`, and
   blocks on failure or cancellation. Its name is ruleset-bound (D6.2) and must not be renamed. An expression
   `name:` yields that name only on a `pull_request` run, so a dispatch run cannot post the required context.
+  Its workflow triggers on `pull_request`, since a gate with no such trigger never runs the validator's
+  pull-request-only steps, the prose gate among them.
   *Prevents a defect merging unverified, and a filter error letting a release change merge unbuilt.*
 - **D1.6 Unit tests run under coverage.** Output: the validator's `unit-test` job runs `dotnet test`, built
   with `TreatWarningsAsErrors` from `Directory.Build.props`, so analyzer and style warnings fail here. The step
@@ -410,9 +412,9 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   `dotnet-coverage`. The script fails the job when any file's process result differs from
   [`RegressionTests/synthetic/expected-results.json`](./RegressionTests/synthetic/expected-results.json). The
   Cobertura report uploads to Codecov under the `integration` flag, best-effort like the validator's uploads.
-  The `integration` entry lists the `release` paths plus the coverage settings, the .NET tool manifest, and `codecov.yml`.
+  The `integration` entry lists the `release` paths plus the coverage settings, the .NET tool manifest, and `.codecov.yml`.
   It also lists the action, the script, its result check and the module it imports, and the synthetic library. The aggregator passes a skipped run, and
-  `codecov.yml` carries the flag forward across the commits that skip it. In the publisher the job runs on
+  `.codecov.yml` carries the flag forward across the commits that skip it. In the publisher the job runs on
   `github.sha` once `plan` resolves `publish`, and `publish` needs it to succeed. It is repo-local, since the
   hub validator's hook receives no Codecov token and the hub release task cannot load an image. *Prevents
   a change to a processing path merging, or a weekly tool refresh publishing, with a processing outcome
@@ -598,7 +600,7 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
   cancellation. The `changes` job's `integration` entry lists every `release` path. The `integration` job
   `needs:` `changes`, runs only on an `integration` change or a dispatch, and calls
   `./.github/actions/integration-coverage` with `CODECOV_TOKEN`. That action uploads with `flags: integration`
-  and `disable_search: true`, and `codecov.yml` declares `integration` with `carryforward: true`.
+  and `disable_search: true`, and `.codecov.yml` declares `integration` with `carryforward: true`.
 - **D2:** the hub task's `validate-release` job runs before the build jobs and they `needs:` it; it checks
   both arms (main without a prerelease `-`, every other branch with one), strips `+buildmetadata`, self-skips
   on smoke; `publish-release.yml`'s own `plan` job resolves `publish`/`stable` once and every later job gates
