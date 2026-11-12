@@ -1106,7 +1106,6 @@ Licensed under the [MIT License][license]\
 [actions-link]: https://github.com/ptr727/PlexCleaner/actions
 [clone-link]: https://github.com/ptr727/PlexCleaner.git
 [commits-link]: https://github.com/ptr727/PlexCleaner/commits/main
-[coverage-link]: https://app.codecov.io/gh/ptr727/PlexCleaner/tree/main
 [discussions-link]: https://github.com/ptr727/PlexCleaner/discussions
 [docker-hub-link]: https://hub.docker.com/r/ptr727/plexcleaner
 [github-link]: https://github.com/ptr727/PlexCleaner
@@ -1121,6 +1120,7 @@ Licensed under the [MIT License][license]\
 [awesomeassertions-link]: https://awesomeassertions.org/
 [cliwrap-link]: https://github.com/Tyrrrz/CliWrap
 [codexffmpeg-releases-link]: https://github.com/GyanD/codexffmpeg/releases
+[coverage-link]: https://app.codecov.io/gh/ptr727/PlexCleaner/tree/main
 [demo-world-link]: https://www.demo-world.eu/2d-demo-trailers-hd/
 [dependabot-link]: https://github.com/dependabot
 [docker-hub-description-action-link]: https://github.com/marketplace/actions/docker-hub-description
