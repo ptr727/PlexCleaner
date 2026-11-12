@@ -28,7 +28,7 @@
 
 A test project on `xunit.v3` 4.0.0 or later is MTP-based. The .NET 10 SDK and later refuse to run such a test project through the VSTest target, so it also carries:
 
-- a root **`global.json`** declaring `{"test": {"runner": "Microsoft.Testing.Platform"}}`, which is what selects the driver `dotnet test` runs the project through,
+- a root **`global.json`** declaring `{"test": {"runner": "Microsoft.Testing.Platform"}}`, which is what selects the driver `dotnet test` runs the project through. The same file carries the `sdk` block every .NET repo needs, per `SKILL.md`'s "Central build and package configuration",
 - **`Microsoft.Testing.Extensions.CodeCoverage`** at **18.9.0 or later**, in place of `coverlet.collector`, whose VSTest data collector MTP ignores without failing,
 - no **`xunit.runner.visualstudio`**, the VSTest adapter MTP replaces.
 

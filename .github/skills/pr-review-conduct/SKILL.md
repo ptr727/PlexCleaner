@@ -54,14 +54,17 @@ visible comments, routinely still carries a finding nobody has answered. Treatin
    whose own file table names exactly the changed files covers it, `coverage=table`. That is the
    reading a Copilot round at Balanced review effort gives. Where no round covering the head carries a table of its own, the newest round
    that does stands in as `coverage=carried:table`. Its table has to name exactly the changed files.
-   Either table may leave out an added, modified, or deleted file with no changed line, such as a
-   binary. That holds while some changed file has one.
+   Either table may leave out an added, modified, renamed, or deleted file with no changed line,
+   such as a binary. That holds while some changed file has one. On a develop -> main promotion, a
+   file that only green Dependabot bumps changed is taken out of that comparison. The head reads
+   `coverage=dependabot`, which satisfies this item, where that covers every changed file or the
+   table names the rest.
    A table stands in only where no Copilot round on the pull request, on any commit, states
    partial coverage. So a pull request that ever had a partial round goes to the maintainer.
    `coverage=none` and `coverage=UNKNOWN` leave this item unsatisfied and decide no exit code,
    so read the field rather than the exit.
-   The coverage this item requires is Copilot's, or the attested local pass above, and CodeRabbit
-   and Qodo are advisory. That is because the hub's `docs/pr-reviewer-evaluation.md` "Status"
+   The coverage this item requires is Copilot's, the attested local pass above, or that green
+   Dependabot reading, and CodeRabbit and Qodo are advisory. That is because the hub's `docs/pr-reviewer-evaluation.md` "Status"
    names Copilot the incumbent and says no candidate is a required reviewer. An advisory
    reviewer's absence blocks nothing, while its findings owe item 3 exactly as Copilot's do.
    A review of the head it has started and not finished is not an absence. While a CodeRabbit
@@ -117,7 +120,15 @@ visible comments, routinely still carries a finding nobody has answered. Treatin
      later one. The attestation counts only from an owner, member, or collaborator, with the marker
      on its own line outside any code span or fence. The attestation's base has to be the one the
      pull request merged into. A local receipt does not count, since removing its worktree deletes
-     it.
+     it. A path `git diff -M100%` against the merge base reports as `R100` needs no read evidence,
+     since no byte of it changed. A Dependabot pull request counts as covered where it changed only
+     dependency manifests and lockfiles and merged into `develop` with its head's checks green.
+     `pr_review.py` reads it off the promotion's commits. Where it reads `coverage=dependabot`,
+     this case is not reached.
+     A change pushed directly to `develop` has no feature pull request. So an attestation published
+     on the promotion counts for each file in the attested head's diff, under the same conditions.
+     Its base is `main`. A Copilot round on the final head is still required, with
+     item 3 closed.
    - Every review thread on the promotion is resolved, and every check passes.
    - `coverage=none` is the only reason `pr_review.py` does not report the promotion ready, read
      from the digest's lines. A `VERDICT WITH NO COUNTED FINDING` headline, exit `50`, is a second
@@ -568,5 +579,4 @@ answer after it reads the PR node ID. `merge` squash-merges a feature pull reque
 words instead of a line number a fix push can move. It resolves the thread only when `--resolve`
 is given. A finding posted twice on one file, as two threads with the same text, is answered with
 `--all-identical`, which the refusal names. The repository's
-`.github/copilot-instructions.md` bootstraps Copilot into the `fleet-code-review` skill and its stable
-coverage marker. Do not reconstruct the API operations by hand.
+`.github/copilot-instructions.md` bootstraps Copilot into the `fleet-code-review` skill. Do not reconstruct the API operations by hand.

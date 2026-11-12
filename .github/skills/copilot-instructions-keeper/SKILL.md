@@ -25,8 +25,7 @@ the bootstrap.
 
 `spec/files.json` declares it `intent` fidelity, `whole: true`, covering named sections
 (`Commit Messages and Pull Request Titles`, `Reviewing Carried Fleet Content`, `GitHub Copilot
-Review Runbook`, `When in Doubt`), with `<owner>`, `<repo>`, and `<N>` placeholders filled per
-repo. **The fleet audit checks an `intent` file for file presence and each named section's
+Review Runbook`, `When in Doubt`). **The fleet audit checks an `intent` file for file presence and each named section's
 heading, never for content drift inside a section.** A section that is present but has fallen out
 of date against the hub produces no finding anywhere in the mechanical audit. Such staleness is the
 exact gap this skill exists to catch. Noticing that has to happen in a live session like this one.
@@ -72,8 +71,7 @@ deleting it.
 1. Fetch the hub (`github.com/ptr727/ProjectTemplate`) `main` branch fresh. A stale local clone
    answers confidently instead of failing.
 2. Compare the target repo's `.github/copilot-instructions.md` against the hub's, section by
-   section, at **intent** fidelity, judged by meaning, not by byte match. A content-identical
-   file with different `<owner>`/`<repo>` placeholder fills is current, not drifted.
+   section, at **intent** fidelity, judged by meaning, not by byte match.
 3. Read the "Disproved Claims" section separately from the rest. Judge its **shape and rules**
    against the hub. Judge its **entries** only against what that repo itself carries (see
    above), never against the hub's own entries.

@@ -89,8 +89,8 @@ of its own.
 1. **Read the open issues** with `gh issue list --repo "<owner>/<repo>" --state open --limit 500
    --json number,title,labels,updatedAt`. A read returning as many rows as its limit may be
    truncated, so raise the limit and read again until one returns fewer. Leave out every issue
-   carrying `handoff`, `canonical-sweep`, or `deferred`, and keep the `deferred` count for the
-   report. Mark the open `decision` issues as questions already queued.
+   carrying `handoff` or `canonical-sweep`. Set aside every `deferred` issue for step 2's re-check
+   rather than classifying it. Mark the open `decision` issues as questions already queued.
 2. **Classify the rest** in batches, one `standard` classifier per batch, at most four running at
    once. Before dispatching, the triaging session runs `git fetch origin main develop` once, and
    stops and reports if it fails. A stale `main` reads an overtaken issue as `HELD`. A stale
@@ -104,6 +104,14 @@ of its own.
    into `develop` and not yet promoted makes the issue `HELD` awaiting promotion rather than
    `OVERTAKEN`. The queued `decision` issues get the same check and no classification beyond it.
    The classifier returns one line per issue in the form "Return Lines" below.
+   Each batch also carries the `deferred` issues to re-check, which get no classification. The
+   classifier reads the comment stating the condition the work waits for, from an account with
+   write access. Where that condition is checkable state, such as an issue closing, and it now
+   holds, the line is `LIFT`. It says whether the question the "not yet" postponed is still
+   undetermined. Any other condition, and a read that cannot be made, is `KEEP`. On a
+   `LIFT` line the triaging session removes the label and comments the evidence, per step 7. Where
+   that question is still undetermined, it puts `decision` back in the same act, making the
+   issue a queued question. Either way the issue goes in a later batch.
 3. **Research the questions** in clusters, one `frontier` researcher per cluster of five or six
    questions that share a topic, at most four running at once. A topic with fewer questions is a
    smaller cluster rather than one padded with other topics. That covers each `ASK` and `SPLIT`
@@ -133,7 +141,7 @@ of its own.
    reason. It names the evidence and what each option does to any work in flight.
 5. **Ask the whole queue** as "Communicating with the User" below states, every question rather
    than only the top of the queue. Fill each prompt with as many questions as it carries, and
-   repeat until the queue is empty. Keep the longest-waited order, except that questions which
+   repeat until each question has been put once. Keep the longest-waited order, except that questions which
    settle each other go in the same prompt. Those are questions linked through a `BLOCKS` line,
    and questions whose fixes would edit the same section of the same file. Such a group takes the
    place its longest-waited member holds. A group larger than one prompt carries splits in that
@@ -153,10 +161,11 @@ of its own.
    the evidence. Where the researcher's `BLOCKS` line names a parked
    group's issue, comment on that issue that its decision is answered. For a "not yet", that
    comment says the group stays parked until the stated condition holds. A question the
-   maintainer skips keeps its label and stays in the queue.
+   maintainer skips keeps its label and stays in the queue. It is not put again in this triage, and
+   step 8 counts it as still open.
 8. **Report** the counts: issues an agent can fix alone, questions answered, questions deferred,
    questions still open, overtaken issues closed, and splits filed. Give the count of open
-   `deferred` issues as well. Also name each issue held back for any other reason "Needs the
+   `deferred` issues as well, after step 2's lifts, and how many it lifted. Also name each issue held back for any other reason "Needs the
    Maintainer" does not count, under that reason. End with one line saying a `backlog-burndown` away-mode run
    can now work the rest.
 
@@ -169,6 +178,8 @@ of its own.
 | classifier | `SPLIT #<n> <the undecided item in one sentence>` | part needs the maintainer, the rest does not |
 | classifier | `HELD #<n> <reason>` | waits on something other than a decision, such as a promotion or an attended run for an approved agent-safety edit |
 | classifier | `OVERTAKEN #<n> <what answered or overtook it>` | a later change already settled it, found by the history check |
+| classifier | `LIFT #<n> <open or settled> <the condition and the evidence that it holds>` | a `deferred` issue whose checkable condition now holds |
+| classifier | `KEEP #<n> <the condition it still waits on>` | a `deferred` issue that stays deferred |
 | researcher | per question, a block of `QUESTION #<n>`, `OPTION` lines with the recommended one first, `EVIDENCE`, and `BLOCKS` | the researched question, each option with its reason, and each issue and pull request it blocks |
 | researcher | `OVERTAKEN #<n> <what answered or overtook it>` | a queued question no longer open |
 
@@ -178,8 +189,8 @@ reported as unclassified where it fails twice.
 ## Briefs
 
 Brief on `AGENTS.md` "Context and Delegation Discipline"'s subagent shape. A classifier's brief
-quotes "Needs the Maintainer" whole, states the history check in step 2, and lists its issue
-numbers. It also states how step 6 says a kept-open comment reads. A researcher's brief names each issue in its cluster, its question, and the rule files
+quotes "Needs the Maintainer" whole and states the history check and the `deferred` re-check in step 2. It lists its issue
+numbers, marking the ones to re-check. It also states how step 6 says a kept-open comment reads. A researcher's brief names each issue in its cluster, its question, and the rule files
 it touches. It also states how to weigh what the issue holds:
 
 - Read every comment, newest last, rather than the body alone.

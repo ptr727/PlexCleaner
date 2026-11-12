@@ -2,8 +2,8 @@
 name: merge-and-release
 description: >-
   Merges a ready develop -> main promotion PR in a ptr727/ProjectTemplate fleet repo and, when
-  asked, dispatches the release, in this hub refreshing this machine's installed Skills as part of
-  that release step. Use this whenever asked to merge main, ship or cut a release, or finish a
+  asked, dispatches the release, in this hub refreshing this machine's installed Skills and its
+  host-safety kit as part of that release step. Use this whenever asked to merge main, ship or cut a release, or finish a
   promotion whose PR is green and fully resolved. When the request does not say how far ("merge
   main", "ship it"), ask once whether to merge only or merge and release. Triggers even when the
   phrasing is as short as "merge main and release", because that already states the scope and is
@@ -20,16 +20,18 @@ description: >-
 
 Once drive-pr (or a maintainer by hand) leaves a promotion PR ready, the same steps follow every
 time. The steps are to merge it, and usually dispatch the release it unblocks. In this hub a promotion can
-also change `.agents/skills` content this very session depends on. So the release step always
-carries a Skills refresh with it there, never a separate branch to ask about. This is because an
-ambiguous "merge and release" on the hub must not leave the maintainer unsure whether Skills got refreshed. One
+also change `.agents/skills` content this very session depends on, and the host-safety kit under
+`host-setup/agent-safety/`. So the release step always carries a Skills refresh and a kit install
+with it there, never a separate branch to ask about. This is because an ambiguous "merge and
+release" on the hub must not leave the maintainer unsure whether either got refreshed. One
 skill covers all of it, scoped down by what the maintainer actually asks for.
 
 ## How Far to Go
 
 - Read the invocation for an explicit scope first. "Just merge" or "merge only" means stop after
   the merge. "Merge and release", "ship it", or "cut a release" means also dispatch, and in this
-  hub also refresh Skills as part of that same step. Act on either without asking.
+  hub also refresh Skills and the host-safety kit as part of that same step. Act on either
+  without asking.
 - When the request names no scope ("merge main"), ask once, before merging: merge only, or merge
   and release. Recommend "merge and release" as the default on a release-model repo, a promotion
   merged without its release is the more common regret there. Recommend "merge only" as the
@@ -38,14 +40,15 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
   branching-and-release-model's "Operational repositories" delta.
 - Detect the hub automatically, `git remote get-url origin` or `gh repo view --json
   nameWithOwner` naming `ptr727/ProjectTemplate`. There the release scope silently includes the
-  Skills refresh, a downstream repo never sees it, it has no `.agents/skills` of its own to
-  refresh.
+  Skills refresh and the kit install. A downstream repo never sees either, since it has no
+  `.agents/skills` or `host-setup/agent-safety/` of its own.
 
 ## What Invoking This Skill Authorizes
 
 - Naming this skill, and answering its how-far question, is the maintainer's explicit, current
   go-ahead. That go-ahead is to merge the promotion PR and to perform the scope chosen, for the one
-  repo and PR in front of the agent. It is never a standing mode carried to the next PR.
+  repo and PR in front of the agent. It is never a standing mode carried to the next PR. In the
+  hub, a release scope also covers step 7's Skills refresh and kit install on this machine.
 - The one standing grant is a `backlog-burndown` away-mode run the maintainer invoked with scope
   `main` or `release`. That invocation names in advance each promotion that run makes, in that
   session only. A worker handing a promotion here under it asks no how-far question, since the scope
@@ -62,9 +65,26 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
    pr-review-conduct Merge Gate. Stop and report exactly what is missing rather than merging on a
    partial gate. A digest carrying `state=MERGED` is a promotion merged since step 1 found it
    open, whose `merge=UNKNOWN` never clears, so stop re-reading it. Confirm its `merge_commit=` per
-   step 4, run the ready-report comparison below against its `head=`, and report both. Dispatch no
-   release from here, since whoever merged it may have released it already. The merge has landed
-   all the same, so go on to step 7 where a release scope was chosen, and then step 8. A digest carrying
+   step 4, run the ready-report comparison below against its `head=`, and report both. Dispatch
+   nothing on the chosen scope alone, since whoever merged it may have released it already. Where
+   a release scope was chosen, look, then ask. Read this repo's `releaseTrigger` as step 5 does,
+   and where it reads `none` report that no release is configured. Otherwise read the publisher's
+   runs on the merge commit, `gh run list --repo owner/repo --workflow publish-release.yml --commit
+   <merge-sha> --json databaseId,event,headBranch,status,conclusion,createdAt`. `<merge-sha>` is
+   the full 40-character SHA, `gh pr view [number] --repo owner/repo --json mergeCommit --jq
+   .mergeCommit.oid`, since the digest's 8-character `merge_commit=` matches no run. Report whether
+   a release started, naming each run with its event, status, and conclusion. A read that fails is
+   reported with its output, never taken as no release started. A run found there, whether
+   running, finished, or failed, is reported and never re-dispatched from here. Where none
+   started, ask the maintainer whether to dispatch, and name `main`'s current tip where it has
+   moved past the merge commit. The release scope does not answer that question, since it was
+   chosen for a merge this session would make. Under an away-mode grant, which cannot ask, dispatch
+   nothing. File the question as a `decision` issue in this repository instead, naming the
+   promotion's number and full merge SHA. An open `decision` issue is what an away run's final
+   report carries to him. Acting on its answer is his, since no step here starts from an
+   issue. Attended, on his yes, run steps 5 and 6, with step 6 matching against `main`'s tip read immediately before the dispatch. On
+   anything else, dispatch nothing. Either way the merge has landed, so go on to step 7 where a
+   release scope was chosen, and then step 8. A digest carrying
    `state=CLOSED` is a stop to report. A digest reading `coverage=none` is not a partial gate where the promotion meets the
    one case that skill's Merge Gate item 2 states. Check that case again on every re-run below, and record
    its evidence for the head step 3 merges, as that item says.
@@ -144,21 +164,41 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
    `host-setup/bootstrap.sh` or `bootstrap.ps1` keeps rather than a checkout. There it holds what
    that bootstrap fetched, the commit `live.commit` names where it is not null. It holds that until
    `bootstrap.sh --skills` or `bootstrap.ps1 -Skills` runs again, which this step does not do.
-   From the same worktree, also run `python3 host-setup/agent-safety/claude/install.py --report`,
-   and report any result other than CURRENT to the maintainer. The host-safety kit, its rendered
-   `CLAUDE.md` included, is refreshed only by its own installer. That installer rewrites this
-   machine's hooks and settings, so this step reports it rather than running it.
-   Then remove the worktree with
-   `git worktree remove <worktree>`, whatever either report said. Removing it leaves the skills
-   snapshot and its stamp unchanged, and a result that does not read current is reported to the
-   maintainer. The skills `--report` exits on the snapshot alone. This step runs whether step 5
+   From the same worktree, also run `python3 host-setup/agent-safety/claude/install.py --report`.
+   The host-safety kit, its rendered `CLAUDE.md` included, is refreshed only by its own installer.
+   So where that report reads anything other than CURRENT, first rule out a rollback. The report
+   judges payload digests alone, so a kit newer than `main` also reads stale. Read the commit its
+   `This machine:` line names after `hub`. Install only where that commit carries no `-dirty`
+   suffix and `git merge-base --is-ancestor <commit> origin/main` exits 0, or where the report
+   reads NOT INSTALLED. Any other result, a kit installed from `develop` or from a dirty tree
+   among them, is reported to the maintainer rather than installed over. Where the install is
+   owed, run `python3 host-setup/agent-safety/claude/install.py` with no arguments from the same
+   worktree, which installs the promoted kit. The installer is idempotent, and it backs up a `CLAUDE.md` edited by
+   hand before rewriting it. Then run `--report` again and confirm it reads CURRENT. A failed
+   install, or a second report still not CURRENT, is reported to the maintainer with its actual
+   output, never retried. Where this seat may not run the installer, a permission denial among
+   the causes, report that to the maintainer rather than working around it. This step only runs
+   the installer, and never edits the kit's files or this machine's settings by hand. Where the
+   install ran, also report that sessions on this machine need a restart to load the new hooks
+   and `CLAUDE.md`. Run the rules refresh only where the kit read CURRENT in this step, or was
+   installed here and then read CURRENT. From the same worktree, run
+   `python3 host-setup/agent-safety/global_rules.py --report`, the writer of the Codex and opencode
+   global rules. Where the kit was left alone, its commit not an ancestor of `main` or carrying
+   `-dirty`, leave the rules alone too. They come from the same tree. Report both to the
+   maintainer together. Where the rules are not current, run `python3 host-setup/agent-safety/global_rules.py`, then
+   `--report` again. A SHADOWED Codex is reported to the maintainer and not fixed, since the override
+   is theirs. An EDITED file is rewritten after its backup, and that is reported. A failure is reported
+   with its output, never retried. Then remove the worktree with
+   `git worktree remove <worktree>`, whatever any report said. Removing it leaves the skills
+   snapshot, the installed kit, and their stamps unchanged. A result that does not read current
+   is reported to the maintainer. The skills `--report` exits on the snapshot alone. This step runs whether step 5
    or 6 dispatched, skipped, or failed a release. That is because it is gated only on the chosen scope,
    never on the release outcome. This refreshes only the machine running
    this session, per skill-lifecycle, every other machine still refreshes on its own next run or
    `docs/host-setup.md` "Fleet Skills Install" cadence.
 8. Run cleanup regardless of how steps 5 through 7 ended. No release configured, a dispatch
-   failure, an ambiguous run match, a timeout, a failed run, or a hub Skills refresh all still
-   reach this step. So does step 2 finding the promotion already merged. The merge already landed
+   failure, an ambiguous run match, a timeout, a failed run, or a hub refresh all still reach
+   this step. So does step 2 finding the promotion already merged. The merge already landed
    by then, in step 3 or before step 2 read it. Every part below is required:
    - The promotion PR's own worktree, where one exists: fetch and prune, remove the worktree, then bring the base
      clone to current `develop`. To do so, check `develop` out first only where it sits on another
