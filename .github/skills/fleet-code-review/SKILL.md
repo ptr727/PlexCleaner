@@ -105,14 +105,5 @@ Each finding states:
 - Why the change causes the failure, or the duplication or excess.
 - A bounded direction for the fix when one is known.
 
-Do not report a clean review until every changed file has been read. End the review body with
-exactly one ASCII marker, replacing the numbers with measured counts:
-
-```text
-<!-- fleet-review: reviewed=N changed=N findings=N -->
-```
-
-`reviewed` is the number of changed files actually reviewed. `changed` is the total number of
-changed files. `findings` is the number of published findings, including body-only findings.
-Never emit `reviewed=changed` as a placeholder. If full coverage is impossible, emit the actual
-counts and explain the limitation in the review body.
+Do not report a clean review until every changed file has been read. If full coverage is
+impossible, say so and explain the limitation in the review body.

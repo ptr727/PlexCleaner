@@ -65,7 +65,7 @@ not know a chain exists never goes looking for one.
 - **A platform lane is for work that needs its platform.** A platform track is one kept for a single
   host platform, such as `wsl` or `windows`. It takes an issue only when its defect reproduces, or
   its fix can be verified, on that platform alone. It also needs that no Linux host outside WSL can
-  both fix the issue and verify the fix. An issue meeting each condition goes to its platform's lane. Any
+  both fix the issue and verify the fix. A platform CI job counts as that verification, so an issue a Linux host can fix and that job verifies goes to the ordinary backlog. An issue meeting each condition goes to its platform's lane. Any
   other issue goes to the ordinary backlog, since a lane costs a separate chain and a host-bound
   session. A defect in WSL interop, the `WSLInterop` binfmt handler, `/mnt/<drive>` paths, or
   `wslpath` reproduces only inside WSL. So does running a Windows `.exe` from Linux, although WSL
@@ -79,8 +79,8 @@ not know a chain exists never goes looking for one.
   The original is narrowed to the rest, or closed in favor of those issues where nothing is left. A
   session that may not write issues names the unsplit issue in its report or handoff instead. An
   issue for a platform whose lane was closed reopens that lane with `new`, which files a new issue
-  continuing from the closed one. A platform lane is closed with `close` once none of its next steps
-  needs its platform. Before that, each remaining step with no issue of its own is filed as one. The
+  continuing from the closed one. A platform lane is ended per "Closing a Session" step 2 once none of its
+  next steps needs its platform. Before that, each remaining step with no issue of its own is filed as one. The
   closing comment carries the outcome, as `AGENTS.md` "Session Scope" closes a track whose work is
   complete.
 - **The title is for humans**, shaped `Session Handoff [<track>]: <subject>`. `new` composes it
@@ -90,9 +90,11 @@ not know a chain exists never goes looking for one.
   invisible, so a retitled or hand-edited issue still reads:
   `<!-- handoff: v1 track=<slug> round=<n> previous=<issue number or none> -->`. The round
   advances at each session close. `previous=` names the closed issue the track continues from, and
-  stays fixed while the round moves. Each archived round ends in a line of its own,
-  `<!-- handoff-round: v1 track=<slug> round=<n> closed=<YYYY-MM-DD> -->`, which is how a reader
-  tells a round from an ordinary comment.
+  stays fixed while the round moves. Each archived round opens with the heading
+  `## Round <n>, closed <YYYY-MM-DD>: <title>`. It ends in a line of its own,
+  `<!-- handoff-round: v1 track=<slug> round=<n> closed=<YYYY-MM-DD> -->`. A reader tells a round
+  from an ordinary comment by that whole shape. Its heading and its one mark line name the same
+  round and date. A mark line alone is not enough, since a comment can quote one.
 - **A session close runs in one order.** First append the outgoing body to the issue as a comment
   headed with its round and close date. Then replace the body and advance the round. Archiving
   first means a failure between the two leaves the outgoing round in both places rather than in
@@ -177,10 +179,11 @@ Read the issue's other comments too, since `resume` prints only the body and an 
 archived rounds. And a parking comment or a closing session's answers land in the comments between
 them. Read them with the command below. It leaves out each archived round, since a long track holds
 many of them in full. It keeps only visible comments from an account with write access, since anyone
-can comment on a public issue. A comment counts as a round where one of its lines is a round mark:
+can comment on a public issue. A comment counts as a round only where it has the whole shape "The
+Chain" above describes, so an answer quoting a mark still prints:
 
 ```sh
-gh issue view "<n>" --repo OWNER/NAME --json comments --jq '.comments[] | select((.authorAssociation | IN("OWNER", "MEMBER", "COLLABORATOR")) and (.isMinimized | not) and (.body | test("(^|\n)<!--[ \t]*handoff-round:[ \t]*v1[ \t][^>]*-->[ \t\r]*(\n|$)") | not)) | "\(.createdAt)\n\(.body)\n"'
+gh issue view "<n>" --repo OWNER/NAME --json comments --jq '.comments[] | select((.authorAssociation | IN("OWNER", "MEMBER", "COLLABORATOR")) and (.isMinimized | not) and (.body | (([capture("\\A\\s*## Round (?<r>[1-9][0-9]*), closed (?<c>[0-9]{4}-[0-9]{2}-[0-9]{2}):[^\n]*\n[\\s\\S]*\n<!--[ \t]*handoff-round:[ \t]*v1[ \t]+track=[a-z0-9-]+[ \t]+round=(?<mr>[1-9][0-9]*)[ \t]+closed=(?<mc>[0-9]{4}-[0-9]{2}-[0-9]{2})[ \t]*-->[ \t\r]*(\n|\\z)") | select(.r == .mr and .c == .mc)] | length) == 1 and ([scan("(^|\n)<!--[ \t]*handoff-round:")] | length) == 1) | not)) | "\(.createdAt)\n\(.body)\n"'
 ```
 
 Read the chain before re-attempting anything. `resume` prints the current body and indexes the
@@ -235,8 +238,11 @@ the whole procedure below. Run every step without being reminded of any of them.
    `blocked` is skipped unless named, since a `backlog-burndown` away-mode worker may hold it right now.
    Where one is named, confirm with the maintainer that no unattended run is live before working
    it. Where every open link is skipped,
-   say so and ask the maintainer which to take. Say which link was picked in one line before
-   anything else, so a wrong pick costs one reply rather than a round.
+   say so and ask the maintainer which to take. Where the maintainer named no link, the one this
+   order picks is a default. Put it to the maintainer as a prompt before any work, whatever its
+   `updatedAt`. A live session may still hold any link, and no time window tells a held link from
+   a free one. The prompt's first option works the picked link. The others name the links next in
+   the same order, as many as the prompt holds.
 2. **Resume it** per "Resuming" above, comments included, re-deriving live state rather than
    trusting the body.
 3. **Ask what it is blocked on first.** Where the link carries `blocked`, the parking comment names
@@ -257,13 +263,17 @@ the whole procedure below. Run every step without being reminded of any of them.
    the recommendation, and every one carries its reason, per "The Parked Decision Queue" below. The numbered list is the fallback where no prompt exists, or where the turn also asks for a command run at the session's input line.
 6. **Close the session** per "Closing a Session" below, which records lessons, writes the next round
    with `new`, presents the parked decision queue, and saves memories last. Where the issue carries
-   the `blocked` label left on in step 3, take it off once the next round is written. Remove it with
-   `gh issue edit "<n>" --repo OWNER/NAME --remove-label blocked`, since the round it marked is
-   archived. An `auto-*` lane differs in one way, since it holds one piece of work. Where that work
-   is done, end the track with `close` instead, the outcome as its comment, as `backlog-burndown`
-   "Away Mode" closes such a lane. Where work remains, the next round's next steps name the decision issue and
-   the answer. In that case, taking `blocked` off hands the lane back to an away-mode run. Either way the
-   parked decision queue is still presented.
+   the `blocked` label left on in step 3, take it off once the next round is written and the queue
+   presented. Remove it with `gh issue edit "<n>" --repo OWNER/NAME --remove-label blocked`, since
+   the round it marked is archived. Leave it on instead where a `decision` issue this session filed
+   on this link's work is still unanswered then. The lane waits on that decision now, and an
+   away-mode run taking it could only park it again. Name that issue in a comment on the handoff,
+   as a parking comment does, so a reader reads the question the lane now waits on. An `auto-*`
+   lane differs in one way, since it holds one piece of work. Where that work is done, end the
+   track per "Closing a Session" step 2 instead, the outcome as the `close` comment. That is how
+   `backlog-burndown` "Away Mode" closes such a lane. Where work remains, the next round's next
+   steps name the decision issue and the answer. In that case, taking `blocked` off hands the lane
+   back to an away-mode run. Either way the parked decision queue is still presented.
 
 ## Closing a Session
 
@@ -275,14 +285,22 @@ it.
    says where a lesson goes. Do it before the handoff is written, so its "New learnings" section
    points at a record that exists.
 2. **Write the handoff** with `new`, per "Running the Chain" below, or end the track with `close`
-   where its work is done. The handoff is written before the closing questions are put. That is
+   where its work is done. A session ending the track first writes a final round with `new` where
+   it has anything for "What not to repeat" or "New learnings", then runs `close`. That is because
+   `chain --grep` searches bodies and archived rounds only, and the outcome `close` posts carries no
+   round mark. The handoff is written before the closing questions are put. That is
    because a prompt blocks until someone answers, and an unanswered one must not cost the round its
    handoff.
 3. **Present the parked decision queue** in the same act, per "The Parked Decision Queue" below.
    Record each answer given on its issue, where one was asked and answered. Where a handoff was
    written, comment those answers onto its issue, with the queue's count and list after them. That
    is because the body keeps the count it was written with, and a resume reads the issue's comments.
-4. **Save memories last.** Where the host keeps a per-user memory, what goes there is the
+4. **Remove the hub clone** "The Attended Session" step 0 made, where it made one, once no step
+   above still needs `$handoff`. No other step or sweep reaches that clone. From outside it, confirm
+   `git -C <clone> status --porcelain` prints nothing, then delete that exact directory. Ignored
+   files there are tool caches, so the removal takes them too. A clone
+   holding uncommitted work is left in place and named in the session's closing message.
+5. **Save memories last.** Where the host keeps a per-user memory, what goes there is the
    environment-specific nuance "Durable Knowledge and Self-Improvement" leaves to memory. A quirk of
    this machine or this account is one such nuance. What goes there is saved as the session's final
    act. Never
@@ -349,7 +367,9 @@ chain, since `new` then archives and rewrites whatever `default` holds, and `clo
   that stopped between the two finds the round archived and only replaces the body. A rerun after a
   run that finished finds the body current and writes nothing.
 - **`close`** is the one way a track ends. It comments the outcome given in `--body-file` on the
-  track's issue, then closes it, and a rerun after the comment landed only closes.
+  track's issue, then closes it, and a rerun after the comment landed only closes. A session
+  running it writes a final round with `new` first where it learned something, per "Closing a
+  Session" step 2. The outcome comment is no round, so `chain --grep` never reads it.
 
 `<hub-checkout>` below is a hub checkout of the session's own, never the maintainer's. In an
 attended session it is the clone "The Attended Session" step 0 makes, in the hub itself as in any

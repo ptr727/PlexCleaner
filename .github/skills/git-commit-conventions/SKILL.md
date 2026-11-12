@@ -48,8 +48,8 @@ scope-widened commit, a rewritten shared history, a destructive reset).
 
 ## Signing, verified not configured
 
-- **Every commit must be cryptographically signed (SSH or GPG).** Branch protection enforces this
-  on every fleet branch, and an unsigned commit is rejected on push. Signing depends on
+- **Every commit must be cryptographically signed (SSH or GPG).** The fleet's rulesets require
+  signatures on `develop` and `main` and reject an unsigned commit pushed there. A feature branch carries no such ruleset, so nothing rejects an unsigned commit pushed to it. The probe below catches a host that does not sign. The target-repository check under "Identity, verified not set" catches a repository that turns signing off. Signing depends on
   environment configuration (`commit.gpgsign`, `user.signingkey`, `gpg.format`), but none of those values prove signing actually works. For example, `gpg.format=ssh` can sign straight from a key file with no `ssh-agent` running at all (the common case on Git for Windows). GPG can likewise sign
   agent-backed or straight from a keyring. **Probing agent liveness (`ssh-add -L`, a `gpg-agent`
   check) is not a valid test and must not be used.** It tests one specific delivery path, not
@@ -115,7 +115,7 @@ scope-widened commit, a rewritten shared history, a destructive reset).
 or invented address.** `author` and `committer` on every agent-authored commit are the GitHub
 `noreply` address of the account whose key signs the commit, in `username@users.noreply.github.com`
 or `ID+username@users.noreply.github.com` form. **Verify it, do not set it**: the scratch commit
-from the signing check above already proves this end-to-end. Read its `author=`/`committer=`
+from the signing check above already proves this end-to-end for the host. Read its `author=`/`committer=`
 output rather than trusting `git config --get user.email` alone, since a global config value doesn't prove what actually lands on a commit object. Read both rather than the author alone, since a rebase, amend, or cherry-pick can rewrite the committer while leaving the author
 untouched. Match both against that address before committing, rather than
 writing a repo-local override. The identity is host configuration set globally once. So a repo-local `user.email` is redundant where the global is right and a silently-shadowing wrong identity where
@@ -123,6 +123,37 @@ it is not. A mismatch is a host fault to surface to the maintainer, not to patch
 A wrong identity is not cosmetic: a private email trips GitHub's email-privacy push protection, and
 an invented author pollutes history. It is also a distinct failure from signing (a wrong author
 does not by itself fail the signature check). The ad-hoc identities that produce a wrong author are typically also unsigned, though, which the signing rule above then rejects independently.
+
+**Then read the target repository's own effective settings.** The scratch probe runs in a fresh repository, so it reads only the system and global config. The commit lands in the target repository. There a local or worktree config file can override what the probe proved, and so can a global `includeIf` matching that path. An override of `commit.gpgsign=false` lands the commit unsigned, which a feature branch accepts without complaint. An override of `user.email`, `author.email`, or `committer.email` lands it under another address. So before the first commit in each repository a session commits to, compare the settings the probe depends on. Compare `user.email`, `author.email`, `committer.email`, `user.signingkey`, `commit.gpgsign`, and `gpg.format` in the target against what a fresh repository reads. Set `repo` to the target checkout's path, the example `/path/to/target-repo` below standing in for it. The check refuses a path outside any repository, since there it reads only the host config and passes. It is one physical line too:
+
+```sh
+repo=/path/to/target-repo; git -C "$repo" rev-parse --git-dir >/dev/null && d=$(mktemp -d "${TMPDIR:-/tmp}/id-check.XXXXXX") && ( trap 'rm -rf "$d"' 0; git init -q "$d" && rc=0 && for k in user.email author.email committer.email user.signingkey commit.gpgsign gpg.format; do t=$(git -C "$repo" config --get "$k"); s=$(git -C "$d" config --get "$k"); if [ "$t" = "$s" ]; then v=same; else v=DIFFERS; rc=1; fi; printf '%s %s %s\n' "$v" "$k" "$(git -C "$repo" config --show-scope --show-origin --get "$k")"; done; [ "$rc" = 0 ] )
+```
+
+PowerShell equivalent:
+
+```powershell
+$repo = '/path/to/target-repo'
+git -C "$repo" rev-parse --git-dir > $null
+if ($LASTEXITCODE -ne 0) { throw "not inside a git repository: $repo" }
+$d = Join-Path $env:TEMP ([guid]::NewGuid())
+try {
+  git init -q "$d"
+  if ($LASTEXITCODE -ne 0) { throw "git init failed: $d" }
+  $bad = $false
+  foreach ($k in 'user.email', 'author.email', 'committer.email', 'user.signingkey', 'commit.gpgsign', 'gpg.format') {
+    $t = git -C "$repo" config --get $k
+    $s = git -C "$d" config --get $k
+    if ($t -ceq $s) { $v = 'same' } else { $v = 'DIFFERS'; $bad = $true }
+    "$v $k $(git -C "$repo" config --show-scope --show-origin --get $k)"
+  }
+  if ($bad) { throw 'the target repository overrides an identity or signing setting' }
+} finally {
+  if (Test-Path "$d") { Remove-Item -Recurse -Force "$d" }
+}
+```
+
+Each line names a setting, whether the target matches the probe, and the scope and file the target's value comes from. A setting unset in both reads `same`. Any `DIFFERS` line, or the check failing outright, means **do not commit**, the same stop the signing probe sets. Stop at `git add` and surface each `DIFFERS` setting to the maintainer as the host fault above. Name the setting and the scope its line prints. Keep the raw line out of any issue, comment, or commit, since its origin path and its value are observed host data. Do not remove or rewrite the override, and do not pass `-c` or an environment override to commit past it. The override is the maintainer's configuration, and clearing it is his call. Matching settings still leave the scratch probe as the proof that signing works, since this check reads configuration and proves nothing on its own.
 
 ## Never force push
 

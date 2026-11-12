@@ -6,7 +6,7 @@ description: >-
   language and naming conventions, XML documentation, analyzer suppression scope, the
   library-versus-application logging split, async and error-handling patterns, xUnit v3 and
   AwesomeAssertions testing, and AOT-compatible project configuration. Use this whenever writing,
-  reviewing, or editing a .cs file, a .csproj, Directory.Build.props, or Directory.Packages.props,
+  reviewing, or editing a .cs file, a .csproj, Directory.Build.props, Directory.Packages.props, or global.json,
   whenever choosing where to suppress an analyzer diagnostic, whenever a NuGet library needs to log
   without depending on Serilog directly, or whenever writing or reviewing an xUnit test. Triggers
   even when the task looks like a small local fix ("just silence this warning", "add a quick log
@@ -69,18 +69,75 @@ GOVERNANCE.md and README.md. That migration has nothing to do with code analysis
 Shared MSBuild configuration is centralized at the repository root, never duplicated per project:
 
 - **`Directory.Build.props`** carries the properties every project shares. Those are the analyzer set and
-  `TreatWarningsAsErrors` from the zero-warnings policy above, plus `LangVersion`,
-  `TargetFramework` where uniform, and any repo-wide build metadata. A `.csproj` carries only what
+  `TreatWarningsAsErrors` from the zero-warnings policy above, plus `TargetFramework` where
+  uniform, and any repo-wide build metadata. A `.csproj` carries only what
   is genuinely project-specific (`OutputType`, `IsPackable`, project references).
 - **`Directory.Packages.props`** owns central package management. It sets
   `ManagePackageVersionsCentrally` to `true` (in this file, not `Directory.Build.props`) and
   declares every dependency version once as a `PackageVersion` item. As a result, a `.csproj`'s
   `PackageReference` items are versionless. One file to review on a bump, one Dependabot surface,
   no version skew between projects.
+- **`global.json`** is required in every .NET repo, carried from the hub's
+  `catalog/snippets/configs/global.json`. It selects the SDK line with an `sdk` block.
+  The example also carries the `test` runner key, which only a repo with an MTP-based test project
+  adds (see Testing conventions below). A repo still on VSTest leaves the `test` key out, since it
+  switches `dotnet test` to the MTP driver:
+
+  ```json
+  {
+      "sdk": {
+          "version": "10.0.100",
+          "rollForward": "latestFeature",
+          "allowPrerelease": false
+      },
+      "test": {
+          "runner": "Microsoft.Testing.Platform"
+      }
+  }
+  ```
+
+  With `latestFeature`, `10.0.100` means the newest installed 10.0.x SDK. It is a floor on the
+  line rather than a pin to one release, so it never goes stale and is not Dependabot-managed.
+  `allowPrerelease` is `false` because it defaults to `true` outside Visual Studio, which would let
+  a 10.0 preview band win. Without the block, the `dotnet` host picks the newest installed SDK. A
+  host carrying a newer major than CI then runs `dotnet format`, `dotnet build`, and `dotnet test`
+  on a different SDK than CI does.
+
+  The major tracks the repo's .NET TFM (`net10.0`), never a `netstandard` target an analyzer or
+  source-generator project carries beside it. It moves only with that TFM (`11.0.100` alongside
+  `net11.0`), and such a project's fixed `LangVersion` moves with them. The hub's workflows and composite actions install the SDK line through
+  `setup-dotnet`'s `dotnet-version`, and the hub's devcontainer snippet through its image tag. A
+  repo calling them therefore cannot move to a new major alone, since CI would then find no
+  compatible SDK. Such a move starts in the hub, as a fleet-wide change. The hub's steps and image
+  provide both lines until every repo has moved. A repo still on
+  `10.0.100` would otherwise find no compatible SDK once the hub installs only the new line.
+
+  A developer host now needs a release SDK on the line, 10.0.x today. A host holding only a newer
+  major, or only a 10.0 preview, fails with a clear "A compatible .NET SDK was not found" error
+  rather than silently drifting. Install the line's SDK beside the newer one.
+
+**`LangVersion` is left unset** in every `.props` or `.targets` file the repo holds and every
+project targeting a .NET TFM. The SDK's own targets derive it, which is the point. The C# version then follows the TFM (`net10.0` gives C# 14 under any SDK). Never set it
+anywhere to `latest`, `latestMajor`, or `preview`, and never set `EnablePreviewFeatures`, which
+reaches `preview` through the SDK. Those float with the installed SDK's compiler. A newer
+SDK then has IDE0028 suggest a syntax the older SDK cannot compile (CS8652), so no single source
+text passes `dotnet format style --verify-no-changes --severity=info` on both. A `netstandard`
+analyzer or source-generator project is the one exception to leaving it unset. Unset, it compiles
+at C# 7.3, which `Nullable` `enable` refuses (CS8630). So it sets a fixed number in its own
+`.csproj`, the TFM's C# version (`14` beside `net10.0`), which does not float. `AnalysisLevel` stays
+`latest-all` with `AnalysisMode` `All`, since it is not what floats the syntax. The `sdk` block
+and an unset `LangVersion` together guarantee the same SDK major and C# version locally and in CI.
+Analyzer output can still differ between feature bands on one line, such as a distro-packaged
+1xx SDK against CI's latest band.
 
 A repo whose projects still carry per-project analyzer settings or versioned `PackageReference`
 items is drifted. Move the shared property or version up to the root file rather than editing it
-in place.
+in place. A repo with no `global.json`, a `global.json` with no `sdk` block, or a `LangVersion`
+the rule above does not allow is drifted too. So is an `sdk` block whose `version` is not exactly
+the TFM major's `.0.100` (`10.0.100`). So is one whose `rollForward` is not `latestFeature` or whose
+`allowPrerelease` is not `false`. Any later version is a higher floor, such as the `10.0.404` that
+`dotnet new globaljson` writes on a newer host. It refuses a host whose newest SDK on the line is
+older, such as a lagging distro-packaged one.
 
 ### Build tasks
 
