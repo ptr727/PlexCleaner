@@ -31,7 +31,7 @@ runs:
       run: ./RegressionTests/integration-test.sh plexcleaner:integration "$RUNNER_TEMP/integration"
 
     # Best-effort like the validator's uploads, so a missing token never reds the gate.
-    # The report names its sources under /Builder, which codecov.yml's fixes rule maps to the repository root.
+    # The report names its sources under /Builder, which .codecov.yml's fixes rule maps to the repository root.
     - name: Upload coverage to Codecov step
       continue-on-error: true
       uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1

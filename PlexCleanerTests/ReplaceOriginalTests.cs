@@ -87,20 +87,17 @@ public sealed class ReplaceOriginalTests : IDisposable
         byte[] original = File.ReadAllBytes(mediaFile);
         VideoProps video = processFile.MkvMergeProps.Video[0];
         string propEditLog = WriteFakeTools("*.tmp8|*.tmp9", 0);
-        WriteRewriteIdentify(
-            "name.tmp9",
-            identify =>
+        WriteRewriteIdentify("name.tmp9", identify =>
+        {
+            if (undefinedVideo)
             {
-                if (undefinedVideo)
-                {
-                    SetUndefined(identify, "video");
-                }
-                else
-                {
-                    Drop(identify, "audio");
-                }
+                SetUndefined(identify, "video");
             }
-        );
+            else
+            {
+                Drop(identify, "audio");
+            }
+        });
         processFile.FfProbeProps.Video[0].Interlaced = true;
 
         bool modified = false;
@@ -524,10 +521,8 @@ public sealed class ReplaceOriginalTests : IDisposable
         string propEditLog = WriteFakeTools("*.tmp1", 0);
         if (change.StartsWith("undefined", StringComparison.Ordinal))
         {
-            _ = FakeTools.WriteChangedIdentify(
-                _directory,
-                "MkvMergeInfoData.json",
-                identify => SetUndefined(identify, change["undefined".Length..])
+            _ = FakeTools.WriteChangedIdentify(_directory, "MkvMergeInfoData.json", identify =>
+                SetUndefined(identify, change["undefined".Length..])
             );
         }
         string tempName = Path.ChangeExtension(processFile.FileInfo.FullName, ".tmp1");

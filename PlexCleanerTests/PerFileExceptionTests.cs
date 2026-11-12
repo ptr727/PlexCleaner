@@ -45,16 +45,11 @@ public sealed class PerFileExceptionTests : IDisposable
 
         List<string> processed = [];
         _ = ProcessDriver
-            .ProcessFiles(
-                ["first.mkv", "second.mkv"],
-                taskName,
-                false,
-                fileName =>
-                {
-                    processed.Add(fileName);
-                    return fileName == "first.mkv" ? throw exception : true;
-                }
-            )
+            .ProcessFiles(["first.mkv", "second.mkv"], taskName, false, fileName =>
+            {
+                processed.Add(fileName);
+                return fileName == "first.mkv" ? throw exception : true;
+            })
             .Should()
             .BeTrue();
 

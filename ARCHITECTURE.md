@@ -978,7 +978,7 @@ An **expected, recoverable** failure escalates through the standard repair tiers
 
 ### Command-Line Parsing
 
-Uses `System.CommandLine` (v2.x):
+Uses `System.CommandLine` (v3.x):
 
 - Options defined in `CommandLineOptions.cs`
 - Binding via `CommandLineParser.Bind()`
