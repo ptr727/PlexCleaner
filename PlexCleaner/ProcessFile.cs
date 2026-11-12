@@ -3115,9 +3115,8 @@ public class ProcessFile
         // Select all tracks with undefined languages
         // Selected is Unknown
         // NotSelected is Known
-        SelectMediaProps selectMediaProps = new(
-            MkvMergeProps,
-            item => Language.IsUndefined(item.LanguageIetf)
+        SelectMediaProps selectMediaProps = new(MkvMergeProps, item =>
+            Language.IsUndefined(item.LanguageIetf)
         );
         return selectMediaProps;
     }
@@ -3266,14 +3265,12 @@ public class ProcessFile
         // Select tracks with wanted languages, or the original language if set to keep
         // Selected is Keep
         // NotSelected is Remove
-        SelectMediaProps selectMediaProps = new(
-            MkvMergeProps,
-            item =>
-                Language.IsMatch(item.LanguageIetf, Program.Config.ProcessOptions.KeepLanguages)
-                || (
-                    Program.Config.ProcessOptions.KeepOriginalLanguage
-                    && item.Flags.HasFlag(TrackProps.FlagsType.Original)
-                )
+        SelectMediaProps selectMediaProps = new(MkvMergeProps, item =>
+            Language.IsMatch(item.LanguageIetf, Program.Config.ProcessOptions.KeepLanguages)
+            || (
+                Program.Config.ProcessOptions.KeepOriginalLanguage
+                && item.Flags.HasFlag(TrackProps.FlagsType.Original)
+            )
         );
 
         // Keep at least one video track if any

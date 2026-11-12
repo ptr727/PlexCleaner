@@ -63,7 +63,7 @@ jobs:
               - 'version.json'
               - '.config/dotnet-tools.json'
               - '.github/actions/integration-coverage/**'
-              - 'codecov.yml'
+              - '.codecov.yml'
               - 'RegressionTests/check_results.py'
               - 'RegressionTests/corpus_common.py'
               - 'RegressionTests/integration-test.sh'
@@ -71,7 +71,7 @@ jobs:
 
   validate:
     name: Validate sources job
-    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@245353323c7ee5617edfe82331d0e83b266bebb2 # 2.0.1366
+    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@9afb02a85c5a2fd59806e5c7fa5d7bf964d56e7a # 2.0.1401
     permissions:
       contents: read
     secrets:
@@ -86,7 +86,7 @@ jobs:
     name: Smoke build job
     needs: [changes]
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.release == 'true'
-    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@245353323c7ee5617edfe82331d0e83b266bebb2 # 2.0.1366
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@9afb02a85c5a2fd59806e5c7fa5d7bf964d56e7a # 2.0.1401
     permissions:
       contents: read
     secrets:

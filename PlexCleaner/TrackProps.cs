@@ -460,21 +460,19 @@ public class TrackProps(TrackProps.TrackType trackType, MediaProps mediaProps)
         }
 
         // Title
-        Title =
-            track
-                .Tags.FirstOrDefault(item =>
-                    item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)
-                )
-                .Value
+        Title = track
+            .Tags.FirstOrDefault(item =>
+                item.Key.Equals("title", StringComparison.OrdinalIgnoreCase)
+            )
+            .Value
             ?? string.Empty;
 
         // Language
-        Language =
-            track
-                .Tags.FirstOrDefault(item =>
-                    item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)
-                )
-                .Value
+        Language = track
+            .Tags.FirstOrDefault(item =>
+                item.Key.Equals("language", StringComparison.OrdinalIgnoreCase)
+            )
+            .Value
             ?? string.Empty;
 
         // TODO: FfProbe uses the tag language value instead of the track language
