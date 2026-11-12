@@ -3,15 +3,15 @@ name: python-codestyle
 description: >-
   Governs Python code style for ptr727/ProjectTemplate fleet repos: the build-versus-lint-only
   profile split, the uv/ruff/pyright/mypy/pytest toolchain, src layout, comment and docstring
-  conventions, type hints, naming, imports, patterns to avoid, test conventions, versioning, and the
-  --help and unknown-argument rule for a script. Use this whenever writing, reviewing, or editing a
-  .py file, a pyproject.toml, or a uv.lock, whenever running or choosing a Python formatting, lint,
-  type-check, or test command, pyright versus mypy included, whenever deciding whether a Python
-  subtree is a shippable project or a lint-only scripts tree, or whenever writing or reviewing a
-  Python test. Triggers even when the task looks like a small local fix ("just add a helper
-  function", "add a dependency") or a verification step ("run the tests"), because choosing pytest
-  before reading the profile turns an intentional unittest suite into a false missing-dependency
-  diagnosis. Applies only to a repo's Python side.
+  conventions, type hints, naming, imports, patterns to avoid, test conventions, versioning, the
+  --help and unknown-argument rule, and the SIGINT/SIGTERM rule for a script. Use this whenever
+  writing, reviewing, or editing a .py file, a pyproject.toml, or a uv.lock, whenever running or
+  choosing a Python formatting, lint, type-check, or test command, pyright versus mypy included,
+  whenever deciding whether a Python subtree is a shippable project or a lint-only scripts tree, or
+  whenever writing or reviewing a Python test. Triggers even when the task looks like a small local
+  fix ("just add a helper function", "add a dependency") or a verification step ("run the tests"),
+  because choosing pytest before reading the profile turns an intentional unittest suite into a
+  false missing-dependency diagnosis. Applies only to a repo's Python side.
 ---
 
 # Python Codestyle
@@ -287,6 +287,31 @@ A command-line script is one a person or an agent runs by name. A hook its host 
 
 - **Every command-line script answers `--help` and `-h`** with the same text on stdout, then exits 0, changing nothing. That text opens on a usage line naming the script. An agent learns a script's interface by asking it, so a script that reads `--help` as an input acts in a way nobody predicted. A PowerShell script declaring its own parameters answers `-Help` and `-h` instead, from a `-Help` switch carrying an `h` alias. That form follows PowerShell's own parameter convention, so such a script owes no answer to a literal `--help`. A wrapper that forwards its arguments to another script answers whatever that script answers.
 - **An argument the script does not recognize is refused**, with a non-zero exit before any read or write. The refusal names it as an unknown or unrecognized option, argument, flag, or parameter, and PowerShell's own refusal of a parameter it cannot bind counts. So a PowerShell script declaring its own parameters refuses a literal `--help` like any other unrecognized argument. Where no parameter takes the remaining arguments, the binder's refusal does that. A script with such a parameter refuses a dash-prefixed leftover itself. An unrecognized first argument is never taken as a default mode or as a target.
+
+<!-- /include -->
+
+## Interrupts
+
+<!-- include: CODESTYLE.md > Interrupts -->
+
+This applies to every Bash and Python script. `CODESTYLE.md` "Interrupts in Python" and "Interrupts in Shell" state each language's mechanics.
+
+- **On SIGINT or SIGTERM, a script releases what it holds before it exits.** It removes the temporary paths it created, releases the locks it took, and stops the child processes it started. A path, lock, or child left behind can stop the next run from starting, or feed it a half-written input.
+- **A write to persistent state goes to a temporary path beside the target, then is renamed over it.** An interrupt then leaves the old content or the new, never a mix of both. A store with transactions of its own, such as an SQLite database, is written through those instead. A rename over an open database can corrupt it.
+- **An interrupted script prints one line naming the signal, with no traceback, and exits 130 for SIGINT or 143 for SIGTERM.** Each status is 128 plus the signal number, the status a shell reports for a process that signal ended.
+- **A script takes this rule when it is created or next edited.** An existing script is not edited for this rule alone.
+- **A script that holds a lock, temporary state, or a child process owes a test that signals it mid-run.** The test sends SIGINT or SIGTERM, then asserts the matching exit status and that nothing the script held remains. It is skipped on Windows, which cannot deliver either signal for a script to handle. A script holding none of these owes no such test.
+
+<!-- /include -->
+
+## Interrupts in Python
+
+<!-- include: CODESTYLE.md > Interrupts in Python -->
+
+- **SIGINT and SIGTERM take one path.** Python raises `KeyboardInterrupt` on SIGINT. The entry point installs a SIGTERM handler with `signal.signal` that records the signal and raises `KeyboardInterrupt`.
+- **The entry point catches `KeyboardInterrupt` once, and any handler below it that catches the exception re-raises it.** It prints the line `CODESTYLE.md` "Interrupts" requires, then exits 143 where the SIGTERM handler recorded a signal and 130 otherwise.
+- **What the script holds is released by `with` blocks and `finally` clauses as the exception unwinds.** A `subprocess.Popen` child is stopped in a `finally` clause with `terminate()`, then `wait()`, since leaving its `with` block does not stop it. That child runs without `shell=True`, so `terminate()` reaches the command rather than a shell around it.
+- **The rename over persistent state uses `os.replace`.** `os.rename` and `Path.rename` fail on Windows when the target exists.
 
 <!-- /include -->
 

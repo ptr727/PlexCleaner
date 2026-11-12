@@ -54,10 +54,15 @@ maintainer can supply what section 0A lists.
 4. **The instruction set, before authoring anything.** STANDUP.md section 1A. An existing
    repository that `docs/eol-lf-rollout.md` "Per-Repo Conversion" says needs a line-ending
    conversion lands that conversion first, as its own merged pull request. In that case, the feature
-   branch from step 2 is cut again from `develop` after that pull request merges. Then carry `CLAUDE.md`,
+   branch from step 2 is cut again from `develop` after that pull request merges. A `branch:`
+   audit finding naming paths `develop` is behind on calls for a re-level of `develop` before
+   the conversion, per STANDUP.md section 1A. So does a hand comparison
+   showing `main` content `develop` lacks, for a finding too large to classify or a path changed
+   on both branches. Then carry `CLAUDE.md`,
    `AGENTS.md`, `GOVERNANCE.md`, `CODESTYLE.md`, `WORKFLOW.md` and `AUDIT.md`, adapted rather
    than cloned for the ones that describe a repo, plus `.markdownlint-cli2.jsonc` and
-   `cspell.json`. `CLAUDE.md` is the fixed, verbatim `@AGENTS.md`-import file that gets
+   `cspell.json`. A downstream `AUDIT.md` is the short, repository-scoped form that says how the
+   repository reaches the hub for its audit and configuration check. `CLAUDE.md` is the fixed, verbatim `@AGENTS.md`-import file that gets
    `AGENTS.md` into a Claude Code session's context at all. It is a separate baseline entry from
    `AGENTS.md` itself, so carrying one without the other still leaves that provider unconfigured.
    Read `CODESTYLE.md` and the `GOVERNANCE.md` documentation-style rules before writing any repo
@@ -83,14 +88,15 @@ maintainer can supply what section 0A lists.
 8. **Settings, rulesets, and secrets.** STANDUP.md section 4: confirm the remote and the GitHub
    repository agree before running anything else here. Then run
    `repo-config/configure.sh check owner/repo release` (substitute `operational` for an
-   operational repo) from the hub at `main`. A non-zero exit there means drift was found, not a
-   command failure. Review what it reports. Then run the same command's `apply` subcommand, never from a hand-built or carried copy. It
+   operational repo) from the hub at `main`. Use the hub at `develop` instead while the repo's
+   registry entry has merged there but not yet reached `main`. A non-zero exit there means drift
+   was found, not a command failure. Review what it reports. Then run the same command's `apply` subcommand, never from a hand-built or carried copy. It
    idempotently reconciles the repo to the full committed configuration regardless of what `check`
    reported.
 
 9. **Verify with the audit.** STANDUP.md section 5: run `AUDIT.md` end to end. The repo is stood
    up only when it passes for its type, or a hub-committed `reports/<repo>/audit.md`
-   plus an issue tracks its residual deltas.
+   plus an issue tracks its residual deltas. `<repo>` there is the repository name in lowercase.
 
 ## Onboarding a new repo type
 
@@ -104,6 +110,9 @@ context-free agent, not just by the one that wrote it.
 ## Ship it
 
 One pull request per standup, branched from `develop` per step 2 above, into `develop`, never a
-direct push to a protected branch. Close the review loop, per the `pr-review-conduct` skill,
+direct push to a protected branch. While its instruction set is partial, a partly
+stood-up repository takes this same shape. That is any re-level and conversion pull requests,
+then one standup pull request.
+`RESYNC.md` section 6 applies once the set is whole. Close the review loop, per the `pr-review-conduct` skill,
 before asking the maintainer for merge permission. The maintainer merges, the agent drives to
 green and stops.

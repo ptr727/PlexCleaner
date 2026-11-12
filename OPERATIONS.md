@@ -149,4 +149,4 @@ The `.NET Tool Update` and `.NET Outdated Upgrade` tasks refresh the local .NET 
 - The branch rulesets, repository settings, and required secret names are hub-hosted rather than carried here, and [AUDIT.md](./AUDIT.md) states how the self-audit reaches them.
 - [host-tools.json](./host-tools.json): the tools a host needs beyond the fleet's own declaration.
 - [.github/workflows/](./.github/workflows/): the CI and publish entry points, under the [WORKFLOW.md](./WORKFLOW.md) contract. The validate, build, publish, plan, merge-bot and Docker-Hub-overview tasks are hub-hosted and reached by a SHA pin.
-- [global.json](./global.json): the Microsoft.Testing.Platform opt-in `dotnet test` needs on the .NET 10 SDK.
+- [global.json](./global.json): the .NET 10 SDK line selection, and the Microsoft.Testing.Platform opt-in `dotnet test` needs on that SDK.

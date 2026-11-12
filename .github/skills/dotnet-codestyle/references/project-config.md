@@ -1,6 +1,12 @@
 # .NET Project Configuration
 
-1. **Target framework**: .NET 10.0 (`<TargetFramework>net10.0</TargetFramework>`).
+1. **Target framework and SDK line**: .NET 10.0 (`<TargetFramework>net10.0</TargetFramework>`).
+   The root `global.json` `sdk` block selects the same line (`"version": "10.0.100"`,
+   `"rollForward": "latestFeature"`, `"allowPrerelease": false`). See `SKILL.md`'s "Central build
+   and package configuration". `LangVersion` stays unset, so the C# version follows the TFM. A
+   `netstandard` analyzer or source-generator project is the exception, and that section says what
+   it sets. The TFM, the `sdk` major, and that project's fixed `LangVersion` move together. They move only once the hub's
+   `setup-dotnet` steps and devcontainer image provide the new line beside the old one.
 2. **AOT compatibility**: `<IsAotCompatible>true</IsAotCompatible>` unconditionally, and
    `<VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>` only in a
    `<PropertyGroup Condition="'$(PublishAot)' == 'true'">`. That group is placed in the `.csproj` after

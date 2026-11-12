@@ -8,13 +8,15 @@ feature-branch PR, which the SKILL.md summary covers.
 
 ## Configuring branch protection: don't hand-build the rules
 
-Delete **all** classic branch-protection rules and stray rulesets because rulesets are the only
-protection mechanism. From a hub checkout at `main`, create **exactly two rulesets named `develop`
-and `main`** from the hub's `repo-config/*.json` payloads. Run
+From a hub checkout at `main`, create **exactly two rulesets named `develop` and `main`** from the
+hub's `repo-config/*.json` payloads. Use a hub checkout at `develop` instead
+while the repository's registry entry has merged there but not yet reached `main`. Run
 `repo-config/configure.sh apply <owner>/<repo> release|operational` from that checkout. The names
 are load-bearing because governance content and workflows reference them. The registry
-`workflowModel` selects the `develop` payload for a registered repository. Pass the model
-explicitly for a repository outside the registry.
+`workflowModel` selects the `develop` payload for a registered repository. `apply` refuses a
+repository outside the registry, writing nothing. Once `apply` has created both rulesets, delete
+**all** classic branch-protection rules and stray rulesets, because rulesets are the only protection
+mechanism. Deleted first, they would leave the branches unprotected wherever `apply` then refuses.
 
 ## Executing a `develop -> main` promotion safely
 
