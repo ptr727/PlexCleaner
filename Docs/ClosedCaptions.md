@@ -14,7 +14,7 @@ Unlike normal subtitle tracks, detection and removal of closed captions are non-
 
 ## Technical Details
 
-> **ℹ️ Note**: I have no expertise in video engineering; the following information was gathered by research and experimentation.
+> **ℹ️ Note**: The following information comes from research and experimentation, not from video engineering expertise.
 
 The currently implemented method of closed caption detection uses [FFprobe and the `subcc` filter](#ffprobe-subcc) to detect closed caption frames in the video stream.
 
@@ -63,7 +63,7 @@ E.g. `ccextractor -12 -out=report filename`
 
 Using MKV containers directly as input produces unreliable results in testing, either no output or false negatives.
 
-CCExtractor does support input piping, but I found it to be unreliable with broken pipes, and requires a temporary TS file to be created on disk and used as standard input.
+CCExtractor does support input piping, but it is unreliable with broken pipes in testing. It also requires a temporary TS file on disk, used as standard input.
 
 Even in TS format on disk, it is very sensitive to stream anomalies, e.g. `Error: Broken AVC stream - forbidden_zero_bit not zero ...`, making it unreliable.
 
