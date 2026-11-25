@@ -55,6 +55,8 @@ A `tag` holding a colon names a local image instead, such as `plexcleaner:local`
 
 Setting `REGRESSION_COVERAGE_TOOL` to the absolute path of a host directory holding `dotnet-coverage.dll` runs the process and plugin runs under `dotnet-coverage collect`. Each run writes a Cobertura report beside its log, `coverage_process.xml` and `coverage_custom_<plugin>.xml`, and each harness invocation first removes the reports an earlier one left. The image's sources are under `/Builder`, and each plugin is built with a path map to the same root. So [.codecov.yml][codecov]'s `fixes` rule maps every report. The version directory's name, less any `-reduced` suffix, is a published build's release tag or a local build's commit. So `git rev-parse "<version>^{commit}"` gives the run's commit. Pass it through `sudo env` with the other variables.
 
+Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
+
 ### Environment
 
 The harness and the Python tools take every host path and dataset from the environment, and none has a default. A command that needs an unset variable exits non-zero and names it, before any ZFS change. `--help` works without any of them. `sudo` resets the environment, so pass them through `sudo env`, as above, or `sudo --preserve-env`.
@@ -69,12 +71,10 @@ The harness and the Python tools take every host path and dataset from the envir
 | `REGRESSION_THREAD_COUNT` | harness | parallel file-processing thread count |
 | `REGRESSION_CORPUS_DIR` | Python tools | host directory of the collection, holding `full/` and `reduced/` |
 | `REGRESSION_SCRATCH_DIR` | Python tools | host scratch directory for clips and per-clip processing logs |
-| `REGRESSION_COVERAGE_TOOL` | harness, optional | see below |
+| `REGRESSION_COVERAGE_TOOL` | harness, optional | absolute host directory holding `dotnet-coverage.dll`, as described above |
 | `TZ` | harness, `reduce_corpus.py`, optional | time zone handed to the container |
 
 A Python tool's command-line arguments, such as `--run`, `--out`, `--settings`, `--reduced`, and `--work`, still take explicit values, and their defaults come from these variables.
-
-Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
 
 ### Comparing two runs
 

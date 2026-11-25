@@ -79,6 +79,37 @@ quick | full) ;;
 *) UnknownArgument "$Mode" ;;
 esac
 
+for Name in REGRESSION_HOST_CONFIG REGRESSION_TEST_MEDIA REGRESSION_PLUGIN_BUILD_DIR \
+    REGRESSION_CORPUS_DATASET REGRESSION_TEST_DATASET REGRESSION_THREAD_COUNT; do
+    if [[ -z "${!Name-}" ]]; then
+        echo "regression-test.sh: required environment variable $Name is not set" >&2
+        exit 2
+    fi
+done
+for Name in REGRESSION_HOST_CONFIG REGRESSION_TEST_MEDIA REGRESSION_PLUGIN_BUILD_DIR; do
+    if [[ "${!Name}" != /* ]]; then
+        echo "regression-test.sh: $Name is not an absolute path: '${!Name}'" >&2
+        exit 2
+    fi
+done
+if [[ ! "$REGRESSION_THREAD_COUNT" =~ ^[1-9][0-9]*$ ]]; then
+    echo "regression-test.sh: REGRESSION_THREAD_COUNT is not a positive integer: '$REGRESSION_THREAD_COUNT'" >&2
+    exit 2
+fi
+HostConfig="$REGRESSION_HOST_CONFIG"
+HostMedia="$REGRESSION_TEST_MEDIA"
+PluginBuildDir="$REGRESSION_PLUGIN_BUILD_DIR"
+CorpusDataset="$REGRESSION_CORPUS_DATASET"
+TestDataset="$REGRESSION_TEST_DATASET"
+Snapshot="$TestDataset@backup"
+ThreadCount="$REGRESSION_THREAD_COUNT"
+
+# Quick mode keeps full-file scanning, and writes short test snippets to shorten remux and re-encode.
+ProcessOptions=(--parallel --threadcount "$ThreadCount")
+if [[ "$Mode" == "quick" ]]; then
+    ProcessOptions+=(--testsnippets)
+fi
+
 # Paths
 PlexCleanerApp="/PlexCleaner/Debug/PlexCleaner"
 MediaPath="/Test/Media"
@@ -145,6 +176,10 @@ ProvisionDataset() {
 
     echo "Provisioning $TestDataset as a clone of $CorpusSnap"
     if zfs list "$TestDataset" >/dev/null 2>&1; then
+        if [[ "$Origin" != "$CorpusDataset@"* ]]; then
+            echo "regression-test.sh: REGRESSION_TEST_DATASET $TestDataset is not a clone of $CorpusDataset, refusing to retire it" >&2
+            exit 2
+        fi
         zfs rename "$TestDataset" "$TestDataset-retired-$(date +%s)"
     fi
     zfs clone "$CorpusSnap" "$TestDataset"
@@ -401,6 +436,10 @@ RunRegressionTests() {
     # Provision a pristine clone of the corpus, process it, then run each built plugin on the results.
     # This only confirms each plugin loads and runs, since per-plugin behavior is verified in isolation.
     ProvisionDataset
+    if [[ "$(zfs get -H -o value mountpoint "$TestDataset")" != "$HostMedia" ]]; then
+        echo "regression-test.sh: REGRESSION_TEST_MEDIA $HostMedia is not the mountpoint of $TestDataset" >&2
+        exit 2
+    fi
     # Roll the clone back to its pristine @backup even if processing or a plugin aborts under set -e.
     # A failed run then never leaves the shared test dataset mutated, and the clean restore disarms the trap.
     trap 'RestoreDataset' EXIT
@@ -445,37 +484,6 @@ CoverageTool="${REGRESSION_COVERAGE_TOOL-}"
 if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet-coverage.dll") ]]; then
     echo "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'" >&2
     exit 2
-fi
-
-for Name in REGRESSION_HOST_CONFIG REGRESSION_TEST_MEDIA REGRESSION_PLUGIN_BUILD_DIR \
-    REGRESSION_CORPUS_DATASET REGRESSION_TEST_DATASET REGRESSION_THREAD_COUNT; do
-    if [[ -z "${!Name-}" ]]; then
-        echo "regression-test.sh: required environment variable $Name is not set" >&2
-        exit 2
-    fi
-done
-for Name in REGRESSION_HOST_CONFIG REGRESSION_TEST_MEDIA REGRESSION_PLUGIN_BUILD_DIR; do
-    if [[ "${!Name}" != /* ]]; then
-        echo "regression-test.sh: $Name is not an absolute path: '${!Name}'" >&2
-        exit 2
-    fi
-done
-if [[ ! "$REGRESSION_THREAD_COUNT" =~ ^[1-9][0-9]*$ ]]; then
-    echo "regression-test.sh: REGRESSION_THREAD_COUNT is not a positive integer: '$REGRESSION_THREAD_COUNT'" >&2
-    exit 2
-fi
-HostConfig="$REGRESSION_HOST_CONFIG"
-HostMedia="$REGRESSION_TEST_MEDIA"
-PluginBuildDir="$REGRESSION_PLUGIN_BUILD_DIR"
-CorpusDataset="$REGRESSION_CORPUS_DATASET"
-TestDataset="$REGRESSION_TEST_DATASET"
-Snapshot="$TestDataset@backup"
-ThreadCount="$REGRESSION_THREAD_COUNT"
-
-# Quick mode keeps full-file scanning, and writes short test snippets to shorten remux and re-encode.
-ProcessOptions=(--parallel --threadcount "$ThreadCount")
-if [[ "$Mode" == "quick" ]]; then
-    ProcessOptions+=(--testsnippets)
 fi
 
 if [[ "$(id -u)" -ne 0 ]]; then
