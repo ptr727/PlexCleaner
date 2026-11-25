@@ -41,8 +41,10 @@ Both are read-only during a run. The harness never mutates the collection; it pr
 `regression-test.sh` provisions a disposable test dataset as a zero-copy ZFS clone of the newest collection snapshot. It processes the clone through a single Docker image tag. It writes the results into a directory named after the image build version, so runs stay durable and comparable across versions.
 
 ```shell
-sudo ./regression-test.sh [quick|full] [tag] [corpus] [plugin...]
+sudo env REGRESSION_HOST_CONFIG="<dir>" REGRESSION_TEST_MEDIA="<dir>" REGRESSION_PLUGIN_BUILD_DIR="<dir>" REGRESSION_CORPUS_DATASET="<dataset>" REGRESSION_TEST_DATASET="<dataset>" REGRESSION_THREAD_COUNT=4 TZ=Etc/UTC ./regression-test.sh
 ```
+
+The positional arguments, each optional, are `[quick|full] [tag] [corpus] [plugin...]`.
 
 - `quick` (default) keeps full-file scanning as in production but writes short test snippets to shorten remux and re-encode. `full` also processes the complete media.
 - `tag` is the Docker image tag to test (default `develop`).
@@ -51,7 +53,26 @@ sudo ./regression-test.sh [quick|full] [tag] [corpus] [plugin...]
 
 A `tag` holding a colon names a local image instead, such as `plexcleaner:local`, which the harness runs without a pull. A reference naming the published repository runs as published, by its tag or its digest. That is how a branch is tested before any published image carries it. Commit the branch, then build the image from it per [OPERATIONS.md][operations] "Test a tool version the image does not carry", adding `--build-arg LABEL_VERSION=$(git rev-parse --short=10 HEAD)`. The build compiles the working tree, so an uncommitted edit would run under the label of a commit that lacks it. The label names the results directory, so the harness refuses a local label that is not a commit hash. That refuses the Dockerfile default `1.0.0.0`, and any published version, which always holds a dot. A local run records `local` as its channel, and a digest reference records the digest. So a tool picking the newest `develop` run picks neither. It builds no plugin, since a plugin builds from the release tag its image version names.
 
-Setting `REGRESSION_COVERAGE_TOOL` to the absolute path of a host directory holding `dotnet-coverage.dll` runs the process and plugin runs under `dotnet-coverage collect`. Each run writes a Cobertura report beside its log, `coverage_process.xml` and `coverage_custom_<plugin>.xml`, and each harness invocation first removes the reports an earlier one left. The image's sources are under `/Builder`, and each plugin is built with a path map to the same root. So [.codecov.yml][codecov]'s `fixes` rule maps every report. The version directory's name, less any `-reduced` suffix, is a published build's release tag or a local build's commit. So `git rev-parse <version>^{commit}` gives the run's commit. `sudo` resets the environment, so pass the variable through `sudo env REGRESSION_COVERAGE_TOOL=<dir> ./regression-test.sh ...`.
+Setting `REGRESSION_COVERAGE_TOOL` to the absolute path of a host directory holding `dotnet-coverage.dll` runs the process and plugin runs under `dotnet-coverage collect`. Each run writes a Cobertura report beside its log, `coverage_process.xml` and `coverage_custom_<plugin>.xml`, and each harness invocation first removes the reports an earlier one left. The image's sources are under `/Builder`, and each plugin is built with a path map to the same root. So [.codecov.yml][codecov]'s `fixes` rule maps every report. The version directory's name, less any `-reduced` suffix, is a published build's release tag or a local build's commit. So `git rev-parse "<version>^{commit}"` gives the run's commit. Pass it through `sudo env` with the other variables.
+
+### Environment
+
+The harness and the Python tools take every host path and dataset from the environment, and none has a default. A command that needs an unset variable exits non-zero and names it, before any ZFS change. `--help` works without any of them. `sudo` resets the environment, so pass them through `sudo env`, as above, or `sudo --preserve-env`.
+
+| Variable | Read by | Holds |
+| --- | --- | --- |
+| `REGRESSION_HOST_CONFIG` | harness, Python tools | absolute host directory holding the master `PlexCleaner.json` and the per-version results directories |
+| `REGRESSION_TEST_MEDIA` | harness | absolute host mountpoint of `REGRESSION_TEST_DATASET` |
+| `REGRESSION_PLUGIN_BUILD_DIR` | harness | absolute host directory the example plugins are cloned and built in |
+| `REGRESSION_CORPUS_DATASET` | harness | snapshotted ZFS dataset holding the collection |
+| `REGRESSION_TEST_DATASET` | harness | ZFS dataset each run provisions as a clone of the newest collection snapshot, rolled back through its `@backup` snapshot |
+| `REGRESSION_THREAD_COUNT` | harness | parallel file-processing thread count |
+| `REGRESSION_CORPUS_DIR` | Python tools | host directory of the collection, holding `full/` and `reduced/` |
+| `REGRESSION_SCRATCH_DIR` | Python tools | host scratch directory for clips and per-clip processing logs |
+| `REGRESSION_COVERAGE_TOOL` | harness, optional | see below |
+| `TZ` | harness, `reduce_corpus.py`, optional | time zone handed to the container |
+
+A Python tool's command-line arguments, such as `--run`, `--out`, `--settings`, `--reduced`, and `--work`, still take explicit values, and their defaults come from these variables.
 
 Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
 

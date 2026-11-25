@@ -19,12 +19,9 @@ import re
 import subprocess
 from pathlib import Path
 
-from corpus_common import DECODE_SIGNATURES, SRC_DIR, make_head_clip
+from corpus_common import DECODE_SIGNATURES, make_head_clip, scratch_dir, src_dir
 
-# Default paths for the reference server; override on the command line for another environment.
-SCRATCH = Path("/data/media/PlexCleaner/scratch-trim")
 IMAGE = "docker.io/ptr727/plexcleaner:develop"
-WORK = SCRATCH / "locate"
 
 # map a catalog subtype label -> the stderr substrings that evidence it (for grep-back)
 SUBTYPE_NEEDLES: dict[str, list[str]] = {}
@@ -190,7 +187,9 @@ def main() -> None:
     args = ap.parse_args()
 
     cat = json.loads(Path(args.catalog).read_text())
-    WORK.mkdir(parents=True, exist_ok=True)
+    source_dir = src_dir()
+    work = scratch_dir() / "locate"
+    work.mkdir(parents=True, exist_ok=True)
 
     if args.files:
         targets = [e for e in cat["files"] if e["file"] in args.files]
@@ -202,7 +201,7 @@ def main() -> None:
         print(f"{'FILE':52} {'SUBTYPES':28} ERROR@")
         for e in targets:
             name = e["file"]
-            src = SRC_DIR / name
+            src = source_dir / name
             subs = e["decode_subtypes"]
             needles = [n for s in subs for n in SUBTYPE_NEEDLES.get(s, [])]
             if not src.exists():
@@ -219,13 +218,13 @@ def main() -> None:
     print(f"{'FILE':52} {'SUBTYPES':30} {'HEAD':>6}  RESULT")
     for e in targets:
         name = e["file"]
-        src = SRC_DIR / name
+        src = source_dir / name
         subs = e["decode_subtypes"]
         needles = [n for s in subs for n in SUBTYPE_NEEDLES.get(s, [])]
         if not src.exists():
             print(f"{name[:52]:52} {','.join(subs)[:30]:30} {'-':>6}  MISSING SOURCE")
             continue
-        wd = WORK / Path(name).stem
+        wd = work / Path(name).stem
         if wd.exists():
             for p in wd.iterdir():
                 p.unlink()

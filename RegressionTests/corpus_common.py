@@ -13,12 +13,35 @@ all errors on newer logs.
 
 import glob
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
-REG_DIR = Path("/data/media/PlexCleaner/RegressionTest")
-SRC_DIR = Path("/data/media/troublesome/full")
+
+def env_path(name: str) -> Path:
+    """Return the directory a required REGRESSION_* environment variable names, or exit naming it."""
+    value = os.environ.get(name)
+    if not value:
+        sys.exit(f"ERROR: environment variable {name} is not set")
+    return Path(value)
+
+
+def reg_dir() -> Path:
+    return env_path("REGRESSION_HOST_CONFIG")
+
+
+def corpus_dir() -> Path:
+    return env_path("REGRESSION_CORPUS_DIR")
+
+
+def src_dir() -> Path:
+    return corpus_dir() / "full"
+
+
+def scratch_dir() -> Path:
+    return env_path("REGRESSION_SCRATCH_DIR")
+
 
 MEDIA_EXTS = {
     ".mkv",
@@ -405,13 +428,14 @@ def buckets_for(state, detections, sig_subtypes, in_errors):
 def find_run(explicit, channel="develop", corpus="full"):
     if explicit:
         p = Path(explicit)
-        p = p if p.is_absolute() else REG_DIR / p
+        p = p if p.is_absolute() else reg_dir() / p
         log = p / "PlexCleaner_process.log"
         if not log.is_file():
             sys.exit(f"ERROR: --run {explicit} has no process log at {log}")
         return p
+    root = reg_dir()
     best, best_mt = None, 0
-    for d in REG_DIR.glob("*/"):
+    for d in root.glob("*/"):
         log, bi = d / "PlexCleaner_process.log", d / "buildinfo.json"
         if not (log.exists() and bi.exists()):
             continue
@@ -424,5 +448,5 @@ def find_run(explicit, channel="develop", corpus="full"):
         if log.stat().st_mtime > best_mt:
             best, best_mt = d, log.stat().st_mtime
     if not best:
-        sys.exit(f"ERROR: no {channel} {corpus}-corpus run under {REG_DIR}")
+        sys.exit(f"ERROR: no {channel} {corpus}-corpus run under {root}")
     return best

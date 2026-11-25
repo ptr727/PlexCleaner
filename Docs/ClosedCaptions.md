@@ -42,7 +42,7 @@ E.g. `mediainfo --Output=JSON filename`
 
 MediaInfo does [not support](https://github.com/MediaArea/MediaInfoLib/issues/1881#issuecomment-2816754336) general input piping (e.g. MKV -> FFmpeg -> TS -> MediaInfo), and requires a temporary TS file to be created on disk and used as standard input.
 
-In my testing I found that remuxing 30s of video from MKV to TS did produce reliable results.
+Testing showed that remuxing 30s of video from MKV to TS produces reliable results.
 
 E.g.
 
@@ -61,7 +61,7 @@ E.g.
 
 E.g. `ccextractor -12 -out=report filename`
 
-In my testing I found using MKV containers directly as input produced unreliable results, either no output generated or false negatives.
+Testing showed that using MKV containers directly as input produces unreliable results, either no output or false negatives.
 
 CCExtractor does support input piping, but I found it to be unreliable with broken pipes, and requires a temporary TS file to be created on disk and used as standard input.
 
@@ -86,7 +86,7 @@ ffprobe -loglevel error -f lavfi -i "movie=filename,readeia608" -show_entries fr
 
 The `movie=filename[out0+subcc]` convention requires [special escaping](https://superuser.com/questions/1893137/how-to-quote-a-file-name-containing-single-quotes-in-ffmpeg-ffprobe-movie-filena) of the filename to not interfere with commandline or filter graph parsing.
 
-In my testing I found only one [IMX sample](https://archive.org/details/vitc_eia608_sample) that produced the expected results, making it unreliable.
+Testing found only one [IMX sample](https://archive.org/details/vitc_eia608_sample) that produced the expected results, making it unreliable.
 
 E.g.
 
@@ -121,7 +121,7 @@ ffmpeg -abort_on empty_output -y -f lavfi -i "movie=filename[out0+subcc]" -map 0
 
 The `ffmpeg -t` and `ffprobe -read_intervals` options limiting scan time does [not work](https://superuser.com/questions/1893673/how-to-time-limit-the-input-stream-duration-when-using-movie-filenameout0subcc) on the input stream when using the `subcc` filter, and scanning the entire file can take a very long time.
 
-In my testing I found the results to be reliable across a wide variety of files.
+Testing showed the results to be reliable across a wide variety of files.
 
 E.g.
 

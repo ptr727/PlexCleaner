@@ -255,7 +255,7 @@ services:
       - --mediafiles=/media/Series  # Add multiple --mediafiles for each folder to monitor
       - --mediafiles=/media/Movies  # Paths inside container (mapped from host volumes)
     environment:
-      - TZ=America/Los_Angeles  # Set your timezone
+      - TZ=Etc/UTC  # Set your timezone
     volumes:
       - /data/media:/media  # Map host path /data/media to container /media (read/write)
 ```
@@ -323,7 +323,7 @@ USERS_GROUP_ID=100
 # Run monitor (adjust paths as needed)
 docker run -it --rm --pull always \
   --log-driver json-file --log-opt max-size=10m \
-  --name PlexCleaner --env TZ=America/Los_Angeles \
+  --name PlexCleaner --env TZ=Etc/UTC \
   --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" \
   --volume /data/media:/media:rw \
   docker.io/ptr727/plexcleaner \
@@ -945,7 +945,7 @@ services:
       - --mediafiles=/media/Series
       - --mediafiles=/media/Movies
     environment:
-      - TZ=America/Los_Angeles
+      - TZ=Etc/UTC
     volumes:
       - /data/media:/media  # Media, config, and the plugin DLL are mounted here
 ```
