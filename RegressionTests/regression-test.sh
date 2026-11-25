@@ -160,6 +160,14 @@ SetLaunch() {
     fi
 }
 
+# Refuse a REGRESSION_TEST_MEDIA that is not where the test dataset mounts, since the runs mount it read-write.
+CheckMountpoint() {
+    if [[ "$(zfs get -H -o value mountpoint "$TestDataset")" != "$HostMedia" ]]; then
+        echo "regression-test.sh: REGRESSION_TEST_MEDIA $HostMedia is not the mountpoint of $TestDataset" >&2
+        exit 2
+    fi
+}
+
 # Provision the test dataset as a zero-copy clone of the newest corpus snapshot.
 # Where the clone already originates from the newest snapshot, the run rolls it back to its @backup.
 # A rollback works while media containers or SMB clients hold the mount, where a destroy fails.
@@ -168,6 +176,9 @@ SetLaunch() {
 ProvisionDataset() {
     local Origin
     Origin="$(zfs get -H -o value origin "$TestDataset" 2>/dev/null || true)"
+    if [[ -n "$Origin" ]]; then
+        CheckMountpoint
+    fi
     if [[ "$Origin" == "$CorpusSnap" ]]; then
         echo "Test clone current ($CorpusSnap) - rolling back"
         zfs rollback "$Snapshot"
@@ -184,10 +195,12 @@ ProvisionDataset() {
     fi
     zfs clone "$CorpusSnap" "$TestDataset"
     zfs snapshot "$Snapshot"
+    CheckMountpoint
 
     # Clean up retired clones on a best-effort basis, which succeeds once the holders have restarted or closed.
     local Retired
-    for Retired in $(zfs list -H -o name 2>/dev/null | grep -E "^$TestDataset-retired-" || true); do
+    for Retired in $(zfs list -H -o name 2>/dev/null || true); do
+        [[ "$Retired" == "$TestDataset-retired-"* ]] || continue
         zfs destroy -r "$Retired" 2>/dev/null &&
             echo "Destroyed retired clone $Retired" ||
             echo "Retired clone $Retired still held; will retry next run" >&2
@@ -436,10 +449,6 @@ RunRegressionTests() {
     # Provision a pristine clone of the corpus, process it, then run each built plugin on the results.
     # This only confirms each plugin loads and runs, since per-plugin behavior is verified in isolation.
     ProvisionDataset
-    if [[ "$(zfs get -H -o value mountpoint "$TestDataset")" != "$HostMedia" ]]; then
-        echo "regression-test.sh: REGRESSION_TEST_MEDIA $HostMedia is not the mountpoint of $TestDataset" >&2
-        exit 2
-    fi
     # Roll the clone back to its pristine @backup even if processing or a plugin aborts under set -e.
     # A failed run then never leaves the shared test dataset mutated, and the clean restore disarms the trap.
     trap 'RestoreDataset' EXIT
