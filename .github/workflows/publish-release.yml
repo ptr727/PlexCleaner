@@ -35,7 +35,7 @@ jobs:
   # rather than resolving publish == false, so a mistyped release attempt is visible instead of a silent no-op.
   plan:
     name: Plan release job
-    uses: ptr727/ProjectTemplate/.github/workflows/publish-plan-task.yml@df0ddfde9ed4b80a0d197e8b83a0f9541cf7e842 # 2.0.1521
+    uses: ptr727/ProjectTemplate/.github/workflows/publish-plan-task.yml@fb08376e63d21fc4a6372fe5160df13916eebbb8 # 2.0.1528
     with:
       event_name: ${{ github.event_name }}
       actor: ${{ github.actor }}
@@ -46,7 +46,7 @@ jobs:
     name: Validate job
     needs: [plan]
     if: ${{ needs.plan.outputs.publish == 'true' }}
-    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@df0ddfde9ed4b80a0d197e8b83a0f9541cf7e842 # 2.0.1521
+    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@fb08376e63d21fc4a6372fe5160df13916eebbb8 # 2.0.1528
     permissions:
       contents: read
     secrets:
@@ -84,7 +84,7 @@ jobs:
     if: >-
       ${{ needs.plan.outputs.publish == 'true' && needs.validate.result == 'success'
       && needs.integration.result == 'success' }}
-    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@df0ddfde9ed4b80a0d197e8b83a0f9541cf7e842 # 2.0.1521
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@fb08376e63d21fc4a6372fe5160df13916eebbb8 # 2.0.1528
     secrets:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
       DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
@@ -115,7 +115,7 @@ jobs:
       ${{ needs.plan.outputs.publish == 'true' && needs.publish.result == 'success' }}
     permissions:
       contents: read
-    uses: ptr727/ProjectTemplate/.github/workflows/publish-docker-readme-task.yml@df0ddfde9ed4b80a0d197e8b83a0f9541cf7e842 # 2.0.1521
+    uses: ptr727/ProjectTemplate/.github/workflows/publish-docker-readme-task.yml@fb08376e63d21fc4a6372fe5160df13916eebbb8 # 2.0.1528
     with:
       ref: ${{ github.sha }}
       branch: ${{ github.ref_name }}
