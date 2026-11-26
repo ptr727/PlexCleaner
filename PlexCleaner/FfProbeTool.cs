@@ -187,14 +187,7 @@ public partial class FfProbe
             }
             catch (OperationCanceledException)
             {
-                Log.Warning(
-                    "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                    GetToolType(),
-                    operation,
-                    processId,
-                    command.Arguments
-                );
-                ToolErrorScope.Record();
+                RecordCancelledExecution(operation, processId, command.Arguments);
                 return (false, string.Empty);
             }
             catch (Exception e) when (Log.Logger.LogAndHandle(e))
