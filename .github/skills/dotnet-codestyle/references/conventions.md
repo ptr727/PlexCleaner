@@ -13,13 +13,21 @@ project.
 
 2. **Nullable reference types**: enabled (`<Nullable>enable</Nullable>`), use nullable annotations
    appropriately, use `required` for mandatory properties.
-3. **Modern C# features**: prefer modern language constructs. Prefer primary constructors when
-   appropriate, top-level statements for console apps, pattern matching over traditional checks.
-   Prefer collection expressions when types loosely match. Prefer extension methods (the classic
-   `this`-parameter form or an `extension(<receiver>) { ... }` block on C# 14+). Prefer implicit
-   object creation when the type is apparent. Prefer range and index operators.
-4. **Expression-bodied members**: use for applicable methods, properties, accessors, operators,
-   lambdas, local functions.
+3. **Modern C# features**: prefer modern language constructs. Each construct below is required
+   wherever its IDE rule matches, since the gate reports each rule at warning:
+   - a primary constructor (IDE0290),
+   - top-level statements in place of a `Program.Main` (IDE0210),
+   - pattern matching over traditional checks (IDE0019, IDE0020, IDE0038, IDE0078, IDE0083,
+     IDE0260),
+   - a collection expression when types loosely match (IDE0028, IDE0300 to IDE0306),
+   - implicit object creation when the type is apparent (IDE0090),
+   - range and index operators (IDE0056, IDE0057).
+
+   Prefer extension methods (the classic `this`-parameter form or an `extension(<receiver>) { ... }`
+   block on C# 14+).
+4. **Expression-bodied members**: each is required wherever its IDE rule matches (IDE0021 to
+   IDE0027, IDE0053, IDE0061). That covers constructors, methods, operators, properties,
+   indexers, accessors, lambdas, and local functions.
 5. **`var` keyword**: do NOT use `var`, always use explicit types:
 
    ```csharp
@@ -91,15 +99,18 @@ project.
 5. **Line endings**: not specified here, governed per repo by `.editorconfig` / `.gitattributes`
    per GOVERNANCE.md's "Line Endings" section.
 6. **`#region`**: do not use regions, prefer logical file/folder/namespace organization.
-7. **Member ordering (StyleCop SA1201)**: const -> static readonly -> static fields -> instance
-   readonly fields -> instance fields -> constructors -> public. Public members are ordered events -> properties -> indexers
-   -> methods -> operators. Non-public follows in same order, then nested types.
+7. **Member ordering (StyleCop SA1201, SA1202)**: order by kind first, across every access level
+   (SA1201). The kinds run fields, constructors, finalizers, delegates, events, enums, interfaces,
+   extension blocks, properties, indexers, conversion operators, operators, methods, nested
+   structs, and nested classes. Within one kind, order by access: public -> internal -> protected
+   internal -> protected -> private protected -> private (SA1202). Within one kind and access,
+   const precedes static, which precedes instance, and readonly precedes mutable (SA1203, SA1204,
+   SA1214).
 
 ## Comments and documentation
 
-XML documentation is on: `<GenerateDocumentationFile>true</GenerateDocumentationFile>`, and
-missing XML comments for public APIs are suppressed in `.editorconfig`. Every public surface must
-still be documented: a single-line summary, additional details in remarks, documented input
+XML documentation is on: `<GenerateDocumentationFile>true</GenerateDocumentationFile>`. Every
+public surface must be documented: a single-line summary, additional details in remarks, documented input
 parameters, return values, exceptions, and crefs.
 
 ```csharp

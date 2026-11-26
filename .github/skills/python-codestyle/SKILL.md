@@ -99,43 +99,49 @@ neither `uv sync` nor `uv run`, since either writes a `uv.lock` that, once commi
 directory the uv form. A pip-form directory builds its environment as the pip-form block below
 shows. A
 **lint-only** Scripts profile has no `uv.lock` to sync and no pytest to run. For it, substitute
-`uvx` per tool and `unittest` per the Two Profiles section above:
+`uvx` per tool and `unittest` per the Two profiles section above:
 
 ```sh
 uv sync                          # creates .venv, installs deps + dev group
-uv run ruff format               # auto-format
-uv run ruff check --fix          # auto-fix lint
-uv run ruff check                # verify lint clean
-uv run ruff format --check       # verify format clean
+uv run ruff format --extend-exclude ./hub_fetch_run.py --force-exclude          # auto-format
+uv run ruff check --fix --extend-exclude ./hub_fetch_run.py --force-exclude     # auto-fix lint
+uv run ruff check --extend-exclude ./hub_fetch_run.py --force-exclude           # verify lint clean
+uv run ruff format --check --extend-exclude ./hub_fetch_run.py --force-exclude  # verify format clean
 uv run pyright                   # verify types
 uv run pytest                    # run tests
 uv build                         # produce wheel + sdist in ./dist (published packages only)
 ```
 
+A downstream repo keeps the carried `hub_fetch_run.py` at its root. So each ruff command this skill and its references name carries
+`--extend-exclude ./hub_fetch_run.py --force-exclude`, whatever form runs it. The repo's own ruff config may be stricter than the hub's.
+The flags keep ruff from reporting or rewriting the helper, which stays byte-identical to the hub's copy.
+
 The **build**-profile Python clean-compile, in its uv form, is `uv run ruff format` +
 `uv run ruff check` + the repo's type checker. That checker is `uv run pyright`, or `uv run mypy`
-where mypy is the CI checker, or both where the repo runs both (see Type checking above). Where the
+where mypy is the CI checker, or both where the repo runs both (see Toolchain above). Where the
 config sits in the project directory, CI passes the checker no path, so the config's own target
 settings decide what is checked. mypy left with no target that way exits with an error. A declared
 subdirectory with no config of its own uses the repository root's instead. CI then runs the checker
-from the root with the directory as its path, `uv run --project <dir> <checker> <dir>`, so run it
+from the root with the directory as its path, `uv run --project "<dir>" "<checker>" "<dir>"`, so run it
 the same way. Run the clean-compile, plus `uv run pytest`, before committing.
 
 A **build**-profile directory in its pip form builds its environment the way CI does, through uv's
 pip interface, which writes no `uv.lock`. It installs every `requirements*.txt` in one command, since
 separate installs let one file's pins downgrade what another resolved. Where its `pyproject.toml`
 carries a `[project]` table it then installs the directory itself as editable. Without that, a
-`src`-layout package is not importable and pytest fails locally where CI passes:
+`src`-layout package is not importable and pytest fails locally where CI passes. Both installs pass
+`--python .venv/bin/python`, since `uv pip install` targets an active `VIRTUAL_ENV` ahead of
+`./.venv`:
 
 ```sh
 uv venv --clear                           # creates .venv, replacing an existing one
-uv pip install -r requirements.txt -r requirements-dev.txt   # one -r per requirements*.txt
-uv pip install -e .                       # only where pyproject.toml has a [project] table
+uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev.txt   # one -r per requirements*.txt
+uv pip install --python .venv/bin/python -e .   # only where pyproject.toml has a [project] table
 # in a declared directory whose .venv installs ruff, .venv/bin/python -m ruff replaces uvx ruff@latest
-uvx ruff@latest format                    # auto-format
-uvx ruff@latest check --fix               # auto-fix lint
-uvx ruff@latest check                     # verify lint clean
-uvx ruff@latest format --check            # verify format clean
+uvx ruff@latest format --extend-exclude ./hub_fetch_run.py --force-exclude          # auto-format
+uvx ruff@latest check --fix --extend-exclude ./hub_fetch_run.py --force-exclude     # auto-fix lint
+uvx ruff@latest check --extend-exclude ./hub_fetch_run.py --force-exclude           # verify lint clean
+uvx ruff@latest format --check --extend-exclude ./hub_fetch_run.py --force-exclude  # verify format clean
 .venv/bin/python -m pytest                # run tests
 ```
 
@@ -155,7 +161,7 @@ way, as in `<dir>/.venv/bin/python -m mypy <dir>`. On Windows each interpreter p
 clean-compile, run with pytest before committing.
 
 A **lint-only** profile's clean-compile substitutes its `uvx` and `unittest` equivalents, per Two
-Profiles above, and has no such command to run before committing beyond those. These are documented
+profiles above, and it runs only those before committing. These are documented
 commands. The hub's `vscode-tasks-python.json` snippet carries the VS Code tasks mirror of the uv
 form that the fleet baseline expects. Its header names the pip-form and lint-only adaptations. Every command-executing task in it is `type: process`, and every aggregator is
 `dependsOn`-only. Neither chains with `&&`, so the mirror runs the same on any task shell.
@@ -168,7 +174,7 @@ a root `pyproject.toml`, per `WORKFLOW.md` D1.2. That undeclared root is gated m
 reads its type-checker configuration only from the `[tool.mypy]` or `[tool.pyright]` section of its
 `pyproject.toml`. It skips the type check where neither is there,
 whatever the form. In its pip form CI installs nothing for that check and runs a bare
-`uvx <checker>@latest`. So the local check against the environment is the stricter one. And CI runs
+`uvx "<checker>@latest"`. So the local check against the environment is the stricter one. And CI runs
 its tests only where a pytest suite in `tests/` sits beside a `uv.lock` or `requirements*.txt`.
 
 A repo that keeps no .NET tool manifest declaring Husky.Net wires its local hook from the canonical
@@ -244,7 +250,7 @@ build-profile conventions, and `references/profiles.md` for the lint-only `unitt
 <!-- include: CODESTYLE.md > Tests and Script Dependencies -->
 
 - **A test lives in a `tests/` directory, never inside the production file it tests.** A deployed script may keep a `--selftest` that runs a small smoke check in seconds, and the case matrix lives in `tests/`. A self-test shipped inside the file it tests grows the file every reviewer reads, and its cases can come to outweigh the code they test.
-- **A hub-hosted standalone script that needs a third-party library declares it in PEP 723 inline script metadata, and runs as `uv run --no-project --script <path>`.** The block opens on `# /// script`, closes on `# ///`, and carries `dependencies` and `requires-python`. The fleet already installs uv on hosts and in CI. `--no-project` keeps uv from syncing the project around a script that has no block yet, where it would write a lockfile and a virtual environment. A script with no such block runs under `python3` and uv alike. A hook an agent harness runs on every tool call stays standard-library only, since it runs before any toolchain is guaranteed.
+- **A hub-hosted standalone script that needs a third-party library declares it in PEP 723 inline script metadata, and runs as `uv run --no-project --script "<path>"`.** The block opens on `# /// script`, closes on `# ///`, and carries `dependencies` and `requires-python`. The fleet already installs uv on hosts and in CI. `--no-project` keeps uv from syncing the project around a script that has no block yet, where it would write a lockfile and a virtual environment. A script with no such block runs under `python3` and uv alike. A hook an agent harness runs on every tool call stays standard-library only, since it runs before any toolchain is guaranteed.
 
 <!-- /include -->
 
@@ -252,7 +258,8 @@ build-profile conventions, and `references/profiles.md` for the lint-only `unitt
 
 Published packages use `_version.py` with `__version__ = "0.0.0"` as a placeholder. Wire
 `hatch-vcs` or equivalent to increment, publish with `skip-existing: true`. Source-only repos use
-a static `version` in `[project]` with no `_version.py`. See `references/profiles.md` for details.
+a static `version` in `[project]` with no `_version.py`, and NBGV plus `version.json` own their
+release tag. See `references/profiles.md` for details.
 
 ## Linter cleanliness
 
@@ -286,7 +293,8 @@ Before pushing or opening a PR:
 A command-line script is one a person or an agent runs by name. A hook its host runs, taking its input from that host rather than from a command line, is not one.
 
 - **Every command-line script answers `--help` and `-h`** with the same text on stdout, then exits 0, changing nothing. That text opens on a usage line naming the script. An agent learns a script's interface by asking it, so a script that reads `--help` as an input acts in a way nobody predicted. A PowerShell script declaring its own parameters answers `-Help` and `-h` instead, from a `-Help` switch carrying an `h` alias. That form follows PowerShell's own parameter convention, so such a script owes no answer to a literal `--help`. A wrapper that forwards its arguments to another script answers whatever that script answers.
-- **An argument the script does not recognize is refused**, with a non-zero exit before any read or write. The refusal names it as an unknown or unrecognized option, argument, flag, or parameter, and PowerShell's own refusal of a parameter it cannot bind counts. So a PowerShell script declaring its own parameters refuses a literal `--help` like any other unrecognized argument. Where no parameter takes the remaining arguments, the binder's refusal does that. A script with such a parameter refuses a dash-prefixed leftover itself. An unrecognized first argument is never taken as a default mode or as a target.
+- **An argument the script does not recognize is refused**, with a non-zero exit before any read or write. The refusal names it as an unknown or unrecognized option, argument, flag, or parameter, and PowerShell's own refusal of a parameter it cannot bind counts. That refusal comes from the binder only in an advanced script, one carrying `[CmdletBinding()]` or a `[Parameter()]` attribute. Without either, a plain `param()` block binds an unknown parameter into `$args` and runs on. Such a script refuses a non-empty `$args` itself, before any work. So a PowerShell script declaring its own parameters refuses a literal `--help` like any other unrecognized argument. A script with a parameter taking the remaining arguments refuses a dash-prefixed leftover itself. An unrecognized first argument is never taken as a default mode or as a target.
+- **A shell script that gives a refused argument an exit status of its own uses 64, `EX_USAGE` from `sysexits.h`, and reserves it.** A caller can then tell a refusal, which changed nothing, from a run that started and failed, without reading the message. Every refusal exits through one function that exits 64. Under `set -e` a failed command's own status becomes the script's, so an `EXIT` trap turns any other exit carrying 64 into 1. A program the script `exec`s replaces that trap. So the script `exec`s only a program whose own 64, if it exits 64 at all, means a refused argument. An argument the script passes on, which that program refuses, keeps the program's status. The script's `--help` names the status, so a caller reads it as a contract.
 
 <!-- /include -->
 
@@ -294,13 +302,14 @@ A command-line script is one a person or an agent runs by name. A hook its host 
 
 <!-- include: CODESTYLE.md > Interrupts -->
 
-This applies to every Bash and Python script. `CODESTYLE.md` "Interrupts in Python" and "Interrupts in Shell" state each language's mechanics.
+This applies to every shell and Python script. `CODESTYLE.md` "Interrupts in Python" and "Interrupts in Shell" state each language's mechanics.
 
-- **On SIGINT or SIGTERM, a script releases what it holds before it exits.** It removes the temporary paths it created, releases the locks it took, and stops the child processes it started. A path, lock, or child left behind can stop the next run from starting, or feed it a half-written input.
+- **On SIGINT or SIGTERM, a script releases what it holds before it exits.** It removes the temporary paths it created, releases the locks it took, and stops the child processes it started. A path, lock, or child left behind can stop the next run from starting, or feed it a half-written input. A script started with SIGINT ignored keeps it ignored, so a stop meant to reach it sends SIGTERM. A non-interactive shell starts a background child that way.
 - **A write to persistent state goes to a temporary path beside the target, then is renamed over it.** An interrupt then leaves the old content or the new, never a mix of both. A store with transactions of its own, such as an SQLite database, is written through those instead. A rename over an open database can corrupt it.
-- **An interrupted script prints one line naming the signal, with no traceback, and exits 130 for SIGINT or 143 for SIGTERM.** Each status is 128 plus the signal number, the status a shell reports for a process that signal ended.
+- **An interrupted script prints one line naming the signal, with no traceback, and ends by re-raising the signal.** The signal then ends the process, so a shell reports 130 for SIGINT or 143 for SIGTERM, 128 plus the signal number. At Ctrl-C, a calling shell's loop then stops rather than starting its next iteration. A script calling `exit 130` has not died by the signal, so that loop reads an ordinary non-zero exit and runs on. A launcher between them, such as `uv run`, exits with the status rather than dying by the signal, so that loop runs on there too.
 - **A script takes this rule when it is created or next edited.** An existing script is not edited for this rule alone.
-- **A script that holds a lock, temporary state, or a child process owes a test that signals it mid-run.** The test sends SIGINT or SIGTERM, then asserts the matching exit status and that nothing the script held remains. It is skipped on Windows, which cannot deliver either signal for a script to handle. A script holding none of these owes no such test.
+- **A script that holds a lock, temporary state, or a child process owes a test that signals it mid-run.** The test sends SIGINT or SIGTERM, then asserts that the script died by that signal and that nothing it held remains. It starts the script with its interpreter directly, since a launcher such as `uv run` hides the signal death. It is skipped on Windows, which cannot deliver either signal for a script to handle. A script holding none of these owes no such test.
+- **A script that ends by `exec`-ing its long-running process owes no interrupt handling for that process.** The `exec` replaces the script, so a signal reaches the process directly. A background child the script starts to outlive the `exec` is handed across it, and the script neither stops it nor waits for it. Such a child is handed across only where something else stops it, such as a container's teardown of its whole process tree. Anything else the script holds is released before the `exec`. A script that holds nothing else at any point before the `exec` owes no trap and no signal test. As PID 1, such as a container's entrypoint, it ignores a SIGTERM that arrives before the `exec`, so a stop waits for its timeout.
 
 <!-- /include -->
 
@@ -308,9 +317,9 @@ This applies to every Bash and Python script. `CODESTYLE.md` "Interrupts in Pyth
 
 <!-- include: CODESTYLE.md > Interrupts in Python -->
 
-- **SIGINT and SIGTERM take one path.** Python raises `KeyboardInterrupt` on SIGINT. The entry point installs a SIGTERM handler with `signal.signal` that records the signal and raises `KeyboardInterrupt`.
-- **The entry point catches `KeyboardInterrupt` once, and any handler below it that catches the exception re-raises it.** It prints the line `CODESTYLE.md` "Interrupts" requires, then exits 143 where the SIGTERM handler recorded a signal and 130 otherwise.
-- **What the script holds is released by `with` blocks and `finally` clauses as the exception unwinds.** A `subprocess.Popen` child is stopped in a `finally` clause with `terminate()`, then `wait()`, since leaving its `with` block does not stop it. That child runs without `shell=True`, so `terminate()` reaches the command rather than a shell around it.
+- **SIGINT and SIGTERM take one path.** The entry point installs one handler with `signal.signal` for both signals. The handler records the first signal and raises `KeyboardInterrupt`, and returns at once on any later one. A later signal would cut the cleanup short, such as the SIGTERM that `uv run` forwards to a process group a Ctrl-C already reached. The handler takes SIGINT only where `signal.getsignal(signal.SIGINT)` is still `signal.default_int_handler`, so a SIGINT inherited as ignored stays ignored.
+- **The entry point catches `KeyboardInterrupt` once, and any handler below it that catches the exception re-raises it.** It prints the line `CODESTYLE.md` "Interrupts" requires, then re-raises the signal the handler recorded. To re-raise, it flushes standard output and standard error inside `contextlib.suppress(OSError)`, restores the default handler with `signal.signal(signum, signal.SIG_DFL)`, then re-sends the signal with `os.kill(os.getpid(), signum)`. The suppression covers a pipe whose reader the same Ctrl-C ended. The default action ends the process without Python's own exit handling. So the flush comes first, and no cleanup on this path relies on an `atexit` handler or a finalizer. The re-raise runs outside every `with` block and `finally` clause, such as at the `__main__` call site, since none of them runs after it. A process the re-sent signal does not end, such as PID 1 in a container, then exits 128 plus the signal number. On Windows, `os.kill` ends the process with the signal number as its status, so there the entry point skips it and exits 130.
+- **What the script holds is released by `with` blocks and `finally` clauses as the exception unwinds.** A `subprocess.Popen` child is stopped in a `finally` clause, since leaving its `with` block does not stop it. The clause calls `terminate()`, then `wait(timeout=...)`, such as 10 seconds. On `subprocess.TimeoutExpired`, it calls `kill()`, then `wait()`. The handler passes over a second Ctrl-C, so a child that ignores SIGTERM would otherwise hold the script. That child runs without `shell=True`, so `terminate()` reaches the command rather than a shell around it.
 - **The rename over persistent state uses `os.replace`.** `os.rename` and `Path.rename` fail on Windows when the target exists.
 
 <!-- /include -->

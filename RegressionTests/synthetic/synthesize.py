@@ -27,6 +27,7 @@ Targeting notes - the PlexCleaner behaviors these builders exploit (see the READ
 """
 
 import argparse
+import os
 import subprocess
 import tempfile
 from collections.abc import Callable
@@ -35,6 +36,7 @@ from pathlib import Path
 from hevc_nal import insert_before_vcl
 from inject_cc_sei import build_cc_sei
 from inject_hdr10plus_sei import build_hdr10plus_sei
+from interrupts import reserve_sibling, run_child, run_main
 
 FFMPEG = "ffmpeg"
 FFPROBE = "ffprobe"
@@ -54,9 +56,8 @@ HDR10_X265 = (
 def run(cmd: list[str]) -> str:
     # Capture combined output and surface its tail on failure, so a regeneration error on another
     # machine is diagnosable rather than a bare non-zero exit.
-    proc = subprocess.run(
+    proc = run_child(
         cmd,
-        check=False,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -439,11 +440,21 @@ CORPUS_NAMES: dict[str, str] = {
 }
 
 
+def build_target(target: str, out: Path) -> None:
+    """Build a target into a partial sibling that keeps the extension, then rename it onto ``out``."""
+    partial = reserve_sibling(out, "partial")
+    try:
+        TARGETS[target](partial)
+        os.replace(partial, out)
+    finally:
+        partial.unlink(missing_ok=True)
+
+
 def build_corpus(out_dir: Path) -> None:
     """Build every corpus target into ``out_dir`` under its corpus name."""
     out_dir.mkdir(parents=True, exist_ok=True)
     for target, name in sorted(CORPUS_NAMES.items()):
-        TARGETS[target](out_dir / name)
+        build_target(target, out_dir / name)
         print(f"built {target} -> {out_dir / name}")
 
 
@@ -465,9 +476,9 @@ def main() -> None:
         ap.error("give a target or --corpus")
     if args.out is None:
         ap.error("a target requires --out")
-    TARGETS[args.target](args.out)
+    build_target(args.target, args.out)
     print(f"built {args.target} -> {args.out}")
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

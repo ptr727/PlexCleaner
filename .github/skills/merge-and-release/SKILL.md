@@ -59,19 +59,21 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
 ## The Procedure
 
 1. Identify the open develop -> main promotion PR for this repo, stop and report if none is open.
-2. Record the promotion's live head, `gh pr view [number] --repo owner/repo --json headRefOid
+2. Record the promotion's live head, `gh pr view "<number>" --repo owner/repo --json headRefOid
    --jq .headRefOid`. Then, from a hub checkout, `scripts/` is not carried into downstream repos,
-   run `uv run --no-project --script scripts/pr_review.py status [number] --repo owner/repo` on it and confirm the
-   pr-review-conduct Merge Gate. Stop and report exactly what is missing rather than merging on a
-   partial gate. A digest carrying `state=MERGED` is a promotion merged since step 1 found it
+   run `uv run --no-project --script scripts/pr_review.py status "<number>" --repo owner/repo` on it and confirm the
+   pr-review-conduct Merge Gate. Spell every `scripts/pr_review.py` call this skill prints as
+   `pr-review-conduct` "Expected review loop" says. Where the gate is not met, stop and report exactly what is missing rather than
+   merging on a partial gate. A digest carrying `state=MERGED` is a promotion merged since step 1 found it
    open, whose `merge=UNKNOWN` never clears, so stop re-reading it. Confirm its `merge_commit=` per
    step 4, run the ready-report comparison below against its `head=`, and report both. Dispatch
    nothing on the chosen scope alone, since whoever merged it may have released it already. Where
-   a release scope was chosen, look, then ask. Read this repo's `releaseTrigger` as step 5 does,
-   and where it reads `none` report that no release is configured. Otherwise read the publisher's
+   a release scope was chosen, look, then ask. Confirm the publisher exists as step 5 does. Read it
+   at `<merge-sha>` below rather than at a tip step 4 confirmed, since `main` may have moved past
+   the merge. Where it is absent report the missing publisher. Otherwise read the publisher's
    runs on the merge commit, `gh run list --repo owner/repo --workflow publish-release.yml --commit
-   <merge-sha> --json databaseId,event,headBranch,status,conclusion,createdAt`. `<merge-sha>` is
-   the full 40-character SHA, `gh pr view [number] --repo owner/repo --json mergeCommit --jq
+   "<merge-sha>" --json databaseId,event,headBranch,status,conclusion,createdAt`. `<merge-sha>` is
+   the full 40-character SHA, `gh pr view "<number>" --repo owner/repo --json mergeCommit --jq
    .mergeCommit.oid`, since the digest's 8-character `merge_commit=` matches no run. Report whether
    a release started, naming each run with its event, status, and conclusion. A read that fails is
    reported with its output, never taken as no release started. A run found there, whether
@@ -91,34 +93,34 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
    Confirm the digest's `head=` is a prefix of the recorded SHA, re-running both where it is not.
    That way the SHA step 3 merges is the one the gate verified. Where drive-pr's ready report named a
    head and it is not a prefix of the recorded one, stop and re-ask with the commits added,
-   `gh api repos/owner/repo/compare/<reported>...<recorded> --jq '.commits[] | .sha[:8] + " " +
+   `gh api "repos/owner/repo/compare/<reported>...<recorded>" --jq '.commits[] | .sha[:8] + " " +
    (.commit.message | split("\n")[0])'`. The reason is that a feature PR squashed into `develop` after the
    report moves the promotion's head onto content the maintainer never saw. Under an away-mode
    standing grant this comparison is skipped, even where the worker holds a ready report. Content
    another session merged meanwhile rides along, as `backlog-burndown` "Away Mode" accepts.
    Where no report named a head, a promotion made ready by hand, the go-ahead covers the head
    this step recorded.
-3. `gh pr merge [number] --merge --match-head-commit <sha> --repo owner/repo`, where `<sha>` is
+   Whichever case set it, run the closing-set check `branching-and-release-model` states in its
+   negated-keyword bullet on the head step 3 merges. This step runs from a hub checkout, so read
+   the range's commit messages from the target rather than with a local `git log`:
+   `gh api --paginate "repos/owner/repo/compare/main...<sha>" --jq '.commits[].commit.message' > "<file>"`.
+   Run that read on its own and stop the merge on a non-zero exit, since a failed read is not a
+   range with no closure. Then run that bullet's `grep` over `<file>`. Stop and report any closure
+   it prints that the promotion body does not state, rather than merging.
+3. `gh pr merge "<number>" --merge --match-head-commit "<sha>" --repo owner/repo`, where `<sha>` is
    the head the go-ahead covers. Attended, that is the head `drive-pr`'s ready report named, or
    the moved head the maintainer approved after step 2's re-ask. Under an away-mode grant, or
    where no report named a head, it is the head step 2 recorded. The server then
    refuses the merge if the head moved past that SHA. Never `--delete-branch`, the promotion
    PR's head is `develop`.
 4. Confirm the merge landed, `mergedAt` set, `main`'s tip matching the merge commit.
-5. When the chosen scope includes a release, first bring the hub checkout used for this procedure
-   current, `git fetch origin main`. Then read this repo's `releaseTrigger` from that fetched tip
-   rather than a possibly-stale working tree copy. That matters when the target repo is the hub itself
-   and this exact promotion changed its own registry entry. Select the one matching entry
-   explicitly, falling back to the registry's own default when that entry sets no
-   `releaseTrigger` of its own. Stop and report rather than guessing when selection is not
-   exactly one match. On a non-1 count exit non-zero rather than returning empty with success. An
-   ambiguous or missing match must fail loud, not read as an empty value still safe to act on: `git
-   show origin/main:registry/repos.json | jq -r --arg name '<repo-name>' '(.repos | map(select(.name
-   == $name))) as $m | if ($m | length) == 1 then ($m[0].releaseTrigger // .defaults.releaseTrigger)
-   else error("expected exactly one registry entry for \($name), got \($m | length)") end'`. Two
-   cases, `none` versus anything else. When it
-   reads `none`, report that no
-   release is configured, dispatch and run-correlation (step 6) do not apply. Otherwise, dispatch
+5. When the chosen scope includes a release, confirm the publisher exists on `main`'s tip from
+   step 4. Every fleet repository releases, so its `releaseTrigger` selects no case here. Read
+   `gh api "repos/owner/repo/contents/.github/workflows/publish-release.yml?ref=<main-sha>" --jq
+   .path`, `<main-sha>` being the full SHA step 4 confirmed. An answer naming the path means the
+   publisher exists. An HTTP 404 means it is absent. That repository owes a publisher the audit
+   reports as drift, so report it, and dispatch and run-correlation (step 6) do not apply. Any
+   other failure is reported with its output, never read as either answer. Where it exists, dispatch
    explicitly, `gh workflow run publish-release.yml --ref main --repo owner/repo`, or `--ref
    develop` only when the maintainer explicitly asked for a prerelease dispatch instead.
 6. Correlate the specific run this dispatch produced rather than assuming the newest one is it.
@@ -138,21 +140,21 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
    id to completion in one further bounded background wait with an explicit, finite timeout.
    The timeout is 2700 seconds (45 minutes, matching `scripts/pr_review.py`'s own default) unless
    the maintainer states a different bound for this specific release. Use `timeout 2700 gh run
-   watch <run-id> --repo owner/repo --exit-status` on a host with GNU `timeout`, with the maintainer's bound in place of 2700 where they state
+   watch "<run-id>" --repo owner/repo --exit-status` on a host with GNU `timeout`, with the maintainer's bound in place of 2700 where they state
    one. On a host without
    it (macOS without coreutils, native Windows), use the equivalent bounded-wait mechanism
    enforcing the same bound. Never pipe `gh run watch` into another command unless the shell running it sets
    `pipefail`. That is because without it a pipeline reports its last stage's exit status and
    `gh run watch ... | tail` reports whether `tail` succeeded rather than whether the run
    did. Read the watch's own exit status, or read the conclusion back with
-   `gh run view <run-id> --repo owner/repo --json status,conclusion`.
+   `gh run view "<run-id>" --repo owner/repo --json status,conclusion`.
    Report a timeout separately from a completed run's own conclusion, the tag or
    version it produced. A run that fails, times out, or never starts is reported, never silently
    retried.
 7. In the hub, when the chosen scope includes a release, refresh this machine's Codex and opencode
    copy from the promoted `main`. Do it in a detached worktree of its own, never by switching an existing
    checkout to `main`. The reason is that the checkout Claude Code loads in place would move with it. Run `git fetch origin main`, then `git worktree add --detach
-   <worktree> origin/main` at a new path in the fleet worktree layout. From that worktree run
+   "<worktree>" origin/main` at a new path in the fleet worktree layout. From that worktree run
    `python3 scripts/skills_install.py --snapshot-only`, then `python3 scripts/skills_install.py
    --report`, and confirm its snapshot reads current. A fresh worktree holds nothing uncommitted
    or ignored under `.agents/skills/` or `.claude-plugin/`, the paths the installer reads, so
@@ -169,7 +171,7 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
    So where that report reads anything other than CURRENT, first rule out a rollback. The report
    judges payload digests alone, so a kit newer than `main` also reads stale. Read the commit its
    `This machine:` line names after `hub`. Install only where that commit carries no `-dirty`
-   suffix and `git merge-base --is-ancestor <commit> origin/main` exits 0, or where the report
+   suffix and `git merge-base --is-ancestor "<commit>" origin/main` exits 0, or where the report
    reads NOT INSTALLED. Any other result, a kit installed from `develop` or from a dirty tree
    among them, is reported to the maintainer rather than installed over. Where the install is
    owed, run `python3 host-setup/agent-safety/claude/install.py` with no arguments from the same
@@ -189,7 +191,7 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
    `--report` again. A SHADOWED Codex is reported to the maintainer and not fixed, since the override
    is theirs. An EDITED file is rewritten after its backup, and that is reported. A failure is reported
    with its output, never retried. Then remove the worktree with
-   `git worktree remove <worktree>`, whatever any report said. Removing it leaves the skills
+   `git worktree remove "<worktree>"`, whatever any report said. Removing it leaves the skills
    snapshot, the installed kit, and their stamps unchanged. A result that does not read current
    is reported to the maintainer. The skills `--report` exits on the snapshot alone. This step runs whether step 5
    or 6 dispatched, skipped, or failed a release. That is because it is gated only on the chosen scope,
@@ -200,7 +202,7 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
    failure, an ambiguous run match, a timeout, a failed run, or a hub refresh all still reach
    this step. So does step 2 finding the promotion already merged. The merge already landed
    by then, in step 3 or before step 2 read it. Every part below is required:
-   - The promotion PR's own worktree, where one exists: fetch and prune, remove the worktree, then bring the base
+   - A `develop`-headed promotion PR's own worktree, where one exists: fetch and prune, remove the worktree, then bring the base
      clone to current `develop`. To do so, check `develop` out first only where it sits on another
      branch, and fast-forward it with `git merge --ff-only origin/develop`. Where that checkout
      is needed, removing first, not after, matters. The reason is that the base clone cannot check out `develop`
@@ -208,6 +210,10 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
      in two worktrees at once is refused outright. Never delete `develop`: it is the promotion PR's
      own head. The repo's auto-delete-head-branches setting is kept off fleet-wide for exactly
      this reason, so nothing does this automatically.
+   - A conflicted promotion's own branch, where one exists. That promotion's head is a branch cut
+     from `main` that merges `develop` rather than `develop` itself. Run the `cleanup <number>`
+     command the next bullet names on the promotion PR. It removes that branch's worktree, its local
+     branch, and its remote branch.
    - A defensive sweep for anything drive-pr's own cleanup should already have removed but might
      not have. The causes include an interrupted loop, a fix landed by hand outside that skill, or
      a maintainer merge in the GitHub UI. `git worktree list` for any worktree still registered under this
@@ -217,9 +223,9 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
      than reading an empty answer as safe: `gh pr list --head "<branch>" --base develop --state
      merged --repo owner/repo --json number --jq 'if length == 1 then .[0].number else
      error("expected exactly one merged PR for this head, got \(length)") end'`. Then run
-     `uv run --no-project --script scripts/pr_review.py cleanup <number> --repo owner/repo --checkout <base-clone>`
-     from a hub checkout outside the worktree it removes, `<base-clone>` being the repository's
-     primary clone, per `repo-worktree` "Listing and Cleanup". It re-reads that pull request and
+     `uv run --no-project --script scripts/pr_review.py cleanup "<number>" --repo owner/repo --checkout ~/repos/"<Repo>"`
+     from a hub checkout outside the worktree it removes, `~/repos/<Repo>` being the repository's
+     primary clone. That path is the convention layout, and a machine not yet migrated passes its actual primary clone instead. See `repo-worktree` "Listing and Cleanup". The `cleanup` command re-reads that pull request and
      repeats the merged, base, head-repository, and tip checks in code. It refuses a permanent or
      protected branch, deletes the remote branch, and confirms it by reading the ref back. It treats
      a remote branch already gone as done, so a prior interrupted attempt finishes rather than
@@ -228,17 +234,15 @@ skill covers all of it, scoped down by what the maintainer actually asks for.
      says what a refusal after it and a `base=kept` line each leave to do. Exit `0` is done, and
      any other exit stops and reports. `1` is a refusal, and `2` is an unanswered read or an unconfirmed
      delete. `64` is a target under an owner other than the hub checkout's own `origin`, or an
-     unreadable `origin`. A registry refusal is a `1`. It runs under the host-safety
-     installer's `Bash(uv run --no-project --script scripts/pr_review.py:*)` allow rule, which is what lets auto mode
-     complete it.
-     It also refuses while another open pull request in the repository has the branch as its head or base, naming each.
+     unreadable `origin`. A registry refusal is a `1`.
+     `cleanup` also refuses while another open pull request in the repository has the branch as its head or base, naming each.
      Where this seat cannot run `cleanup`, report the cleanup to the maintainer instead of running its steps by hand. That report names the pull request number and `--repo`.
      No direct `git push origin --delete`, ref API delete, `git worktree remove`, or `git branch -D` runs on a feature branch from this skill. That is because `cleanup` is the one place holding the checks.
      Never apply this sweep to `develop` or `main`
      themselves, only to feature branches a drive-pr loop created.
    - What no single pull request names: run
-     `uv run --no-project --script scripts/pr_review.py cleanup --sweep --repo owner/repo --checkout <base-clone>`
-     and report what it lists. It writes nothing but a fetch, and `--apply` runs only on the
+     `uv run --no-project --script scripts/pr_review.py cleanup --sweep --repo owner/repo --checkout ~/repos/"<Repo>"`
+     and report what it lists. In that command `~/repos/<Repo>` is the convention layout, and a machine not yet migrated passes its actual primary clone instead. The sweep writes nothing but a fetch, and `--apply` runs only on the
      maintainer's go-ahead, since the report reaches other sessions' finished work too.
 
 ## Mechanics Live Elsewhere

@@ -53,13 +53,17 @@ same document's own prose, outside that region, is governed normally. A referenc
 verbatim section is a defect in the canonical. It is fixed once at the source rather than reported
 against every repository carrying it.
 
-**The second exception is a hub-hosted tool the reader is told to run**, which is a different kind
-of reference. A rule naming a gate, a script, or a reference snippet the reader executes or copies
-states an instruction rather than a provenance. An instruction with no destination is
-unfollowable, which is precisely how a pointer in carried text comes to read as decorative. The
-test is whether the reference is something the reader *does* or something that *happened to this
-file*. Where the content came from stays out, what the reader runs stays in. Such a pointer names
-the hub's canonical rather than this repository's provenance. So it is the hub's to keep resolving
+**The second exception is a hub-hosted tool the reader is told to run, or a procedure the reader
+runs from a hub checkout.** It is a different kind of reference. A rule naming a gate, a
+script, or a reference snippet the reader executes or copies states an instruction rather than a
+provenance. So does a procedure whose steps the reader runs from a hub checkout, such as auditing
+a repository and converging what the audit finds. Reporting a discrepancy upstream runs no such
+step, so it stays under item 1. An instruction
+with no destination is unfollowable, which is precisely how a pointer in carried text comes to read
+as decorative. The test is whether the reference is something the reader *does* or something
+that *happened to this file*. Where the content came from stays out, what the reader runs or
+carries out stays in. Such a pointer names the hub's canonical rather than this repository's
+provenance. So it is the hub's to keep resolving
 and never a repository's to edit out or re-point at a local path. What is reached rather than
 carried, and how, is `GOVERNANCE.md` "Hub-Hosted Tooling". In `AGENTS.md` and `GOVERNANCE.md` this
 belongs in verbatim rule text, the same region the first exception already covers. So the whole

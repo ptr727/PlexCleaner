@@ -61,10 +61,13 @@ this skill exists to prevent. So is forgetting to loop back to the promotion PR 
 
 - Naming this skill, and answering its how-far question, is the maintainer's explicit, current
   go-ahead. It covers every feature -> develop squash merge the drive performs to reach that target.
+  It also covers opening each pull request the drive needs. And it covers the whole post-merge
+  `cleanup` after each feature -> develop merge, a peer's merge included.
 - A dispatched drive answers no such question. So what stands in its place is the go-ahead the
-  dispatching seat holds, per "How Far to Drive" above. The drive performs the same merges on it.
+  dispatching seat holds, per "How Far to Drive" above. The drive performs the same writes on it.
   Reading this bullet list is not how such a drive establishes that. That is because a worker
-  cannot verify a grant made in a seat it has no access to.
+  cannot verify a grant made in a seat it has no access to. Its brief can also withhold one of
+  those writes. A `backlog-burndown` worker's brief withholds the post-merge `cleanup`, for one.
 - It is never authorization to merge the develop -> main promotion PR, or to dispatch a release.
   Those stay in merge-and-release, invoked on its own so the maintainer keeps a checkpoint before
   the harder-to-reverse step.
@@ -75,7 +78,12 @@ this skill exists to prevent. So is forgetting to loop back to the promotion PR 
 ## The Drive Loop
 
 1. Isolate into a worktree per repo-worktree before the first edit. Base it on the branch that skill's base rule names, develop unless the task is explicitly about main-only content.
-2. Commit the work, then run `local-strict-review` and record its pass in the order that skill
+2. Before any commit that first writes a code or config comment line, check
+   `gh label list --search comments`. Where the label is missing, `comment-and-doc-style` says the
+   escape is not yet available there. So delete the comment line before committing. Where a rule
+   requires the comment, report the missing label to whoever dispatched the drive, or to the
+   maintainer, and do not push.
+   Commit the work, then run `local-strict-review` and record its pass in the order that skill
    gives, its diff receipt following the commit. Where the change also carries the canonical ledger,
    that skill's carried-content records instead precede the commit, because that ledger is tracked.
    A driver that cannot dispatch a subagent follows that skill's "Running It".
@@ -88,10 +96,17 @@ this skill exists to prevent. So is forgetting to loop back to the promotion PR 
    finding still open into the pull request's body with its class, per `local-strict-review`
    "Disposing of Findings". A later push adds its own to any list already there. Step 3 gives
    each one an outcome under the Merge Gate's item 3. Where the
-   change writes a code or config comment line, add the `comments` label after creating the PR, or
-   the prose gate refuses it. Where a public repository's lint log says "Read the pull
-   request's labels live", a rerun of the failed job picks the label up. Otherwise it applies to
-   the next push.
+   change writes a code or config comment line, create the PR with `gh pr create --label comments`,
+   or the prose gate refuses it. A repository lacking the label can refuse that create, which is
+   why the check above comes first. A label added after the create is missing from the
+   opened event's payload. Where the lint log lacks "Read the pull request's labels live", that
+   payload decides. A private repository's log always lacks it until the lint job holds
+   `pull-requests: read`. A label given at the create is still missed there now and then, so read
+   the first lint run. Where a later push first writes a comment line, add the label with
+   `gh pr edit` before that push, so the push's event carries it. Where the log reads the labels
+   live, a rerun of the failed job picks up a label added late. Otherwise a rerun replays the
+   payload. So the label then reaches the gate only through a fresh event, such as the next push
+   or a close and reopen.
    A push refused by a `.husky/pre-push` hook is that gate working rather than an obstacle to
    route around. The hub carries such a hook, and a repository has one only if it adds one. That
    skill's refusal table says what each refusal means and what clears it.
@@ -103,16 +118,20 @@ this skill exists to prevent. So is forgetting to loop back to the promotion PR 
    one per "Disposing of Every Finding" and wait again. Read `state=` in every digest `wait` or `status` prints.
    A peer can merge or close the pull request mid-drive. A digest carrying `state=MERGED` on a feature PR into develop means the merge has landed.
    Skip the merge in step 4 and go on to its post-merge path.
+   A finding still open there keeps its outcome owed. That covers an unresolved thread and every finding step 4 names, whether or not `merge` would refuse on it.
+   Give each one per "Disposing of Every Finding" before that path's cleanup, a fix landing as a fresh feature -> develop pass.
    On a promotion PR it means the drive's end state is passed, so stop and report it merged.
    A digest carrying `state=CLOSED` is a stop to report, with its `closed_at=`.
    On such a PR `state=` decides the next step over any exit code `wait` or `status` returns. A promotion re-reviews content its feature PRs already carried.
    So under the hub's default review policy, the hosted review runs once per change, at the
    promotion in step 6. `wait` sends each request the repository's review policy asks for, so
    the drive never asks whether a reviewer starts on its own.
-4. Merge the feature PR into
-   develop with `uv run --no-project --script scripts/pr_review.py merge <number> --repo <owner>/<repo> --cleanup --checkout <base-clone>`,
-   run from a hub checkout outside the task's worktree, `<base-clone>` being the repository's
-   primary clone. It reads the Merge Gate's mechanically readable items in code, through `wait`'s
+4. Run this step's merge and post-merge `cleanup` only on the go-ahead "What Invoking This Skill
+   Authorizes" states. Merge the feature PR into
+   develop with `uv run --no-project --script scripts/pr_review.py merge "<number>" --repo "<owner>/<repo>" --cleanup --checkout ~/repos/"<Repo>"`,
+   run from a hub checkout outside the task's worktree, `~/repos/<Repo>` being the repository's
+   primary clone. That path is the convention layout, and a machine not yet migrated passes its actual primary clone instead. Spell every `scripts/pr_review.py` call this skill prints as `pr-review-conduct`
+   "Expected review loop" says. `merge` reads the Merge Gate's mechanically readable items in code, through `wait`'s
    own decision and a fresh read after it. It merges nothing while one reads unmet. The items no
    code reads stay this seat's per pr-review-conduct's Merge Gate. A finding the pull request's
    body lists is one. A no-thread finding on an earlier round is one too, since `FINDINGS WITH NO
@@ -130,18 +149,25 @@ this skill exists to prevent. So is forgetting to loop back to the promotion PR 
    line's route here. The hub's `scripts/README.md` "`pr_merge.py`" gives each route in full.
 
    - `next=done` is merged and cleaned up.
-   - `next=cleanup` is a merge that landed with its cleanup still owed. Run the `cleanup` command
-     below. Report a pull request another hand merged as a merge this run cannot vouch for. The
-     head that merged may be one the gate never read.
-   - `next=readback` is a merge that may have landed. Read it back with `gh pr view <number> --repo
-     <owner>/<repo> --json state`. `MERGED` means run `cleanup`, and `OPEN` means treat it as
+   - `next=cleanup` is a merge that landed with its cleanup still owed. Give its open findings the
+     outcome step 3 owes after a peer merge, then run the `cleanup` command below. Report a pull
+     request another hand merged as a merge this run cannot vouch for. The head that merged may be
+     one the gate never read.
+   - `next=readback` is a merge that may have landed. Read it back with `gh pr view "<number>" --repo
+     "<owner>/<repo>" --json state`. `MERGED` means run `cleanup`, and `OPEN` means treat it as
      `redrive`. Only a read that still cannot answer is reported, saying the merge may have landed.
    - `next=redrive` is a refusal that merged nothing and that this seat can clear. Do what its
      `status=` lines name, per step 3 and pr-review-conduct, giving each finding they count an
      outcome per "Disposing of Every Finding". A check still running clears by waiting for it,
-     with `timeout 1800 gh pr checks <number> --repo <owner>/<repo> --watch`. A hosted
+     with `timeout 1800 gh pr checks "<number>" --repo "<owner>/<repo>" --watch`. A hosted
      reviewer's review still running on the head is such a check, refused as `CHECKS_PENDING`.
-     Then run `merge` once more.
+     An open registration grace is refused as `CHECKS_PENDING` too, on a line naming when it
+     ends. The watch above can return before then, so it does not clear the grace alone. On a
+     held head, `wait` holds until the grace ends. On any other head, run the watch above
+     first, since a check settling restarts the grace. Then wait in a background process until
+     the later of the named end and 90 seconds after the watch returned. Then run `merge` once
+     more. A rerun that still refuses on a grace is the blocked merge reported below, naming the
+     end it gives.
    - `next=retry` is a read that did not answer, or a merge `gh` refused on an unchanged head. Run
      `merge` once more as it is.
    - `next=maintainer` is a line no action of this seat can change, or a merge whose `cleanup`
@@ -154,27 +180,28 @@ this skill exists to prevent. So is forgetting to loop back to the promotion PR 
    around, and it hands the maintainer no command to run instead.
    A harness refusing the `merge` call itself is a refused write
    rather than a gate refusal. That happens on a machine with no allow rule for it, or under
-   another provider. Raise it as a blocked decision per `GOVERNANCE.md` "Repository Boundaries and
-   Write Safety". Name the maintainer's routes, adding the permission rule or running the command
-   themselves. Once the merge is
+   another provider. It also happens on Claude Code for a call the rule does not match, per
+   `pr-review-conduct` "Expected review loop". Raise it as a blocked decision per `GOVERNANCE.md`
+   "Repository Boundaries and Write Safety". Name the maintainer's routes. One is adding the
+   permission rule where it is missing. Another is the change that paragraph names, a hub checkout
+   inside the session's working directories or a writable uv cache. The last is running the
+   command themselves. Once the merge is
    confirmed, `--cleanup` runs repo-worktree's post-merge cleanup,
-   `uv run --no-project --script scripts/pr_review.py cleanup <number> --repo <owner>/<repo> --checkout <base-clone>`,
-   and its exit is the command's. It deletes the remote branch, then removes the task's worktree and local branch.
+   `uv run --no-project --script scripts/pr_review.py cleanup "<number>" --repo "<owner>/<repo>" --checkout ~/repos/"<Repo>"`,
+   and its exit is the command's. That path is the convention layout, and a machine not yet migrated passes its actual primary clone instead. It deletes the remote branch, then removes the task's worktree and local branch.
    It decides its local refusals before the remote delete. `repo-worktree` "Listing and
    Cleanup" says what a refusal after the remote delete and a `base=kept` line each leave to do.
    It takes the pull request rather than a branch name and does the verify-then-delete in
-   code. It refuses unless the pull request merged into `develop` from a head in that same
-   repository. It also refuses a permanent branch or one any ruleset or branch protection covers. It
+   code. It refuses unless the pull request merged into `develop`, or is a conflicted promotion
+   merged into `main`, from a head in that same repository. It also refuses a permanent branch or one any ruleset or branch protection covers. It
    checks the tip is still at the pull request's `headRefOid` before deleting, and reads the ref
    back to confirm.
    These exits are `cleanup`'s, read once a `status=MERGED` line printed or a standalone `cleanup`
    ran. Exit `0` is done, the branch deleted or already gone. Any other exit stops and reports rather
    than deleting by hand. `1` is a refusal, a moved tip among them. `2` is a read that did not
    answer or a delete it could not confirm. `64` is a target under an owner other than the hub
-   checkout's own `origin`, or that `origin` unreadable. A registry refusal is a `1`. It runs
-   under the host-safety installer's `Bash(uv run --no-project --script scripts/pr_review.py:*)` allow rule,
-   which is what lets auto mode complete it.
-   It also refuses while another open pull request in the repository has the branch as its head or base.
+   checkout's own `origin`, or that `origin` unreadable. A registry refusal is a `1`.
+   `cleanup` also refuses while another open pull request in the repository has the branch as its head or base.
    It names each, since the delete would close or retarget it.
    Where this seat cannot run `cleanup`, report the delete to the maintainer instead of deleting by hand.
    Name the pull request number and `--repo` so the maintainer runs the same command.
@@ -184,16 +211,29 @@ this skill exists to prevent. So is forgetting to loop back to the promotion PR 
    repo's auto-delete-head-branches setting is kept off fleet-wide (to protect `develop` and
    `main` from it, GitHub has no per-branch exception). So nothing deletes an ordinary feature
    branch automatically. Stop here and report the merged PR when the target is develop only.
-5. Open the develop -> main promotion PR if it does not exist yet, or find the existing one.
+5. Open the develop -> main promotion PR if it does not exist yet, or find the existing one. Its
+   body carries the closing keywords, checked as `branching-and-release-model`'s closing-keyword
+   bullets state. A promotion reading `DIRTY`, or failed by the `Check promotion history step`,
+   lands from a conflicted-promotion cut instead. That skill's
+   `references/branch-protection-and-promotion.md` states the cut, its label and closing-set carry,
+   and its tree-equality check.
 6. Drive its review loop the same way. A finding that needs a code change never gets pushed to
    the promotion PR directly, since its head is develop. So land the fix as a fresh pass through
    steps 1 to 4 in its own worktree and branch. Then return here.
-7. The fix landing on develop updates the promotion PR's diff and head SHA on its own. Re-request
+   The promotion's head can read `coverage=none` where a Copilot round covers it and none
+   covering it carries a file table. Then run the local strict review at the `frontier` tier from
+   a clean checkout of that head, `main...develop`. Its target is `main` in every command that
+   skill runs, the `status` and `record` calls included. Then run `pr_review.py attest` from that
+   checkout on the promotion pull request. Merge Gate item 2 in
+   pr-review-conduct then reads `coverage=local`, on the further terms that item states. Each new
+   head owes its own pass and attestation.
+7. The fix landing on develop updates the promotion PR's diff and head SHA on its own. A cut's
+   head does not move with develop, so merge each fix into the cut as that reference states. Re-request
    a review on the new head and continue the loop.
 8. Repeat 6 and 7 until the promotion PR meets every pr-review-conduct Merge Gate item except the
    maintainer's explicit permission to merge.
 9. Report the promotion PR number, its ready state, and its full head SHA, read as `gh pr view
-   <number> --repo <owner>/<repo> --json headRefOid --jq .headRefOid`, the one `merge-and-release`
+   "<number>" --repo "<owner>/<repo>" --json headRefOid --jq .headRefOid`, the one `merge-and-release`
    compares against before merging. Do not merge it.
 
 ## Disposing of Every Finding
@@ -207,7 +247,10 @@ maintainer when".
 
 A finding that committed text holds observed data takes outcome 4's observed-data bullet,
 whatever its class, ahead of every other outcome. That applies once the data is confirmed as
-observed. A value the repository constructed is disproved under outcome 2 instead.
+observed. A value the repository constructed is disproved under outcome 2 instead. So is a
+value outside the rule's scope, such as a date, an amount, a balance, or a private-range IP
+address. `GOVERNANCE.md` "Representative Data in Agent-Authored Text" bounds only what its first
+bullet calls identifying data.
 
 1. **Real, so fix it, and fix the class rather than the instance.** A reviewer samples rather
    than enumerates, so sweep for the finding's siblings before replying. Fix each one sitting
@@ -264,7 +307,11 @@ observed. A value the repository constructed is disproved under outcome 2 instea
      that one too. The pull request holding the record takes the `history-data` label, and so
      does the one whose review raised it. Where the repository lacks that label, the maintainer is
      told. A thread raising a recorded finding is answered with a pointer to its body line and
-     resolved.
+     resolved. Every observed secret also goes to the maintainer for revocation, whatever else its
+     case requires, naming only the repository and the kind of data. A seat that cannot reach the
+     maintainer hands that notice to whoever dispatched it. The notice is not an escalation, so it
+     stops nothing, and its case's own route continues. A seat with no dispatcher lists it in its
+     final report, never in a handoff issue.
    - A local pass before the push that opens the pull request can raise a `pre-existing`
      correctness defect in a file the diff already touches. That defect is fixed here under
      outcome 1. That covers wrong behavior and a false or unfollowable instruction, and not a
@@ -339,8 +386,9 @@ instance's outcome is context for the new one, never a standing answer to reuse 
 ## Mechanics Live Elsewhere
 
 - Review loop mechanics, the Merge Gate, and `scripts/pr_review.py`: pr-review-conduct.
-- Branch rules, never delete develop, the EOL-only conflict, issue-closing keywords belonging on
-  the promotion PR: branching-and-release-model.
+- Branch rules, never delete develop, the EOL-only conflict, the conflicted-promotion cut, the
+  squash recovery, issue-closing keywords belonging on the promotion PR:
+  branching-and-release-model.
 - Worktree isolation and post-merge cleanup: repo-worktree.
 
 ## Stop and Ask, Beyond the How-Far Question

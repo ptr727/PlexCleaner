@@ -13,6 +13,7 @@ Usage: catalog_corpus.py [--run <version-dir>] [--out catalog.json]
 import argparse
 import json
 import os
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -26,6 +27,10 @@ from corpus_common import (
     state_flags,
     stem_of,
 )
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "synthetic"))
+
+from interrupts import atomic_write_text, run_main
 
 
 def build(run):
@@ -89,7 +94,7 @@ def main():
 
     run = find_run(args.run)
     catalog = build(run)
-    out.write_text(json.dumps(catalog, indent=2, ensure_ascii=False))
+    atomic_write_text(out, json.dumps(catalog, indent=2, ensure_ascii=False))
 
     print(f"run={run.name} app={catalog['application']} files={catalog['file_count']}")
     print(f"catalog -> {out}")
@@ -100,4 +105,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

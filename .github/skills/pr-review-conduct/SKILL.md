@@ -54,6 +54,8 @@ visible comments, routinely still carries a finding nobody has answered. Treatin
    whose own file table names exactly the changed files covers it, `coverage=table`. That is the
    reading a Copilot round at Balanced review effort gives. Where no round covering the head carries a table of its own, the newest round
    that does stands in as `coverage=carried:table`. Its table has to name exactly the changed files.
+   The bound is that file set rather than file recency. The carry exists for a later head that
+   changed those files and drew a round with no table of its own.
    Either table may leave out an added, modified, renamed, or deleted file with no changed line,
    such as a binary. That holds while some changed file has one. On a develop -> main promotion, a
    file that only green Dependabot bumps changed is taken out of that comparison. The head reads
@@ -61,6 +63,18 @@ visible comments, routinely still carries a finding nobody has answered. Treatin
    table names the rest.
    A table stands in only where no Copilot round on the pull request, on any commit, states
    partial coverage. So a pull request that ever had a partial round goes to the maintainer.
+   The review policy owes a Copilot round to some heads, by default those of a pull request into
+   the default branch, a promotion among them. On such a head a file table stays the first route to
+   this item. An attested local pass covers it instead, `coverage=local`, only where no Copilot
+   round covering it states coverage or carries a table of its own. No table above may already
+   stand in, since a carried table is read first. That pass
+   runs at the `frontier` tier over the whole diff against the pull request's base,
+   `main...develop` on a promotion. It holds only where no round on record states partial
+   coverage and the whole review history is in view. No refusal on the head may stand against it.
+   A spent cap waives none of these here, since a Copilot round already covers the head. A head
+   round whose own table names other than exactly the changed files keeps this route closed,
+   since that table says what Copilot read. So does a head no Copilot round covers yet, since
+   that round is still owed.
    `coverage=none` and `coverage=UNKNOWN` leave this item unsatisfied and decide no exit code,
    so read the field rather than the exit.
    The coverage this item requires is Copilot's, the attested local pass above, or that green
@@ -71,7 +85,16 @@ visible comments, routinely still carries a finding nobody has answered. Treatin
    or Qodo check on the head has neither passed nor failed, `merge` refuses as `CHECKS_PENDING`,
    whatever the merge state reads. `wait` holds an attested head then too. A reviewer whose newest
    output is a rate limit posted since the check began posts no review, so its check holds
-   nothing.
+   nothing. The registration grace is not an absence either. A CodeRabbit or Qodo reviewer asked
+   by comment registers its check only after the ask. The grace runs 90 seconds from the latest
+   of the head's push, its last check settling, and its newest trusted review ask. A hosted
+   reviewer's own check, Copilot's included, never counts as that settling. A trusted ask
+   is one from an owner, member, or collaborator. The grace ends early once a CodeRabbit or Qodo
+   check that did not conclude `SKIPPED` begins at or after that ask.
+   Until then `merge` refuses as `CHECKS_PENDING`, on a line naming when the grace ends. `wait`
+   holds an attested head then too.
+   A CodeRabbit or Qodo check can read `success` over a rate limit, and a rate limit is not
+   coverage of the head.
    `pr_review.py`'s `review_on_head` names Copilot's own coverage specifically, not "no review of
    any kind covers this head". An advisory reviewer carrying the exact head under
    `other_reviewed`, with an empty review body and no new threads, is not a missing review. It is
@@ -235,8 +258,8 @@ visible comments, routinely still carries a finding nobody has answered. Treatin
    - Read each part whole in the review body, since the excerpt only locates it. Give every item
      in it item 3's outcome: fixed with its SHA, declined with evidence, or listed as pre-existing
      in the pull request body.
-   - Post the outcomes with `pr_review.py comment <number> --repo <owner>/<repo> --fingerprint
-     <fp> --body <outcomes>`. One from an owner, member, or collaborator clears the hold,
+   - Post the outcomes with
+     `uv run --no-project --script scripts/pr_review.py comment "<number>" --repo "<owner>/<repo>" --fingerprint "<fp>" --body "<outcomes>"`. One from an owner, member, or collaborator clears the hold,
      `shapes=ACKNOWLEDGED`. New unplaced text on a new head owes a new acknowledgment.
    - The spelling is a data edit to the matching `scripts/reviewers/*.json` in the hub plus one
      fixture. Whoever acknowledged the part makes it in a pull request of its own, never an issue.
@@ -278,9 +301,12 @@ must have done.
   since an advisory reviewer blocks nothing.
 - **Silence is not evidence, and is never read as one on its own.** A reviewer that has posted
   nothing may not have started yet, or may not cover this repository at all. Or it may have
-  reviewed and had nothing to say. That case posts no comment to read, and Merge Gate item 2
-  describes it as its own ordinary shape. Read the reviews themselves rather than the comments alone, since the third
-  case appears only there.
+  reviewed and had nothing to say. That case opens no thread, and where it leaves its record
+  differs by reviewer. It can be a review with an empty body, the shape Merge Gate item 2 calls
+  ordinary. A CodeRabbit clean pass can leave no review object at all. It then shows only in
+  CodeRabbit's summary comment, as a line saying no actionable comments were generated. That line
+  counts only where the commit range the summary's review details print ends at the current head.
+  So read the reviews and the comments both, since either can hold the third case.
 - **Copilot's absence blocks where no local pass stands in, and is answered elsewhere.**
   Merge Gate item 2 requires Copilot's own coverage of the current head. Where the review policy
   hands the head to a local pass, by default off the default branch, an attested local pass stands
@@ -313,15 +339,33 @@ that says only "open a PR" is not such an instruction.
 Run every `scripts/pr_review.py` command below from a hub checkout. The script is hosted there and
 is never carried into a downstream repository.
 
+On Claude Code, the host-safety installer's allow rule runs a `scripts/pr_review.py` call without
+the auto-mode classifier only where the call matches the rule's text. So run each such command as a
+call of its own, spelled exactly as the skill prints it. That holds for every
+`scripts/pr_review.py` call a fleet skill prints, in this skill or another. Where the hub checkout sits inside the session's working
+directories, a `cd "<hub-checkout>" &&` prefix keeps the match. A `cd` elsewhere may not. A leading
+variable assignment leaves the rule unmatched unless Claude Code counts that variable as known-safe.
+So does a flag between `uv run` and the script, or a script named by an absolute path or a shell
+variable. The classifier then judges the call, and its default rules refuse a merge no human has
+approved. So the spelling is owed on the first call. A call refused anyway is a refused write
+under `GOVERNANCE.md` "Repository Boundaries and Write Safety", reported rather than re-spelled.
+On Claude Code, where the executor restricts uv's cache writes, the cache variable that restriction
+needs is such an assignment. So every call there reaches the classifier. A call that merges or
+deletes is then reported to the maintainer as a blocked write rather than run. Those calls are
+`merge`, `cleanup <number>`, and `cleanup --sweep --apply`. They are the writes the classifier is
+known to refuse, a merge even with its gate met and a branch delete on some days. So running one there is a
+write fired to see whether it passes, which `GOVERNANCE.md` "Repository Boundaries and Write Safety" forbids. Any other call there runs, and one the classifier refuses is the refused
+write above.
+
 Run `local-strict-review` against the branch's current diff before every push this loop makes. The pass is owed before the push that opens the pull request in step 1 and each one after it. It is owed whatever finding a push answers and whether or not the branch was reviewed once already. A push that delivers content no pass has read is the case the rule is about. So a re-push of a tree a recorded pass already covers needs no second pass. That is because the receipt is keyed on the branch's net content rather than on its commit series. A rebase that leaves the tree alone keeps the receipt only while the merge base holds. Rebasing onto a target that has moved retires the receipt although no file changed. That push owes a pass like any other. Follow that skill's own ordering and record each pass, which is what a capture point reads. The hub's own `pre-push` hook is one, and a repository has none until such a hook is carried to it. A push that hook refuses, where one is present, is the gate working rather than an obstacle to route around. That skill's refusal table says what each refusal means and what clears it.
 
 1. Push changes to the PR branch and open the pull request when it does not exist. Once the push
-   lands, run `uv run --no-project --script scripts/pr_review.py attest <number> --repo <owner>/<repo> --checkout <worktree>`.
+   lands, run `uv run --no-project --script scripts/pr_review.py attest "<number>" --repo "<owner>/<repo>" --checkout "<worktree>"`.
    `attest` refuses unless the checkout is the pushed head and a recorded pass covers that head.
    Attest after every push a recorded pass covers, the opening push included. The comment `attest`
    posts is the record Merge Gate item 2's promotion case reads, since the receipt goes when its
    worktree does.
-2. Run `uv run --no-project --script scripts/pr_review.py status <number> --repo <owner>/<repo>` once in the foreground and read its output.
+2. Run `uv run --no-project --script scripts/pr_review.py status "<number>" --repo "<owner>/<repo>"` once in the foreground and read its output.
 3. Send each request the repository's review policy asks for, which step 4's `wait` is what does.
    Under the hub's default that is one Copilot round, on the head of a pull request into the default
    branch. A promotion is one such pull request. Auto-trigger is unreliable, so `wait` fills a
@@ -335,7 +379,7 @@ Run `local-strict-review` against the branch's current diff before every push th
    the request set. Something in the request set is the condition the recovery below clears. An error refusal whose run log reads transient is
    the exception, owed one re-request per Merge Gate item 2. Requesting in the pull request UI is
    the maintainer's route rather than this loop's.
-4. Run a bounded `uv run --no-project --script scripts/pr_review.py wait <number> --repo <owner>/<repo>` in a background process and read its terminal output.
+4. Run a bounded `uv run --no-project --script scripts/pr_review.py wait "<number>" --repo "<owner>/<repo>"` in a background process and read its terminal output.
    A completed review raising **no findings** is a valid terminal outcome, so do not re-trigger it
    or read silence as a missing review. A review whose body says it declined to review is the one
    exception, and it is terminal the other way. Nothing follows it, and re-requesting the same
@@ -357,13 +401,16 @@ is not a stopping condition here, and neither is patience running out. Reporting
 PR was opened is an early exit unless the maintainer explicitly instructed the agent not to
 monitor or drive its review.
 
-After an authorized merge, run the `repo-worktree` post-merge cleanup procedure unless the user explicitly asks to retain the checkout or branch. For a merge into `develop` that procedure is `uv run --no-project --script scripts/pr_review.py cleanup <number> --repo <owner>/<repo> --checkout <base-clone>`, run from a hub checkout. The pull request loop is incomplete while its finished worktree or local task branch remains. A promotion branch merged into `main` is the exception, which `repo-worktree` leaves for its sweep. The loop is also incomplete until the base clone returns to fetched and fast-forwarded `develop`.
+After an authorized merge, run the `repo-worktree` post-merge cleanup procedure unless the user explicitly asks to retain the checkout or branch. For a merge into `develop` that procedure is `uv run --no-project --script scripts/pr_review.py cleanup "<number>" --repo "<owner>/<repo>" --checkout ~/repos/"<Repo>"`, run from a hub checkout. In that command `~/repos/<Repo>` is the convention layout, and a machine not yet migrated passes its actual primary clone instead. The pull request loop is incomplete while its finished worktree or local task branch remains. A conflicted promotion's branch merged into `main` takes the same command, run on the promotion pull request. The loop is also incomplete until the base clone returns to fetched and fast-forwarded `develop`.
 
 ## Every finding ends in a listed outcome
 
 A finding that committed text holds observed data takes outcome 4's observed-data bullet,
 whatever its class, ahead of every other outcome. That applies once the data is confirmed as
-observed. A value the repository constructed is disproved under outcome 2 instead.
+observed. A value the repository constructed is disproved under outcome 2 instead. So is a
+value outside the rule's scope, such as a date, an amount, a balance, or a private-range IP
+address. `GOVERNANCE.md` "Representative Data in Agent-Authored Text" bounds only what its first
+bullet calls identifying data.
 
 1. **Real, so fix it, and fix the class rather than the instance.** A reviewer samples rather
    than enumerates, so sweep for the finding's siblings before replying. Fix each one sitting
@@ -420,7 +467,11 @@ observed. A value the repository constructed is disproved under outcome 2 instea
      that one too. The pull request holding the record takes the `history-data` label, and so
      does the one whose review raised it. Where the repository lacks that label, the maintainer is
      told. A thread raising a recorded finding is answered with a pointer to its body line and
-     resolved.
+     resolved. Every observed secret also goes to the maintainer for revocation, whatever else its
+     case requires, naming only the repository and the kind of data. A seat that cannot reach the
+     maintainer hands that notice to whoever dispatched it. The notice is not an escalation, so it
+     stops nothing, and its case's own route continues. A seat with no dispatcher lists it in its
+     final report, never in a handoff issue.
    - A local pass before the push that opens the pull request can raise a `pre-existing`
      correctness defect in a file the diff already touches. That defect is fixed here under
      outcome 1. That covers wrong behavior and a false or unfollowable instruction, and not a
@@ -536,7 +587,7 @@ item 4's lead bullet covers takes no `--ack` until the maintainer answers, per M
 collaborator. Code checks that each item carries an outcome, never that the outcome is right,
 which stays this section's.
 **Read every round, not only the head.** A suppressed finding does not retire when a later push
-supersedes it, it just stops showing up in a head-scoped query while still unanswered. Post the answer with `uv run --no-project --script scripts/pr_review.py comment <number> --repo <owner>/<repo> --ack <key>=<outcome> --body <text>`
+supersedes it, it just stops showing up in a head-scoped query while still unanswered. Post the answer with `uv run --no-project --script scripts/pr_review.py comment "<number>" --repo "<owner>/<repo>" --ack "<key>=<outcome>" --body "<text>"`
 from a hub checkout. Do not use a provider connector or reconstruct the GitHub mutation.
 
 ## Escalate to the maintainer when

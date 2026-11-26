@@ -159,7 +159,7 @@ per-section rule broke several sections earlier. Neither is the rule.
 Sections 7 and 8 are what the chain exists for, and they are also the most likely to be padded.
 
 A handoff issue outlives the session that wrote it, and is readable by everyone who can read the
-repository. On a public one that is everyone. So it quotes no data observed in the maintainer's
+repository. On a public one that is everyone. So it quotes no identifying data observed in the maintainer's
 environment, per `GOVERNANCE.md` "Representative Data in Agent-Authored Text". That rule binds on a
 private repository exactly as it does on a public one, and the visibility only changes who the
 audience is. The routine case here is an absolute home path, since a handoff naturally wants to
@@ -212,16 +212,17 @@ A maintainer resuming work says little, often only "resume the handoff", and tha
 the whole procedure below. Run every step without being reminded of any of them.
 
 0. **Clone a hub checkout of the session's own, as the first command.** Clone the hub's `main`
-   into a new directory under `<worktrees>`, the fleet worktree directory `repo-worktree` names,
-   before any `git` or `$handoff` command. `<unique>` is a name no directory under `<worktrees>`
-   already holds, so the clone never takes a path a task worktree wants:
+   into a new directory under `~/repos/worktrees`, the fleet worktree directory `repo-worktree`
+   names, before any `git` or `$handoff` command. `<unique>` is a name no directory under
+   `~/repos/worktrees` already holds, so the clone never takes a path a task worktree wants:
 
    ```sh
-   git clone --branch main https://github.com/ptr727/ProjectTemplate.git <worktrees>/ProjectTemplate-hub-<unique>
+   git clone --branch main https://github.com/ptr727/ProjectTemplate.git ~/repos/worktrees/ProjectTemplate-hub-"<unique>"
    ```
 
    That clone is the hub checkout "Running the Chain" sets `$handoff` from, so every later step
-   runs the chain's script there. Bring it up to date with `git -C <clone> pull --ff-only` before
+   runs the chain's script there. Bring it up to date with
+   `git -C ~/repos/worktrees/ProjectTemplate-hub-"<unique>" pull --ff-only` before
    step 6 writes, since a clone is whatever it last fetched. Wherever this skill was loaded from is
    never this session's hub checkout, whatever checkout or snapshot holds it. So no step reads that
    location as the hub checkout or runs `$handoff` from it. A task worktree `repo-worktree` creates
@@ -265,8 +266,8 @@ the whole procedure below. Run every step without being reminded of any of them.
    with `new`, presents the parked decision queue, and saves memories last. Where the issue carries
    the `blocked` label left on in step 3, take it off once the next round is written and the queue
    presented. Remove it with `gh issue edit "<n>" --repo OWNER/NAME --remove-label blocked`, since
-   the round it marked is archived. Leave it on instead where a `decision` issue this session filed
-   on this link's work is still unanswered then. The lane waits on that decision now, and an
+   the round it marked is archived. Leave it on instead where a `decision` issue on this link's work
+   is still unanswered then, whichever session filed it. The lane waits on that decision now, and an
    away-mode run taking it could only park it again. Name that issue in a comment on the handoff,
    as a parking comment does, so a reader reads the question the lane now waits on. An `auto-*`
    lane differs in one way, since it holds one piece of work. Where that work is done, end the
@@ -296,10 +297,12 @@ it.
    written, comment those answers onto its issue, with the queue's count and list after them. That
    is because the body keeps the count it was written with, and a resume reads the issue's comments.
 4. **Remove the hub clone** "The Attended Session" step 0 made, where it made one, once no step
-   above still needs `$handoff`. No other step or sweep reaches that clone. From outside it, confirm
-   `git -C <clone> status --porcelain` prints nothing, then delete that exact directory. Ignored
-   files there are tool caches, so the removal takes them too. A clone
-   holding uncommitted work is left in place and named in the session's closing message.
+   above still needs `$handoff`. No other step or sweep reaches that clone. From outside it, read
+   `git -C ~/repos/worktrees/ProjectTemplate-hub-"<unique>" status --porcelain --ignored --untracked-files=normal`.
+   Any line not starting `!!` is uncommitted work, so the clone is left in place and named in the session's closing
+   message. Otherwise name each `!!` entry in that message, since the removal deletes them, and
+   delete that exact directory. `--porcelain` alone never lists ignored entries. The explicit
+   untracked mode keeps a `status.showUntrackedFiles=no` setting from hiding untracked ones too.
 5. **Save memories last.** Where the host keeps a per-user memory, what goes there is the
    environment-specific nuance "Durable Knowledge and Self-Improvement" leaves to memory. A quirk of
    this machine or this account is one such nuance. What goes there is saved as the session's final
@@ -329,7 +332,9 @@ The numbered list also serves a turn asking for a command run at the session's i
 
 - **Reference every pull request as a clickable link.** When you mention a PR on a surface that renders Markdown (chat, a summary, a report), render it as a Markdown link to the PR. Write it as `[#N](https://github.com/OWNER/REPO/pull/N)`, never a bare `#N`. The same applies to issues and commits. **The form follows the surface.** Some surfaces link neither a Markdown link nor a bare URL, an interactive prompt's question and option text among them. Pasting a full URL into one of those does not rescue it, since the reader gets a string to copy. That is the outcome this rule exists to prevent. There the reference is a bare `#N`. The clickable link goes in the message that comes **before** the prompt rather than merely alongside it. That is because the prompt blocks on an answer, and a message emitted after it is read once that answer is already given. That is the one moment the link is no longer any use. The test is whether the reader can click it where it is read, not whether it was written in the syntax that works elsewhere.
 - **Put a command the user must run where the user can run it.** This session's input line is where the user types to the agent. A command runs outside this session where this session's input line cannot run it or cannot hold its effect. One waiting on typed input, such as a password or a confirmation, is such a command. So is one meant for another host, or one setting a variable the session reads at launch. Every other one runs at this session's input line, where that line can run a command, and outside the session otherwise. **A command the user runs outside this session goes in the question's own text.** Where a question asks the user to run one, the question carries the exact command, complete and ready to paste. A message before the prompt may repeat the command, but the question never points at that message. A question pointing at it can leave the reader to find the command among a long run of earlier output. Such a command stays in the prompt, where the turn opens one, although the clickable-link bullet above moves a link out of one. The command needs no rendering, since the prompt shows it as plain text the reader can copy. **A command the user runs at this session's input line never goes in an interactive prompt.** On Claude Code such a command is a `!` line, typed at the session's input line so its output lands in the session. While an interactive prompt is open, the user cannot type at the session's input line. So a command placed in one sits in the one surface that blocks running it. It goes in a plain message instead, as a fenced block holding the `!` line itself, complete and ready to paste. Several commands join on that one line with `&&`, which runs them in order and stops at the first that fails. The block opens the message. Any question the same turn owes follows it as a numbered list, and any report comes after both. The message asks the user to reply once the command has run, and the turn ends with no interactive prompt open. The agent then checks the result on the user's next message. It reads back the state the command was meant to change, or the output it left in the session. An answer saying the command ran is not that check.
-- **Ask every question through the interface's prompt, never in prose.** When you need the user to decide, answer, or approve anything, put it to them through the interface's own prompt mechanism. Do so whether or not work is blocked on it. An offer to do more work ("want me to file that?") is a question like any other. A question written into a message is lost in the report around it, however short it is. One closing a long report sits where the reader is least likely to reach it. Where no prompt mechanism is available, the questions go as a numbered list opening the message rather than closing it. The user can then reply per number. A turn asking for a command the user runs at this session's input line is an exception, per the command bullet above. It puts every question it owes in that message, since a prompt open beside the command would block the place it runs. This bullet settles how a question is put once it is asked. Whether a question is asked now or recorded for later is the parking bullet's to settle. That is the one opening "A question filed as an issue is parked rather than asked".
+- **Ask when the user can cheaply confirm.** An assumption that saves one question and is wrong costs the rework plus the trust. So a genuine ambiguity in intent, scope, or authorization is raised, not resolved by picking the likelier reading. Rules that already answer the question (the committed instruction set) are not ambiguity, so read them first rather than asking what they state.
+- **The irreversible step (merging, publishing, releasing, force-pushing, deleting, changing branch protection) stays the maintainer's.** **A grant given in a past session or for a different task authorizes nothing now.** Whether a credential's reach or a tool that happens to work authorizes anything is answered by `GOVERNANCE.md` "Repository Boundaries and Write Safety" rather than here.
+- **Ask every question through the interface's prompt, never in prose.** When you need the user to decide, answer, or approve anything, put it to them through the interface's own prompt mechanism. Do so whether or not work is blocked on it. An offer to do more work ("want me to file that?") is a question like any other. A question written into a message is lost in the report around it, however short it is. One closing a long report sits where the reader is least likely to reach it. **Each question reads whole from its own text.** It states the problem, why it is being asked, and what each option does, in plain words. It may cite an issue or a pull request by number. The question and its options still read fully without opening it. A question leaning on an issue for its meaning is often answered without reading that issue, so the answer misses its point. Where no prompt mechanism is available, the questions go as a numbered list opening the message rather than closing it. The user can then reply per number. A turn asking for a command the user runs at this session's input line is an exception, per the command bullet above. It puts every question it owes in that message, since a prompt open beside the command would block the place it runs. This bullet settles how a question is put once it is asked. Whether a question is asked now or recorded for later is the parking bullet's to settle. That is the one opening "A question filed as an issue is parked rather than asked".
 - **Raise work blocked on the user as a direct interactive prompt.** When progress needs a decision, an authorization, or an answer only the user can give, ask for it at the point the work stops. Ask through the interface's own prompt mechanism. Never leave it as prose in a summary. A handoff buried in a paragraph is a handoff that did not happen. That is because a summary reads as a report of finished work. It is also because the one line still waiting on the user is the easiest in a summary to skim past. The blocked item is the message, not a closing remark on a message about something else. **The options offered are the actions themselves.** The one that unblocks the work names the action it authorizes ("squash and merge it"). Selecting it is then the go-ahead rather than a note to act on later. Offering only ways to wait is the same failure in interactive clothing. That is because a prompt whose every choice is inaction reports the block rather than clearing it. Where the agent may not perform the authorized action itself, the option says who does it. Where no interactive prompt is available, the numbered list the bullet above names is the fallback. In a turn asking for a command the user runs at this session's input line, the command bullet above replaces the interactive prompt.
 - **Lead every choice with a recommendation and its reason.** Wherever the user is asked to choose, in a prompt or in a numbered list, the option the agent recommends comes first. It is marked as the recommendation, and every option states the reason for it. A user who takes the recommendation then reads one line, and one who does not sees what the other options trade away. A question with no defensible recommendation says so rather than inventing one. Where an open question has no options and the agent does have an answer, that answer and its reason go in the question's text. They never go in as an invented option.
 - **A question filed as an issue is parked rather than asked, and it stays owed.** Where the work cannot continue without the answer, the interactive-prompt bullet governs and the question is asked at the point the work stops. Wherever the question is recorded rather than asked, recording it is the right thing to do, and recording it is still not asking it. That holds whether the work can continue without the answer or the question was asked once and deferred. So the issue carries the fleet's `decision` label. When the filing session knows the choices the question is between, the issue states them. The label and the stated choices are what let a later session, one that was not there when the issue was filed, find the question. That session can then put the question to the user without inventing its answers. **The parked queue is the failure, not the parking.** An issue holding a question the user has never seen reads to every later session as tracked work rather than as a block. So each session files correctly and moves on. Presenting the accumulation is the step nobody owns.
@@ -383,7 +388,7 @@ python3 "$handoff" chain   --repo OWNER/NAME --track "<slug>" --grep "an escaped
 python3 "$handoff" new     --repo OWNER/NAME --track "<slug>" --title "<subject>" \
   --body-file "<path>" --dry-run
 python3 "$handoff" close   --repo OWNER/NAME --track "<slug>" --body-file "<path>" --dry-run
-python3 "$handoff" tracks  --repo OWNER/NAME [--json]
+python3 "$handoff" tracks  --repo OWNER/NAME  # add --json for JSON output
 ```
 
 Read `--dry-run` output before the first real `new` of a session, since the run replaces a body. It

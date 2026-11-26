@@ -28,10 +28,11 @@ cold-start self-test.
 
 ## Before starting
 
-Read STANDUP.md section 0A first. Nothing in this procedure creates the GitHub repository, its
-App, or its secrets. Each is an outward-facing write that needs the maintainer's explicit permission
-and inputs. So hand that checklist over before step 1 rather than discovering the gap partway
-through. A repo with no remote is not partially stood up, it is not started, and only the
+Read STANDUP.md section 0A first. Nothing in this procedure creates the GitHub repository or
+installs its App. Each is an outward-facing write that needs the maintainer's explicit permission
+and inputs. Only the maintainer can supply a repository-scoped secret's value file, which section
+4 reads to set both secret stores. So hand that checklist over before step 1 rather than
+discovering the gap partway through. A repo with no remote is not partially stood up, it is not started, and only the
 maintainer can supply what section 0A lists.
 
 ## Apply, in order
@@ -42,14 +43,25 @@ maintainer can supply what section 0A lists.
    under the wrong identity or unsigned cannot be cleanly repaired afterward.
 
 2. **Branches, before the first standup commit.** STANDUP.md section 0B: create `main` and
-   `develop` empty, off one signed empty root commit, then run every step below on a feature
+   `develop` empty, off one signed empty root commit. Then run each later target-repository step on a feature
    branch off `develop`. Never commit standup work directly onto `develop`. `non_fast_forward` on
    both branch payloads, or the missing blocking rule on an operational repo's `develop` ruleset,
-   makes that mistake either unrecoverable or silently unprotected.
+   makes that mistake either unrecoverable or silently unprotected. Point `origin` at the
+   repository once it exists. Push `main` and `develop` before step 6, since `scripts/carry.py`
+   needs `origin/develop`. The fleet's agent-safety kit refuses a commit, a push, and a
+   `git checkout -b` in the primary checkout a fresh `git init` makes. So in a session running
+   it, the branch block and the seed push are the maintainer's hand-over. Once the repository
+   exists, hand the maintainer section 0B's block through `git branch develop`. Read its
+   identity and signing output per step 1 before anything is pushed. Then hand over
+   `git remote add origin "<url>"` and `git push -u origin main develop`. Wait for the push to
+   land. Then create the feature branch as a linked worktree with
+   `git worktree add -b "<feature-branch>" "<path>" develop`. Later work on the target repository runs there. Hub commands run from a clean hub checkout.
 
 3. **Classify and catalog.** STANDUP.md section 1: resolve the repo's type(s) against `AUDIT.md`
    section 2, then write or repair its `registry/repos.json` entry and confirm it with
-   `spec/validate.py`.
+   `spec/validate.py`. The entry and its `SHORT_NAME_PINS` pin are hub edits, so they land
+   through a hub pull request into `develop`. Step 6 waits for it to merge, since `scripts/carry.py`
+   refuses a repository the fetched hub's registry does not hold.
 
 4. **The instruction set, before authoring anything.** STANDUP.md section 1A. An existing
    repository that `docs/eol-lf-rollout.md` "Per-Repo Conversion" says needs a line-ending
@@ -58,13 +70,13 @@ maintainer can supply what section 0A lists.
    audit finding naming paths `develop` is behind on calls for a re-level of `develop` before
    the conversion, per STANDUP.md section 1A. So does a hand comparison
    showing `main` content `develop` lacks, for a finding too large to classify or a path changed
-   on both branches. Then carry `CLAUDE.md`,
+   on both branches. Then carry
    `AGENTS.md`, `GOVERNANCE.md`, `CODESTYLE.md`, `WORKFLOW.md` and `AUDIT.md`, adapted rather
    than cloned for the ones that describe a repo, plus `.markdownlint-cli2.jsonc` and
    `cspell.json`. A downstream `AUDIT.md` is the short, repository-scoped form that says how the
-   repository reaches the hub for its audit and configuration check. `CLAUDE.md` is the fixed, verbatim `@AGENTS.md`-import file that gets
-   `AGENTS.md` into a Claude Code session's context at all. It is a separate baseline entry from
-   `AGENTS.md` itself, so carrying one without the other still leaves that provider unconfigured.
+   repository reaches the hub for its audit and configuration check. Write it from
+   `catalog/snippets/configs/AUDIT.md`, filling each placeholder `spec/files.json` declares for it.
+   No `CLAUDE.md` is carried, since Claude Code reads `AGENTS.md` itself.
    Read `CODESTYLE.md` and the `GOVERNANCE.md` documentation-style rules before writing any repo
    content of your own, the same window-closes shape as signing in step 1.
 
@@ -87,16 +99,17 @@ maintainer can supply what section 0A lists.
 
 8. **Settings, rulesets, and secrets.** STANDUP.md section 4: confirm the remote and the GitHub
    repository agree before running anything else here. Then run
-   `repo-config/configure.sh check owner/repo release` (substitute `operational` for an
+   `repo-config/configure.sh check "<owner>/<repo>" release` (substitute `operational` for an
    operational repo) from the hub at `main`. Use the hub at `develop` instead while the repo's
    registry entry has merged there but not yet reached `main`. A non-zero exit there means drift
-   was found, not a command failure. Review what it reports. Then run the same command's `apply` subcommand, never from a hand-built or carried copy. It
+   was found, not a command failure. Review what it reports. Where the repo is public, the first public-interaction limit follows `STANDUP.md` section 4's pilot-first rule. Then run the same command's `apply` subcommand, never from a hand-built or carried copy. It
    idempotently reconciles the repo to the full committed configuration regardless of what `check`
    reported.
 
 9. **Verify with the audit.** STANDUP.md section 5: run `AUDIT.md` end to end. The repo is stood
    up only when it passes for its type, or a hub-committed `reports/<repo>/audit.md`
-   plus an issue tracks its residual deltas. `<repo>` there is the repository name in lowercase.
+   plus an issue tracks its residual deltas. `AUDIT.md` section 8 defines `<repo>` there.
+   The report lands through a hub pull request of its own into `develop`.
 
 ## Onboarding a new repo type
 
@@ -109,8 +122,9 @@ context-free agent, not just by the one that wrote it.
 
 ## Ship it
 
-One pull request per standup, branched from `develop` per step 2 above, into `develop`, never a
-direct push to a protected branch. While its instruction set is partial, a partly
+One target-repository pull request per standup, beside the hub pull requests steps 3 and 9 name.
+It is branched from `develop` per step 2 above, into `develop`, never a direct push to a
+protected branch. While its instruction set is partial, a partly
 stood-up repository takes this same shape. That is any re-level and conversion pull requests,
 then one standup pull request.
 `RESYNC.md` section 6 applies once the set is whole. Close the review loop, per the `pr-review-conduct` skill,

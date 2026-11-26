@@ -88,6 +88,8 @@ Legibility rules. Necessary but not sufficient: a perfectly styled workflow can 
 - **Hub-task pinning.** A `uses:` naming a hub-hosted reusable workflow carries the same commit SHA plus
   `# <release-tag>` comment as any action, so a hub change never reaches this repo until Dependabot proposes
   the bump and the required checks pass on it.
+- **Checkout credentials.** Every `actions/checkout` step sets `persist-credentials: false`. A persisted
+  token is readable by every later step, and no step here runs an authenticated git command.
 - **Filename.** Reusable workflows end in `-task.yml`; entry workflows end in what they do
   (`-pull-request.yml`, `-release.yml`). A `-task.yml` is `uses:`-d, never triggered directly.
 - **Workflow `name:`.** Reusable names end in **"task"**, entry names in **"action"**.
@@ -297,8 +299,9 @@ flowchart TD
     classDef stop fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
 ```
 
-**Automation - Dependabot + merge-bot.** Dependabot opens in-repo bot PRs; the merge-bot enables auto-merge
-on open (squash on `develop`, merge on `main`) for every tier, and disables it on a maintainer push. There
+**Automation (Dependabot and merge-bot).** Dependabot opens in-repo bot PRs. The merge-bot enables auto-merge
+on open for every tier, squash on `develop` and merge on `main`. It disables auto-merge on a maintainer push.
+When GitHub disables an armed auto-merge with every check green, the merge-bot re-arms it once. There
 is no codegen here; a merged bump does not publish - it ships in the next scheduled run (D8).
 
 ```mermaid
@@ -308,8 +311,10 @@ flowchart TD
         MB{"event / author / in-repo?"}:::gate
         MB -- "opened/reopened<br/>dependabot[bot]<br/>(every tier)" --> EN["enable auto-merge<br/>--squash develop / --merge main<br/>(App token)"]
         MB -- "synchronize by maintainer<br/>on a bot branch" --> DIS["disable auto-merge<br/>(App token)"]
+        MB -- "auto_merge_disabled under the App<br/>on a head the bot pushed" --> RE["re-arm once on the same head<br/>(App token)"]
     end
     EN --> CK{"required check passes?"}:::gate
+    RE --> CK
     CK -- "yes" --> MRG(["PR merges (App token)"]):::pub
     CK -- "no" --> BLK(["merge blocked<br/>maintainer notified"]):::stop
     MRG -. "no publish on merge" .-> NEXT(["ships in next weekly schedule"]):::stop
@@ -536,10 +541,14 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
 ### D8 - Bots and automation
 
 - **D8.1 Merge-bot.** Output: `merge-bot-pull-request.yml` is a thin caller of the hub's `merge-bot-task`,
-  running on `pull_request_target` with `permissions: {}` at the caller, since every write in the task uses
-  the App token. The task merges the PR by URL without checking out its code, enables auto-merge on
-  `opened`/`reopened`, squashes on `develop` and merge-commits on `main` by the PR's base ref, and disables
-  auto-merge when a maintainer pushes to a bot branch. Concurrency keyed on PR number. This repo passes no
+  running on `pull_request_target`. The caller grants `permissions: {}`, since every write in the task uses
+  the App token. The task merges the PR by URL without checking out its code. It enables auto-merge on
+  `opened`/`reopened`, squashing on `develop` and merge-committing on `main` by the PR's base ref. It disables
+  auto-merge when a maintainer pushes to a bot branch. The caller also triggers on `auto_merge_disabled`.
+  The task re-arms a disable GitHub records under the App on a pull request the merge-bot armed. It re-arms
+  once, pinned to the head it read, after the base branch settles. It re-arms only a head the bot itself
+  pushed, so the maintainer-push disable stays in place. A second disable on that head, or a refused merge, fails the
+  job visibly. A disable a person made stays in place. Concurrency keyed on PR number. This repo passes no
   `rules` or `delete-branch` input: it has no tracker branch outside the task's built-in codegen and
   upstream-version pairs, and auto-delete-on-merge stays off.
 - **D8.2 Dependabot auto-merges on green, every tier.** Output: every Dependabot PR, any ecosystem and any
@@ -547,8 +556,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   version bump. A failing check blocks the merge. A merged bump does **not** itself publish (dependencies are
   not shipped inputs); it ships in the next weekly publish.
 - **D8.3 No codegen / upstream-version automation.** This repo opens no App pull requests of its own, so the
-  hub task's `merge-app` job is inert here and only its `merge-dependabot` and
-  `disable-auto-merge-on-maintainer-push` jobs ever act.
+  hub task's `merge-app` job is inert here. Only its `merge-dependabot`,
+  `disable-auto-merge-on-maintainer-push`, and `rearm-auto-merge` jobs ever act.
 
 ### D9 - Style, static, and dropped workflows (see section 2)
 
@@ -565,6 +574,7 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   likewise a defect: those are hub-hosted and reached by pin. Their presence is a defect to remove.
 - **D9.6** Style is enforced in CI by the hub validator's `lint` job (D1.2), from the same config files the
   editor and Husky hook use.
+- **D9.7** Every `actions/checkout` step sets `persist-credentials: false`.
 
 ### D10 - Repository configuration
 
@@ -627,9 +637,10 @@ Read the workflow files plus `version.json` and assert the fact behind each appl
 - **D7:** the publisher group is `${{ github.workflow }}-${{ github.ref }}` with `cancel-in-progress: false`.
   The merge-bot keys on PR number. CI uses the standard group. Reusable jobs declare permissions.
 - **D8/D9:** the merge-bot is a thin caller of the hub task, runs on `pull_request_target` with
-  `permissions: {}`, and keys on PR number. Dependabot auto-merge covers every tier. There is no date-badge,
-  tool-versions, or `PUBLISH_ON_MERGE`. Every action and hub-task `uses:` is SHA-pinned. Names, shells, and
-  conditionals follow section 2.
+  `permissions: {}`, and keys on PR number. It also triggers on `auto_merge_disabled`. Dependabot auto-merge
+  covers every tier. There is no date-badge, tool-versions, or `PUBLISH_ON_MERGE`. Every action and hub-task
+  `uses:` is SHA-pinned, and every `actions/checkout` step sets `persist-credentials: false`. Names, shells,
+  and conditionals follow section 2.
 
 ### 5B. End-to-end trace scenarios (deterministic from the YAML)
 

@@ -240,16 +240,24 @@
         },
         {
             "label": "Lint: EditorConfig",
-            "type": "shell",
-            "command": "docker",
+            "type": "process",
+            "command": "python3",
             "args": [
-                "run",
-                "--rm",
-                "--pull=always",
-                "--volume=${workspaceFolder}:/check",
-                "--workdir=/check",
-                "ghcr.io/editorconfig-checker/editorconfig-checker:latest"
+                "${workspaceFolder}/hub_fetch_run.py",
+                "scripts/docker_lint.py",
+                "--linter",
+                "editorconfig-checker"
             ],
+            "windows": {
+                "command": "py",
+                "args": [
+                    "-3",
+                    "${workspaceFolder}/hub_fetch_run.py",
+                    "scripts/docker_lint.py",
+                    "--linter",
+                    "editorconfig-checker"
+                ]
+            },
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false,
@@ -258,17 +266,24 @@
         },
         {
             "label": "Lint: Workflows",
-            "type": "shell",
-            "command": "docker",
+            "type": "process",
+            "command": "python3",
             "args": [
-                "run",
-                "--rm",
-                "--pull=always",
-                "--volume=${workspaceFolder}:/repo",
-                "--workdir=/repo",
-                "rhysd/actionlint:latest",
-                "-color"
+                "${workspaceFolder}/hub_fetch_run.py",
+                "scripts/docker_lint.py",
+                "--linter",
+                "actionlint"
             ],
+            "windows": {
+                "command": "py",
+                "args": [
+                    "-3",
+                    "${workspaceFolder}/hub_fetch_run.py",
+                    "scripts/docker_lint.py",
+                    "--linter",
+                    "actionlint"
+                ]
+            },
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false,
@@ -277,17 +292,24 @@
         },
         {
             "label": "Lint: Markdown",
-            "type": "shell",
-            "command": "docker",
+            "type": "process",
+            "command": "python3",
             "args": [
-                "run",
-                "--rm",
-                "--pull=always",
-                "--volume=${workspaceFolder}:/workdir",
-                "--workdir=/workdir",
-                "davidanson/markdownlint-cli2:latest",
-                "**/*.md"
+                "${workspaceFolder}/hub_fetch_run.py",
+                "scripts/docker_lint.py",
+                "--linter",
+                "markdownlint"
             ],
+            "windows": {
+                "command": "py",
+                "args": [
+                    "-3",
+                    "${workspaceFolder}/hub_fetch_run.py",
+                    "scripts/docker_lint.py",
+                    "--linter",
+                    "markdownlint"
+                ]
+            },
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false,
@@ -296,19 +318,126 @@
         },
         {
             "label": "Lint: Spelling",
-            "type": "shell",
-            "command": "docker",
+            "type": "process",
+            "command": "python3",
             "args": [
-                "run",
-                "--rm",
-                "--pull=always",
-                "--volume=${workspaceFolder}:/workdir",
-                "--workdir=/workdir",
-                "ghcr.io/streetsidesoftware/cspell:latest",
-                "--no-progress",
-                "README.md",
-                "HISTORY.md"
+                "${workspaceFolder}/hub_fetch_run.py",
+                "scripts/docker_lint.py",
+                "--linter",
+                "cspell"
             ],
+            "windows": {
+                "command": "py",
+                "args": [
+                    "-3",
+                    "${workspaceFolder}/hub_fetch_run.py",
+                    "scripts/docker_lint.py",
+                    "--linter",
+                    "cspell"
+                ]
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: ShellCheck",
+            "type": "process",
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/hub_fetch_run.py",
+                "scripts/docker_lint.py",
+                "--linter",
+                "shellcheck"
+            ],
+            "windows": {
+                "command": "py",
+                "args": [
+                    "-3",
+                    "${workspaceFolder}/hub_fetch_run.py",
+                    "scripts/docker_lint.py",
+                    "--linter",
+                    "shellcheck"
+                ]
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: shfmt",
+            "type": "process",
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/hub_fetch_run.py",
+                "scripts/docker_lint.py",
+                "--linter",
+                "shfmt"
+            ],
+            "windows": {
+                "command": "py",
+                "args": [
+                    "-3",
+                    "${workspaceFolder}/hub_fetch_run.py",
+                    "scripts/docker_lint.py",
+                    "--linter",
+                    "shfmt"
+                ]
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: EOL",
+            "type": "process",
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/hub_fetch_run.py",
+                ".github/actions/repo-gate/repo_gate.py",
+                "--check",
+                "eol"
+            ],
+            "windows": {
+                "command": "py",
+                "args": [
+                    "-3",
+                    "${workspaceFolder}/hub_fetch_run.py",
+                    ".github/actions/repo-gate/repo_gate.py",
+                    "--check",
+                    "eol"
+                ]
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Lint: Prose",
+            "type": "process",
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/hub_fetch_run.py",
+                ".github/actions/prose-gate/prose_lint.py",
+                "."
+            ],
+            "windows": {
+                "command": "py",
+                "args": [
+                    "-3",
+                    "${workspaceFolder}/hub_fetch_run.py",
+                    ".github/actions/prose-gate/prose_lint.py",
+                    "."
+                ]
+            },
             "problemMatcher": [],
             "presentation": {
                 "showReuseMessage": false,
@@ -322,6 +451,9 @@
             "args": [
                 "ruff@latest",
                 "check",
+                "--extend-exclude",
+                "./hub_fetch_run.py",
+                "--force-exclude",
                 "."
             ],
             "options": {
@@ -341,6 +473,9 @@
                 "ruff@latest",
                 "format",
                 "--check",
+                "--extend-exclude",
+                "./hub_fetch_run.py",
+                "--force-exclude",
                 "."
             ],
             "options": {
@@ -401,6 +536,9 @@
                 "Lint: Workflows",
                 "Lint: Markdown",
                 "Lint: Spelling",
+                "Lint: ShellCheck",
+                "Lint: shfmt",
+                "Lint: EOL",
                 "Lint: Ruff",
                 "Lint: Ruff Format",
                 "Lint: Mypy"

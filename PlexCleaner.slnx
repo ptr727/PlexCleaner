@@ -50,7 +50,6 @@
         <File Path=".gitattributes" />
         <File Path=".gitignore" />
         <File Path="AGENTS.md" />
-        <File Path="CLAUDE.md" />
         <File Path="CODESTYLE.md" />
         <File Path="cspell.json" />
         <File Path="Directory.Build.props" />

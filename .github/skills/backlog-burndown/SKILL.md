@@ -74,19 +74,30 @@ Working them is out of this skill's scope, and a fleet-wide backlog sweep is a d
 
 ## The Round
 
-A round is the unit. Each one runs these steps in order.
+A round is the unit. Each one runs these steps, step 6 repeating as each worker ends.
 
 1. **Rank** every open issue, per "Ranking".
-2. **Group** the top of that ranking, per "Grouping and File Claims".
+2. **Group** the top of that ranking, per "Grouping and File Claims", until each free slot holds a
+   group that passes step 3. A slot is free only while both dispatch limits in "Grouping and File
+   Claims" leave room for the group taking it.
 3. **Verify** each group's predicted file set against everything in flight before dispatching
-   anything. A group whose files are already claimed waits for the next round.
-4. **Dispatch** at most four workers, one per group, per "Dispatching a Worker".
+   it. A group whose files are already claimed waits for a refill that finds them free, or for
+   the next round.
+4. **Dispatch** one worker per group, within the dispatch limits in "Grouping and File Claims", per
+   "Dispatching a Worker".
 5. **Collect** each worker's outcome: merged to develop, stopped on a maintainer-only question,
    parked behind another group's file claim, handed back for review, or abandoned.
    The adjudication in "Grouping and File Claims" and a confirmed-gone worker each produce that outcome. Bound this wait per "Bounding the Wait on a Worker".
    The orchestrator records a handed-back pass and continues the same worker.
-6. **Clean up** the worktrees, local branches, and remote branches of every group that has
-   merged or been abandoned, per "Dispatching a Worker".
+6. **Clean up and refill as each worker ends**, rather than once the round's last worker has.
+   Clean up the worktree, local branch, and remote branch of a group that merged or was abandoned, per
+   "Dispatching a Worker". Then run steps 1 to 3 afresh for the free slots and dispatch the
+   groups they form. Refilling stops once step 7
+   starts. From then, and under the freeze, "The Promotion Boundary" step 6 says what may be
+   dispatched. In an attended run, a free slot goes first to a stopped group whose question is
+   answered. The
+   round moves to step 7 once no worker is in flight and no group can be dispatched. A round
+   prepared under the freeze first waits for that merge, per step 8.
 7. **Promote**, per "The Promotion Boundary".
 8. **Re-rank from scratch**. Whenever a promotion pull request is still waiting on the maintainer,
    the next round prepares under the freeze "The Promotion Boundary" describes. Under that freeze
@@ -158,7 +169,7 @@ whether it waits on a split, as it names a `blocked` one.
 
 An issue that asks a question rather than states a defect is not ranked and is never guessed at.
 It has no group, no worker, and no claim, so nothing in "Raising a Blocked Question" applies to it
-except how the question travels. It goes to the maintainer at the end of ranking, per
+except how the question travels. It goes to the maintainer at the end of the first ranking that meets it, per
 `GOVERNANCE.md` "Communicating with the User". It does not wait for a stop that may not come. It is
 batched with any other question the run is sending at that moment, and goes in a prompt of its own
 otherwise. It stays unranked until answered. An issue carrying `decision` is such a question already
@@ -210,13 +221,14 @@ Group so that **no file is claimed by two live groups at once.** This is the rul
 for, and it binds harder than any throughput target.
 
 - **Group by the files a fix will touch**, not by the issues' subject matter. Two issues that read
-  as unrelated but both edit a shared governance file are one group. Two issues that read as near
+  as unrelated but both edit a shared governance file share a group, up to the group cap below. Two issues that read as near
   duplicates but touch different files are two groups.
 - **Genuine duplicates are one group.** Never close an issue during triage on the orchestrator's
   own judgment. Comment to cross-link the pair, and let the fix close both.
 - **Closing keywords go on the promotion pull request**, not the feature pull request, per
-  `branching-and-release-model`. A feature pull request merging into develop fires no
-  auto-close, so a `Fixes #N` line there closes nothing. **The feature pull request body instead
+  `branching-and-release-model`. A repository's squash setting can copy the body into the commit,
+  as the hub's does. Then a `Fixes #N` line there closes #N when the promotion brings that commit
+  to main, a closure no promotion body stated. **The feature pull request body instead
   carries a line reading `Closes on promotion: #N`**. It lists every issue that pull request
   actually fixes and nothing it merely mentions. The promotion body is assembled from that line,
   per "The Promotion Boundary". GitHub reads a closing keyword only where the issue reference
@@ -227,7 +239,7 @@ for, and it binds harder than any throughput target.
   that behavior. That is the doc, the manifest entry, or the rule sentence `GOVERNANCE.md`
   "Verification Discipline" makes the change's own to fix. Find them by searching the tree for
   the identifier, flag, check name, or rule phrase the fix changes, rather than by guessing which
-  docs apply. Two groups needing one such file are one group, per the first bullet. A predicted
+  docs apply. A predicted
   edit lands before the first push, where it costs no extra CI run or hosted review.
 - **Record every claim on the issue itself**, as a comment naming the predicted file set **and the
   branch that holds it**, before dispatching. The comment opens with `**Backlog burndown claim`
@@ -254,10 +266,15 @@ for, and it binds harder than any throughput target.
 - **Verify the prediction before dispatching**, against everything in flight, which is wider than
   this round. In flight covers the files changed by every open **feature** pull request on this
   repository. It also covers the claim comments of every group still holding a branch, parked
-  groups from earlier rounds included.
+  groups from earlier rounds included. It covers too the claim of each group dispatched whose
+  worker has not yet ended. A worker creates its branch only once it runs. A worker handed back
+  for review has not ended, since the same worker is continued. The orchestrator reads
+  that set from the assignments and outcomes its working notes hold, per "Run State". A refill
+  planner's brief names the groups in it. A claim comment alone cannot say, since a merged group's cleanup
+  leaves its claim reading like one whose worker has yet to start.
   `gh pr list --state open --limit 1000 --json number,baseRefName,headRefName,isCrossRepository --jq '.[] | select(.headRefName != "develop" or .baseRefName != "main" or .isCrossRepository) | .number'`
   lists the open pull requests, its filter applying the promotion exclusion below.
-  `gh pr diff <number> --name-only` then reads each one's files. `git worktree list` reports the
+  `gh pr diff "<number>" --name-only` then reads each one's files. `git worktree list` reports the
   registered worktrees and the branch checked out in each. That is not the same as every branch
   that exists. So pair it with `git branch -r`, after `git fetch --prune origin`, for one that was
   pushed and whose worktree is already gone. Pair it also with `git branch` for one that was never
@@ -269,8 +286,8 @@ for, and it binds harder than any throughput target.
   the web interface. A plain fetch leaves that ref in `git branch -r` to defer valid groups
   forever. Stop and report a failed fetch rather than reading `git branch -r` anyway, per
   `GOVERNANCE.md` "Verification Discipline" on what a local clone answers for. Here the scan would
-  miss a branch pushed since the last successful fetch and keep one deleted since it. The round
-  stops there and reports, rather than dispatching against a stale answer. Stopping rather than
+  miss a branch pushed since the last successful fetch and keep one deleted since it. Dispatch
+  stops there and the failure is reported, rather than dispatching against a stale answer. Stopping rather than
   deferring is what the cleanup and promotion steps need too, since both read the same remote.
   Those three enumerate the branches, with one gap. A branch in the standalone clone
   `repo-worktree` allows as a fallback is reached only once it is pushed. That is because
@@ -281,14 +298,15 @@ for, and it binds harder than any throughput target.
   open promotion pull request from that enumeration.** Its diff is all of
   `origin/main..origin/develop`, so counting it claims nearly every file any earlier round touched.
   A round run during the freeze would then defer every group it formed. A predicted claim that
-  collides with a real one is a group deferred to the next round, never one dispatched hoping the
-  overlap stays small.
+  collides with a real one is a group deferred to a later refill or the next round. It is never
+  one dispatched hoping the overlap stays small.
 - **A branch no claim comment covers still has to yield a file set.** The maintainer's own
   worktree and a hand-driven task's branch are enumerated above and carry no claim comment. So
   reading only the comments records them as holding nothing. That is the collision this section
   exists to prevent rather than the absence of one. Read the branch itself instead:
-  `git diff --name-only origin/<base>...<branch>` for what it has committed, and, for a
-  registered worktree, `git -C <worktree> status --porcelain` for what it holds uncommitted.
+  `git diff --name-only "origin/<base>...<branch>"` for what it has committed, and, for a
+  registered worktree, `git -C "<worktree>" status --porcelain --untracked-files=all` for what it
+  holds uncommitted.
   `<base>` is the `baseRefName` of the branch's pull request where it has one, and `develop`
   otherwise. That is because `repo-worktree` "The Base Branch" lets a task branch from `main`. Read against
   `develop`, a `main`-based branch can list files it never touched, which errs toward a collision
@@ -299,11 +317,11 @@ for, and it binds harder than any throughput target.
   needing a file outside its claim stops and reports rather than editing it. A file may sit on a
   branch no claim comment covers, or on one whose set is unknown. Then the worker is stopped for
   the maintainer per "Raising a Blocked Question". Where no branch holds the file, the orchestrator
-  verifies that as it verifies a prediction. It then extends the claim comment at once. A grown
+  verifies that as it verifies a prediction. It then extends the claim comment. A grown
   set failing the tier test in "Choosing the Worker's Model Tier" under a worker below `frontier`
   stops the group there. One passing it lets the worker continue, unless the agent-safety hold
   below applies. That is the ordinary path for a doc describing the group's own change, and it is
-  answered at once rather than at a round boundary. Where another group holds the file, the need
+  answered without waiting for a round boundary. Where another group holds the file, the need
   is a conflict. The orchestrator decides which group keeps the file and tells the loser what to do
   rather than leaving it to choose. The loser narrows its change to drop that file, parks until
   the holder merges, or abandons its branch per "Cleanup Is the Orchestrator's". Some losers need
@@ -323,13 +341,24 @@ for, and it binds harder than any throughput target.
   drifts from the real claim it exists to report. A group told to abandon its branch keeps its claim
   comment unchanged, since cleanup decides whether that claim is released, per "Cleanup Is the
   Orchestrator's".
-- **Cap the round at four workers**, whatever the grouping allows.
+- **Cap each group at three issues and four predicted files.** A wide group draws the most review
+  passes and sets the round's tail. A refill shortens the idle time around that tail but not the
+  tail itself. Where the ranking would form a wider group, its lower-ranked issues wait for a later
+  group, which a refill can dispatch once this one merges. Genuine duplicates count as one issue,
+  and an issue holding nothing but a question counts as none. A file a generator writes from
+  another in the set does not count. An issue predicting more than
+  four files on its own forms a group by itself.
+- **Limit the round's dispatch to four workers at once and eight groups in all**, whatever the
+  grouping allows. A group counts once in a round, however many workers it takes. So a group
+  resuming in the round it stopped in takes no second place among the eight. One resuming in a
+  later round counts there. A promotion fix counts toward neither limit.
 
 ## Bounding a Prose Group
 
 A group whose files are prose-heavy Markdown bloats in a way a code group does not. It needs its
 own bound stated in the worker's brief.
 
+- **The group's scope is capped** per "Grouping and File Claims", and the brief names that cap.
 - **The change reaches the units the issue names and the units it puts in disagreement.** A unit
   stating the rule or behavior the change altered is this change's to fix wherever it sits in this repository, per
   `GOVERNANCE.md` "Verification Discipline". Its edit is the smallest one that makes it true again.
@@ -358,7 +387,8 @@ Brief on `AGENTS.md` "Context and Delegation Discipline"'s subagent shape.
   another's worktree. That is why "Bounding the Wait on a Worker" removes a dead worker's tree,
   with or without its branch, or leaves that tree untouched for the maintainer. It never passes
   the tree on, for the same reason.
-- **The worker reports the path of the checkout it worked in**, with its outcome. A standalone
+- **The worker reports the path of the checkout it worked in**, with its outcome. It also reports
+  a missing or wrong shared git hook it met, per `repo-worktree` "Preparing Git Hooks". A standalone
   clone, the fallback `repo-worktree` allows, appears in no `git worktree list`. So a worker
   choosing that fallback records the clone's directory name, `<Repo>-<task-slug>`, on each of its
   group's claim comments before cloning. Each edit keeps the comment's `**Backlog burndown claim`
@@ -373,6 +403,11 @@ Brief on `AGENTS.md` "Context and Delegation Discipline"'s subagent shape.
   the override moves is the two cleanup halves `drive-pr` runs after it, the worktree procedure
   and the verify-then-delete of the merged remote branch. It moves **both** rather than only the
   first. "Cleanup Is the Orchestrator's" below, in this same section, says why and what it covers.
+- **The brief quotes the `merge` command in `drive-pr` step 4's exact spelling**, without
+  `--cleanup` or `--checkout`. It also quotes, whole, the paragraph in `pr-review-conduct` "Expected review loop"
+  on spelling a `scripts/pr_review.py` call. A worker that writes the call another way, adding a
+  cache variable for one, sends its merge to the auto-mode classifier. That classifier refuses a merge no
+  human has approved.
 - **A worker that cannot dispatch a subagent hands back its worktree path, target, and digest.**
   The brief says so per `local-strict-review` "Running It", and says the orchestrator can continue the same worker after recording.
 - **The brief names the branch the worker will use**, which is what lets the claim comment record
@@ -380,7 +415,7 @@ Brief on `AGENTS.md` "Context and Delegation Discipline"'s subagent shape.
   one of its choosing. That is because a claim naming a branch nobody used points at nothing.
   A brief dispatching an issue returned to the ranking names a new branch.
   A branch a claim comment names for the first time is one no pull request on the repository has
-  used as its head. That is checked with `gh pr list --head <name> --state all` before the
+  used as its head. That is checked with `gh pr list --head "<name>" --state all` before the
   comment is written.
 - **The brief quotes `pr-review-conduct` outcome 4 whole and adds no instruction of its own to
   file a review finding.** A worker reads its brief as the more specific instruction. So a brief saying "file a
@@ -395,6 +430,9 @@ Brief on `AGENTS.md` "Context and Delegation Discipline"'s subagent shape.
 - **The brief requires the `Closes on promotion:` line** in the pull request body, listing exactly
   the issues this group fixes. A worker never reads this skill, and `drive-pr` does not ask for the
   line. So a brief that omits it produces a pull request nothing can derive a closing set from.
+  On an operational-model repository the brief also requires a `Reopens on promotion:` line where
+  the group undoes a fix already in the range. Without it the promotion closes an issue whose fix
+  the range no longer holds.
   It also has the worker draft that body, and each rewrite of it, in a file named for its branch.
   Workers sharing a scratch directory and one file name each publish the other's draft.
 - **The brief names the files this group owns and the files it must not touch.** A subagent never
@@ -409,7 +447,7 @@ Brief on `AGENTS.md` "Context and Delegation Discipline"'s subagent shape.
   installed skills need not match develop, since some installs snapshot promoted `main`. So a rule
   merged to develop during the run may not reach it. In the hub, the brief tells the worker to
   read each fleet skill from develop as it invokes it. That covers any reference file it links.
-  The read is `git fetch origin develop && git show origin/develop:.agents/skills/<name>/<path>`,
+  The read is `git fetch origin develop && git show "origin/develop:.agents/skills/<name>/<path>"`,
   in place of the installed copy. The orchestrator reads the skills it applies the same way at
   each round's start. Reading develop rather than the worker's own tree also covers a
   worker on an older branch, such as a resumed group. A downstream repository has no such gap, since its skills come from the hub.
@@ -425,10 +463,13 @@ that concurrently mutate one shared checkout, which `GOVERNANCE.md` "Repository 
 Write Safety" forbids.
 
 So the whole procedure moves to the orchestrator.
-It runs the procedure against the base clone at the round's cleanup step, while no worker is live in a tree it touches.
+It runs the procedure against the base clone as each group's worker ends, per "The Round" step 6.
+It runs it while no worker is live in a tree it touches.
 It carries the remote half of `drive-pr`'s post-merge cleanup too.
-For a merged group both halves are one command, `uv run --no-project --script scripts/pr_review.py cleanup <number> --repo <owner>/<repo> --checkout <base-clone>`.
-It is run from a hub checkout once for each merged group, `<base-clone>` being the repository's primary clone.
+For a merged group both halves are one command, `uv run --no-project --script scripts/pr_review.py cleanup "<number>" --repo "<owner>/<repo>" --checkout ~/repos/"<Repo>"`.
+Spell every `scripts/pr_review.py` call this skill prints as `pr-review-conduct` "Expected review loop" says.
+The command is run from a hub checkout once for each merged group, `~/repos/<Repo>` being the repository's primary clone.
+That path is the convention layout, and a machine not yet migrated passes its actual primary clone instead.
 It deletes the remote branch, then removes the group's worktree and local branch, per `repo-worktree` "Listing and Cleanup", which also says what its exit leaves to do.
 Taking that step from the worker without naming a new owner would leave a live remote branch behind every group.
 `cleanup` holds the delete's checks, among them the tip against the pull request's `headRefOid`.
@@ -441,9 +482,10 @@ A group told to abandon its branch keeps a registered worktree until something r
 That worktree holds a live claim that would collide with the very group the next round re-forms for the same issue.
 For a merged group the procedure is deferred rather than changed: `repo-worktree`'s verify-before-removing and prove-the-cleanup steps run unchanged, just later and in one seat.
 A merged group that worked in a standalone clone is checked before anything is deleted, since `cleanup` sees only the base clone's registered worktrees.
-The orchestrator confirms the clone the worker reported or recorded is clean and its branch tip is at the pull request's `headRefOid` or behind it.
+The orchestrator confirms the clone the worker reported or recorded is clean by `repo-worktree` "Listing and Cleanup"'s hand-removal read.
+It also confirms the clone's branch tip is at the pull request's `headRefOid` or behind it.
 `repo-worktree` "Listing and Cleanup" accepts both, since a GitHub "Update branch" merge leaves a tip behind it that holds nothing the merge lacks.
-After `git -C <clone> fetch origin <headRefOid>`, `git -C <clone> merge-base --is-ancestor refs/heads/<exact-branch> <headRefOid>` exits `0` in both cases.
+After `git -C "<clone>" fetch origin "<headRefOid>"`, `git -C "<clone>" merge-base --is-ancestor "refs/heads/<exact-branch>" "<headRefOid>"` exits `0` in both cases.
 Where either confirmation fails, nothing is deleted and the group is stopped for the maintainer per "Raising a Blocked Question".
 Where both hold, `cleanup` runs as for any merged group and deletes the remote branch.
 The orchestrator then removes the clone, per `repo-worktree` "Listing and Cleanup".
@@ -451,8 +493,8 @@ The orchestrator then removes the clone, per `repo-worktree` "Listing and Cleanu
 **Retiring a worktree and deleting its branch are two dispositions with two tests.** Citing one for
 the other is how a removal that discards nothing gets routed to the maintainer. It is also how a
 removal that discards commits gets waved through. Retiring a worktree alone, the branch left
-standing, risks only what is uncommitted in it. A clean tree is the whole test, and the branch's
-own contents do not enter it. A tree that is not clean is left exactly as it stands while the
+standing, risks only what is uncommitted in it. A tree clean by `repo-worktree` "Listing and
+Cleanup"'s hand-removal read is the whole test, and the branch's own contents do not enter it. A tree that is not clean is left exactly as it stands while the
 group is stopped for the maintainer per "Raising a Blocked Question". Deleting the branch as well
 risks what is committed, so it carries whichever branch check the group's state calls for. That is
 `repo-worktree`'s verify-before-removing for a group whose pull request merged. It is the no-merge
@@ -468,7 +510,7 @@ abandon its branch reports its worktree path and ends without discarding anythin
 orchestrator waits until the dispatch mechanism reports that the worker has ended, per "Bounding
 the Wait on a Worker". It then reads a live `git worktree list --porcelain` for a linked worktree,
 an entry other than the first, whose `branch` line names the claimed branch. Where one exists, it
-runs `git -C <path> reset --hard` and then `git -C <path> clean -fd`, `<path>` being that entry's
+runs `git -C "<path>" reset --hard` and then `git -C "<path>" clean -fd`, `<path>` being that entry's
 `worktree` line. It discards nothing in any other tree. Where none exists and the worker reported
 or recorded no standalone clone, nothing is discarded and the group is stopped for the maintainer
 per "Raising a Blocked Question". A standalone clone follows the clone paragraph below. The
@@ -477,32 +519,32 @@ branch's commits stay for the branch check below.
 An abandoned group, and a dead worker's clean tree, have no merged pull request for
 `repo-worktree`'s verify-before-removing step to read. So that step gives way here to a check of
 what it exists to establish, that nothing unmerged is being thrown away.
-The orchestrator records the local tip with `git rev-parse refs/heads/<exact-branch>`.
-After `git fetch origin develop`, `git merge-base --is-ancestor <tip> refs/remotes/origin/develop` must exit `0`, and the worktree must be clean.
+The orchestrator records the local tip with `git rev-parse "refs/heads/<exact-branch>"`.
+After `git fetch origin develop`, `git merge-base --is-ancestor "<tip>" refs/remotes/origin/develop` must exit `0`, and the worktree must be clean by `repo-worktree` "Listing and Cleanup"'s hand-removal read.
 Where both hold, the worktree and local branch are removed by hand, since `cleanup` needs a merged pull request to read.
-The removal is `git worktree remove <exact-path>`, then `git update-ref -d refs/heads/<exact-branch> <tip>`.
+The removal is `git worktree remove "<exact-path>"`, then `git update-ref -d "refs/heads/<exact-branch>" "<tip>"`.
 That delete refuses only where the branch has moved off the tip the is-ancestor check judged, so it discards nothing that check did not clear.
 `git branch -d` would not agree with that check, since it judges a branch with no upstream against `HEAD`, and the fetch does not advance local develop.
-Where `git config --get-regexp '^branch\.<exact-branch>\.'` prints anything, `git config --remove-section branch.<exact-branch>` then removes the tracking `git branch -d` would have removed.
+Where `git config --get-regexp '^branch\.<exact-branch>\.'` prints anything, `git config --remove-section "branch.<exact-branch>"` then removes the tracking `git branch -d` would have removed.
 A refusal stops the group for the maintainer per "Raising a Blocked Question".
 Where the branch was never pushed, the orchestrator records the release once both succeed.
-It edits the group's claim comment, and the issue returns to the next round's ranking.
+It edits the group's claim comment, and the issue returns to the ranking.
 Where it was pushed, the orchestrator also deletes the remote branch, since `cleanup` needs a merged pull request to read.
 That is the one remote delete this skill types by hand.
 The delete runs only where two more checks hold.
-The remote tip, read live with `git ls-remote --exit-code origin refs/heads/<exact-branch>`, equals the recorded tip.
+The remote tip, read live with `git ls-remote --exit-code origin "refs/heads/<exact-branch>"`, equals the recorded tip.
 And no open pull request uses the branch as its head or its base.
-`gh pr list --head <exact-branch> --state open --json number --jq length` prints `0`, and so does the same command with `--base`.
-The delete is `git push origin --delete <exact-branch>`, an outward-facing write bound by `GOVERNANCE.md` "Repository Boundaries and Write Safety".
+`gh pr list --head "<exact-branch>" --state open --json number --jq length` prints `0`, and so does the same command with `--base`.
+The delete is `git push origin --delete "<exact-branch>"`, an outward-facing write bound by `GOVERNANCE.md` "Repository Boundaries and Write Safety".
 So it names the exact branch, takes every identifier from a live read, and keeps its output unsuppressed.
-The orchestrator then reads the ref back with `git ls-remote --exit-code origin refs/heads/<exact-branch>`, and only its exit `2`, no matching ref, confirms the delete.
-Only after that confirmation is the release recorded on the claim comment, and the issue then returns to the next round's ranking.
+The orchestrator then reads the ref back with `git ls-remote --exit-code origin "refs/heads/<exact-branch>"`, and only its exit `2`, no matching ref, confirms the delete.
+Only after that confirmation is the release recorded on the claim comment, and the issue then returns to the ranking.
 Where any check fails or the delete is not confirmed, the claim is kept and the group is stopped for the maintainer per "Raising a Blocked Question".
 Where a confirmation fails for an abandoned group, cleanup stops there and the group is stopped for the maintainer.
 That stop is per "Raising a Blocked Question", since past that point removal discards work.
 A dead worker's clean tree whose branch fails the check is retired alone instead, per "Bounding the Wait on a Worker".
 Where a pushed branch still heads or bases an open pull request, what goes to the maintainer names that pull request.
-A worker still live, a promotion fix included, keeps its worktree until the next round's cleanup step.
+A worker still live, a promotion fix included, keeps its worktree until it ends and its group's cleanup runs.
 
 **A standalone clone holds its branch alone**, since the base clone does not register it. So the
 base-clone commands above do not reach it, and deleting the clone deletes its local branch too.
@@ -510,12 +552,12 @@ The orchestrator finds it under the temporary root the brief named, by the recor
 run that named another root cannot find it, so its group goes to the maintainer. The
 abandoned-worker discard above does not run there, so a dirty abandoned clone goes to the
 maintainer.
-The clone must be clean, and its tip is read with `git -C <clone> rev-parse refs/heads/<exact-branch>`.
+The clone must be clean by `repo-worktree` "Listing and Cleanup"'s hand-removal read, and its tip is read with `git -C "<clone>" rev-parse "refs/heads/<exact-branch>"`.
 A clone retired alone, its branch left standing, also needs that tip to equal the remote tip, read
-live with `git -C <clone> ls-remote --exit-code origin refs/heads/<exact-branch>`. The remote then holds the
+live with `git -C "<clone>" ls-remote --exit-code origin "refs/heads/<exact-branch>"`. The remote then holds the
 only copy of the branch. A clone removed with its branch and no merged pull request instead needs
-`git -C <clone> merge-base --is-ancestor <tip> refs/remotes/origin/develop` to exit `0` after
-`git -C <clone> fetch origin develop`. Its branch, where pushed, then takes the abandoned-group
+`git -C "<clone>" merge-base --is-ancestor "<tip>" refs/remotes/origin/develop` to exit `0` after
+`git -C "<clone>" fetch origin develop`. Its branch, where pushed, then takes the abandoned-group
 remote checks, delete, and confirmation above first. Where the checks hold, the orchestrator then
 deletes the clone's exact directory, per `repo-worktree` "Listing and Cleanup". It also removes the
 recorded name from the claim comments. A clone removed with its branch and no merged pull request
@@ -557,9 +599,10 @@ is met here. A worker
 reports merged, parked, stopped, or handed back for review. A worker that reports nothing at all needs a bound.
 Its silence looks exactly like slowness, and dying mid-drive is ordinary here.
 
-The bound is a state read rather than a clock. When the other workers in the round have reported,
+The bound is a state read rather than a clock. Wait until every other worker dispatched no later than
+the silent one has reported or is confirmed gone, as below. Then
 read the silent worker's branch and pull request directly, with `git log` on that branch and
-`gh pr view <branch>`. Pass the branch as that command's positional argument, since a
+`gh pr view "<branch>"`. Pass the branch as that command's positional argument, since a
 bare `gh pr view` resolves the pull request of whatever branch the caller is standing on. It never
 resolves the worker's. Let what they show decide. A pull request that is merged means the worker
 died after doing the work. The group is then finished.
@@ -573,11 +616,12 @@ that is. Waiting costs a round's latency and guessing costs another task's uncom
 Once the worker is confirmed gone, its worktree decides what follows. A standalone clone recorded
 on the claim comment is that worktree, retired or removed per "Cleanup Is the Orchestrator's".
 Where that fails, the group stops there and no fresh worker is dispatched.
+A worktree is judged clean or dirty by `repo-worktree` "Listing and Cleanup"'s hand-removal read.
 **A clean one** is cleaned up as an abandoned group's is, per "Cleanup Is the Orchestrator's".
 That procedure confirms the branch carries no commit that is not already on develop before anything is removed. A worker that
 committed its fix and then died leaves a clean tree standing over commits develop has never seen.
 So that check is what separates the two. It holds, and once that procedure releases the claim,
-the issue returns to the next round's ranking to be dispatched on a new branch. It
+the issue returns to the ranking to be dispatched on a new branch. It
 fails, and the branch holds the dead worker's work. So the worktree alone is retired, per
 "Cleanup Is the Orchestrator's". The branch, its claim, and any pull request it heads stay
 standing. A fresh worker is then dispatched on that same branch to finish the drive, in the dead
@@ -610,17 +654,18 @@ rather than a decision.
 - **The question is also written on its issue, and so is the answer**, so both survive the session that asked it.
 - **A stopped group keeps its branch and its claim.** Its worktree is left exactly as it stands
   while the question is open, since the answer may be that the work in it continues. Say in the
-  prompt whether that worktree holds uncommitted work. For a standalone clone, say also whether its
+  prompt whether that worktree holds uncommitted work, by `repo-worktree` "Listing and Cleanup"'s
+  hand-removal read. For a standalone clone, say also whether its
   tip equals the remote tip, and that pushing the branch is the maintainer's. That is
   because what becomes of it is part of what is being asked, rather than something to settle while
   waiting.
 - **Resuming retires that worktree first, then dispatches a fresh worker.** Git refuses to attach a
   branch already checked out somewhere, per `repo-worktree`. So a fresh worker cannot take the
   branch while the stopped tree holds it. Once the answer is in, remove that worktree if it is
-  clean. Otherwise apply what the answer said about its uncommitted work, then remove it. A
+  clean by `repo-worktree` "Listing and Cleanup"'s hand-removal read. Otherwise apply what the answer said about its uncommitted work, then remove it. A
   standalone clone draws no such refusal and is retired all the same, so two checkouts never hold
   one branch. It is retired per "Cleanup Is the Orchestrator's", once its tip equals the remote
-  tip. Only then dispatch. This is the
+  tip. Only then dispatch, into a slot per "The Round" step 6. This is the
   same retire-then-dispatch shape "Bounding the Wait on a Worker" uses, and
   no worker ever inherits another's tree.
 
@@ -675,11 +720,11 @@ the issues it fixes in a `Closes on promotion:` line in its own commit message, 
    yields by handing the file over. A holder that already pushed and has an open pull request
    yields by having that pull request wait, its branch untouched. It also yields by the promotion
    fix taking the file, since the two must not be in flight on one file at once. Once the fix
-   lands, that pull request waits untouched until the freeze lifts. Reconciling its content is the
+   lands, that pull request waits untouched until the next round dispatches. Reconciling its content is the
    next round's worker's job rather than the orchestrator's, which opens no branch and edits
    nothing. The orchestrator retires that group's worktree, the branch and its pull request left
    standing. That is the worktree-only disposition "Cleanup Is the Orchestrator's" separates out,
-   and the retire-then-dispatch shape "Raising a Blocked Question" uses. The orchestrator then
+   and the retire-then-dispatch shape "Raising a Blocked Question" uses. That next round
    dispatches a fresh worker on that same branch. That worker is briefed either to merge develop in
    to pick the fix up, or to narrow the change to drop the file. Never rebase it, since its branch
    is already pushed and a rebase there needs what `GOVERNANCE.md` "Git and Commit Rules" forbids.
@@ -704,13 +749,17 @@ two hops. First, for each commit in
 `origin/main..origin/develop`, freshly fetched, read the pull request that merged it into develop:
 
 ```sh
-gh api repos/<owner>/<repo>/commits/<sha>/pulls --jq '.[] | select(.merged_at != null and .base.ref == "develop") | .number'
+gh api "repos/<owner>/<repo>/commits/<sha>/pulls" --jq '.[] | select(.merged_at != null and .base.ref == "develop") | .number'
 ```
 
 Then read each pull request it prints for its `Closes on promotion:` line. That is the line
 "Grouping and File Claims" requires every feature pull request to carry and every worker brief to
 ask for. A commit it prints nothing for is a direct push. Read that commit's own message for its
-line instead. A read that exits non-zero stops the assembly and is reported.
+line instead. On an operational-model repository, also read the same places for a
+`Reopens on promotion:` line, which a change undoing a fix carries there per `GOVERNANCE.md`
+"Operational Repositories". Leave out each issue such a line names, unless a later change in the
+range names it on a `Closes on promotion:` line again. A read that exits non-zero stops the
+assembly and is reported.
 
 **That line exists because the set has to be stated rather than inferred**, distinct from any
 issue a body merely mentions. A body routinely references an issue it does not fix, the deferral
@@ -730,6 +779,14 @@ from a read of the body made immediately before the write, keeping every line th
 Then read the body again, and repeat the amendment where it lacks a `Fixes` line a freshly fetched
 range calls for. Checking the whole set rather than only this amendment's own lines is what
 restores a line another session's write dropped.
+On an operational-model repository, a `Reopens on promotion:` line can land in the range during the
+freeze. Where it names an issue the body holds a `Fixes` line for, put that line to the maintainer
+rather than editing it. A seat cannot tell that line from one added by hand for a change that left
+its own line out.
+
+Run the mechanical closing-set check that `branching-and-release-model` states in its
+negated-keyword bullet, at each point that bullet names. A body naming a deferral issue
+in a sentence that negates a keyword still closes that issue, and reading the body misses it.
 
 ## Away Mode
 
@@ -765,6 +822,12 @@ merge to main with no release never exercises artifact creation.
   rule assumes no other run is live and no attended session works a parked group's issue. So the
   maintainer starts an away run only once any earlier
   run has ended and no such attended work is in flight.
+- **An away run gains nothing from a session on `highest`.** The lean orchestrator below reads no
+  issue, diff, or thread. Its planner and workers run at the tiers this skill names, whatever the
+  session's own. So `highest` there buys only a dearer dispatcher, and an away run is launched at
+  `frontier`. An attended run is the one a stronger session improves, since there the orchestrator
+  ranks, groups, and chooses each tier itself. A session on `highest` asked for an away run says
+  this once, before its first dispatch, and then runs as asked.
 
 ### Needs the Maintainer
 
@@ -843,23 +906,34 @@ subagents and holds only what they return.
    undetermined outcome, a settled decision, or an unrequested rule, the planner files it as
    `decision`. It comments the question there, unless the issue already carries the label. It
    returns the round plan: each group's issues, branch, claimed files, and tier, then each held-back
-   issue with its reason. It also names each `deferred` issue it lifted. A promotion fix comes first, and a group resuming parked work names the
+   issue with its reason. It also names each `deferred` issue it lifted. A planner stopping short of
+   a plan still returns each claim comment it wrote. A promotion fix comes first, and a group resuming parked work names the
    parked worktree.
 2. **Retire each parked worktree a resuming group names**, before dispatching its worker. Git
-   refuses to attach a branch another worktree holds, per `repo-worktree`. Remove a clean tree with
-   `git worktree remove <exact-path>`, leaving its branch standing. That command errors on a
+   refuses to attach a branch another worktree holds, per `repo-worktree`. Remove a tree clean by
+   `repo-worktree` "Listing and Cleanup"'s hand-removal read with `git worktree remove "<exact-path>"`, leaving its branch standing. That command errors on a
    standalone clone, which takes the retire-alone checks of "Cleanup Is the Orchestrator's"
    instead. Leave a dirty tree, or a clone failing those checks, exactly as it stands. Keep its
    group parked, and name it in the report. Only the
    maintainer disposes of another task's uncommitted work.
-3. **Dispatch the group workers** per "Dispatching a Worker", each brief built from the group's
-   line. Each brief also states the park duty below and the comment rule above. A group worker
-   drives to develop and ends there, whatever the scope.
+3. **Dispatch the group workers** per "Dispatching a Worker", each brief built
+   from the group's line. Each brief also states the park duty below and the comment rule above.
+   A group worker drives to develop and ends there, whatever the scope.
 4. **Collect each worker's one-line outcome**, bounding the wait per "Bounding the Wait on a
    Worker". A worker that hands back for review is continued per "The Round" step 5. Dispatch the
    reviewer, record the pass per `local-strict-review` "Running It", and continue the same worker.
-   The orchestrator reads only the reviewer's findings and the record's exit.
-5. **Clean up** per "Cleanup Is the Orchestrator's". Each command there is one call whose exit and
+   The orchestrator reads only the reviewer's findings and the record's exit. **The slot a worker
+   frees is refilled** per "The Round" step 6, once step 5 below has run for its group. Dispatch a
+   planner that runs orchestrator step 1 for the free slots, without the net-flow count. Dispatch
+   one for each worker that ends. Once this round has dispatched eight groups, dispatch one only
+   while a group this round stopped or parked has not resumed. Such a group needs no place among
+   the eight, and no other group can take a slot. The planner's brief names each group this round dispatched. It marks each whose worker has not yet ended and each that stopped or parked and
+   has not resumed. It
+   names no file set. The planner reads each group's current set from its claim comment, which
+   holds any grown set granted since the plan. One refill planner runs at
+   a time, and none starts while a dispatch is pending. While one runs, a grown set a worker reports and a group's cleanup
+   each wait for it to return. So every claim is written from a current read. Then dispatch each group's worker per steps 2 and 3.
+5. **Clean up** each group as its worker ends, per "Cleanup Is the Orchestrator's". Each command there is one call whose exit and
    status line are all the orchestrator reads.
 6. **Promote** per "Promoting" below.
 7. **Record the round's report** in working notes, per "Run State", and start the next round.
@@ -887,6 +961,8 @@ a state of the session rather than of any issue, so the orchestrator handles it 
   condition, and one leaving unclear whether a subagent started. It also covers a dispatch still
   failing after its third wait, and a timer that cannot start. The final message names the seat
   whose dispatch failed and the error its last attempt returned.
+- **Once the run is ending, a failed dispatch takes neither path above.** "Ending an Away Run"
+  says what becomes of it.
 
 ### Parking Instead of Asking
 
@@ -984,16 +1060,32 @@ group's pull request merges, the worker ends the track with `close`, per `sessio
 
 The run ends at the first of these, each an ending of its own:
 
-- A re-rank finds nothing it can act on.
+- A round's opening ranking finds nothing it can act on.
 - The round cap is reached.
 - A dispatch fails, per "A Dispatch That Fails".
 - A condition every later round would meet. Examples are a missing label, an exhausted reviewer
   allowance, a refused push or merge, and a read the planner cannot make.
 - The session ends.
 
-The final message is the report "Ending the Run" describes, with every held-back issue under the
+Every ending but the session's own first drops every waiting dispatch retry and stops its timer.
+From then, a dispatch that fails is not retried and ends nothing. That holds for a reviewer and
+for continuing a handed-back worker alike. The ending names that worker as uncollected, leaves its
+branch and claim as they stand, and goes on. It names a worker whose dropped retry it needed the
+same way. Where the error left unclear whether the dispatch started, it marks that seat as one
+that may be live. Every ending but
+the session's own and a dispatch failure then collects each worker still in flight. It cleans up each such
+group per "The Lean Orchestrator" steps 4 and 5, and refills no slot. Such an ending also waits
+for a refill planner still running. An ending releases no claim it did not clean up. "Grouping and File Claims"
+counts no claim in flight that has neither a branch nor a live worker. Every ending but
+the session's own names each claim the run recorded for a group with no outcome. It also names
+each planner that ended returning nothing, since the claims it wrote are unknown. A run ended by a
+dispatch failure names each worker and any refill planner still in flight, the claims such a
+planner writes being unknown. Where its error left unclear whether the failed dispatch started, it
+marks that seat as one that may have. Where that seat was a planner, its claims are unknown too. The final message is the report "Ending the Run" describes, with every held-back issue under the
 reason that holds it back. **Only what needs the maintainer is reported as needing the
-maintainer.** That is an open `decision` issue, a group parked on one, and a parked dirty tree. It
+maintainer.** That is an open `decision` issue, a group parked on one, and a parked dirty tree.
+It is also a worker named as uncollected, since no later run resumes its group. It is also a
+missing or wrong shared git hook a worker reported, per `repo-worktree` "Preparing Git Hooks". It
 also covers an issue held back for a setting, a credential, a host, or the agent-safety tree,
 reported as needing the maintainer present. An outsider's issue awaiting acceptance is reported
 as needing the maintainer to accept it. Each other reason is named as itself, never as a
@@ -1004,7 +1096,7 @@ it. An ending that cannot dispatch a promotion worker the run owes is named too.
 ## Run State
 
 - **Working notes outside the repository hold the round**: the ranking, the working groups, the
-  tier choices, and the worker assignments. A scratch file the harness gives a session serves
+  tier choices, the worker assignments, and the outcomes. A scratch file the harness gives a session serves
   where there is one. Any note kept out of the tree serves where there is not. It is the
   in-flight session state `GOVERNANCE.md` "Durable Knowledge and Self-Improvement" describes, and
   nothing about it is committed.
@@ -1019,7 +1111,7 @@ it. An ending that cannot dispatch a promotion worker the run owes is named too.
 
 The run ends at one of the points below, and they are different endings.
 
-- **The backlog is worked out**, meaning a full re-rank finds no open issue this skill can act on.
+- **The backlog is worked out**, meaning a round's opening ranking finds no open issue this skill can act on.
   That differs from zero open issues, since a backlog of nothing but maintainer questions and
   issues whose blockers still stand is a finished run. Report it as finished, with the questions
   put to the maintainer.
@@ -1046,7 +1138,7 @@ A rule, a Skill, or a brief names a model tier, never a model. A model release i
 - **`frontier`** is the fleet's default reasoning tier, for orchestrating, rule text, design, spec logic, and adversarial review. It is not the most capable model available, which is `highest`.
 - **`standard`** is ordinary implementation and driving a pull request. Judging a review finding is never mechanical, however often it repeats, so it runs at `standard` or above. A `standard` driver's evidence-backed decline of a finding raised on its pull request stands, since that pull request's reviewers and its merge gate check it.
 - **`bulk`** is the cheapest model that does the work correctly. It is for high fan-out mechanical work, such as an extraction or a status check.
-- **`highest`** is the most capable model available, and only the maintainer selects it. The maintainer chooses it for the session itself, or allows it for the session's subagents at launch. The host's agent-safety kit reads that launch setting, `FLEET_ALLOW_HIGHEST=1` on Claude Code. Naming the tier in a prompt does not set it. A maintainer naming it partway through a session restarts the session with it allowed, and an agent never sets it. Without that setting, the kit refuses a dispatch that names it. A dispatch naming no model runs at its agent definition's model where one is set, and otherwise at the session's own. A fork always runs at the session's model, whatever it names. So a session launched on `highest` names a tier on every dispatch meant to run below it, and uses no fork for such work. A session never reaches for it because a task looks hard.
+- **`highest`** is the most capable model available, and only the maintainer selects it. The maintainer chooses it for the session itself, or allows it for the session's subagents at launch. The host's agent-safety kit reads that launch setting, `FLEET_ALLOW_HIGHEST=1` on Claude Code. Naming the tier in a prompt does not set it. A maintainer naming it partway through a session restarts the session with it allowed, and an agent never sets it. Without that setting, the kit refuses a dispatch that names it. A dispatch naming no model runs at its agent definition's model where one is set. Otherwise it runs at the default the host's agent-safety kit sets, which is the `frontier` model. On a host without the kit it runs at the session's own. That default does not reach every agent type a tool builds in. On Claude Code the `Explore` and `Plan` types still take the session's model, so the kit refuses a dispatch of either that names no model. A fork always runs at the session's model, whatever it names. So a session launched on `highest` names a tier on every dispatch meant to run below it, and uses no fork for such work. The kit's default is a backstop for a dispatch that forgot its tier, never a reason to leave one out. A session never reaches for it because a task looks hard.
 
 | Tool | `highest` | `frontier` | `standard` | `bulk` |
 | --- | --- | --- | --- | --- |
@@ -1055,7 +1147,7 @@ A rule, a Skill, or a brief names a model tier, never a model. A model release i
 Each cell is the name that tool's subagent dispatch takes, which follows the latest model of its family. A dispatch on a tool with no row here, or on one that cannot name a model per subagent, names no model.
 
 - **A tier resolves only through this table.** A word such as "frontier", "strongest", or "most capable" never resolves to `highest`. The industry's "frontier model" is the opposite of what this tier means here. A session that cannot see this table names no model rather than guessing one.
-- **An orchestrating seat runs at `frontier` and names a tier on every dispatch.** It defaults a subagent to `frontier`, and picks `standard` or `bulk` deliberately for execution or mechanical work.
+- **An orchestrating seat runs at `frontier`, or at `highest` where the maintainer chose that for the session, and names a tier on every dispatch.** It defaults a subagent to `frontier`, and picks `standard` or `bulk` deliberately for execution or mechanical work.
 
 <!-- /include -->
 
