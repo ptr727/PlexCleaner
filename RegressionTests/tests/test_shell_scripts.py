@@ -1,7 +1,6 @@
 """Tests the exit statuses, the --help text, and the interrupt handling of the shell scripts."""
 
 import json
-import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +12,7 @@ from script_helpers import (
     run_script,
     signals,
     stubbed_env,
+    with_stubs,
     write_stub,
 )
 from test_help import ROOT, clean_env
@@ -65,7 +65,7 @@ class RefusalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             stubs = Path(d)
             write_stub(stubs, "dotnet", "exit 64\n")
-            env = clean_env() | {"PATH": f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}"}
+            env = with_stubs(clean_env(), stubs)
             proc = run_script(REPO / "Docker" / "version.sh", env=env)
         self.assertEqual(proc.returncode, 1, proc.stderr)
         self.assertNotIn("unknown argument", proc.stderr)

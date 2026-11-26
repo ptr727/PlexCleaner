@@ -1,6 +1,5 @@
 """Tests that the regression harness script answers --help, validates its inputs, and stops on a signal."""
 
-import os
 import shutil
 import subprocess
 import tempfile
@@ -14,6 +13,7 @@ from script_helpers import (
     run_script,
     signals,
     stubbed_env,
+    with_stubs,
     write_stub,
 )
 from test_help import ROOT, clean_env
@@ -170,8 +170,7 @@ esac
                 "CorpusSnap=pool/corpus@s2 HostMedia=/m/test\n"
                 "ProvisionDataset\n"
             )
-            env = clean_env() | {
-                "PATH": f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}",
+            env = with_stubs(clean_env(), stubs) | {
                 "STUB_LOG": str(log),
                 "STUB_ORIGIN": origin,
                 "STUB_HAS_BACKUP": "1" if has_backup else "",

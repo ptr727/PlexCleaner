@@ -10,14 +10,29 @@ Refuse() {
     exit 64
 }
 
+pids=()
+RunChild() {
+    local Pid Status=0
+    "$@" <&0 &
+    Pid=$!
+    pids=("$Pid")
+    wait "$Pid" || Status=$?
+    pids=()
+    return "$Status"
+}
+
 OnExit() {
     local Status=$?
-    if ((Status == 64 && !Refused)); then
+    if ((Status == 64 && Refused == 0)); then
         exit 1
     fi
 }
 
 OnSignal() {
+    if ((${#pids[@]})); then
+        kill -s TERM "${pids[@]}" 2>/dev/null || :
+        wait "${pids[@]}" || :
+    fi
     echo "install-debug-tools.sh: interrupted by SIG$1" >&2
     trap - "$1"
     kill -s "$1" "$$" || :
@@ -99,7 +114,7 @@ get_dotnet_runtime_id
 # https://github.com/dotnet/diagnostics/blob/main/documentation/single-file-tools.md
 echo "Installing .NET diagnostic tools for $__RuntimeID to /dotnet-tools"
 mkdir -p /dotnet-tools
-wget -O /dotnet-tools/dotnet-counters https://aka.ms/dotnet-counters/$__RuntimeID
+RunChild wget -O /dotnet-tools/dotnet-counters https://aka.ms/dotnet-counters/$__RuntimeID
 chmod ug=rwx,o=rx /dotnet-tools/dotnet-counters
-wget -O /dotnet-tools/dotnet-dump https://aka.ms/dotnet-dump/$__RuntimeID
+RunChild wget -O /dotnet-tools/dotnet-dump https://aka.ms/dotnet-dump/$__RuntimeID
 chmod ug=rwx,o=rx /dotnet-tools/dotnet-dump

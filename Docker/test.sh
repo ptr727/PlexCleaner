@@ -26,7 +26,7 @@ OnExit() {
     if [[ -n "${TestPath-}" ]]; then
         rm -f -- "$TestPath/matroska-test-files.zip"
     fi
-    if ((Status == 64 && !Refused)); then
+    if ((Status == 64 && Refused == 0)); then
         exit 1
     fi
 }

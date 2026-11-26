@@ -12,11 +12,8 @@ from pathlib import Path
 NEEDS_BASH = unittest.skipUnless(
     sys.platform.startswith("linux") and shutil.which("bash") is not None, "needs Linux with bash"
 )
-PIDFILE_STUB = (
-    'echo $$ > "$STUB_PIDFILE.tmp"\n'
-    'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
-    "exec sleep 120 </dev/null >/dev/null 2>&1\n"
-)
+PIDFILE_PUBLISH = 'echo $$ > "$STUB_PIDFILE.tmp"\nmv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
+PIDFILE_STUB = PIDFILE_PUBLISH + "exec sleep 120 </dev/null >/dev/null 2>&1\n"
 
 
 def write_stub(directory: Path, name: str, body: str) -> None:
@@ -37,11 +34,12 @@ def run_script(script: Path, *args: str, env: dict[str, str]) -> subprocess.Comp
     )
 
 
+def with_stubs(env: dict[str, str], stubs: Path) -> dict[str, str]:
+    return env | {"PATH": f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}"}
+
+
 def stubbed_env(env: dict[str, str], stubs: Path, pidfile: Path) -> dict[str, str]:
-    return env | {
-        "PATH": f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}",
-        "STUB_PIDFILE": str(pidfile),
-    }
+    return with_stubs(env, stubs) | {"STUB_PIDFILE": str(pidfile)}
 
 
 def signals() -> list[signal.Signals]:

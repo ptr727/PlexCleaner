@@ -1,7 +1,6 @@
 """Tests that each tool dies by the signal it is sent, and the atomic write leaves no stray file."""
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -10,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from script_helpers import interrupt, signals
+from script_helpers import PIDFILE_PUBLISH, interrupt, signals, with_stubs, write_stub
 from test_help import ROOT, clean_env
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "synthetic"))
@@ -96,26 +95,20 @@ class ToolSignalTests(unittest.TestCase):
         self.addCleanup(self._dir.cleanup)
 
     def write_stub(self, name: str, create_last_argument: bool = False) -> None:
-        # Leaves a marker only where it is sent SIGTERM, since SIGKILL cannot run the trap.
-        stub = self.stubs / name
         create = 'touch "${@: -1}"\n' if create_last_argument else ""
-        stub.write_text(
-            "#!/bin/bash\n"
-            + create
+        write_stub(
+            self.stubs,
+            name,
+            create
             + f"sleep {STUB_SLEEP} </dev/null >/dev/null 2>&1 &\n"
             + "Sleeper=$!\n"
             + 'trap \'echo TERM > "$STUB_MARKER"; kill "$Sleeper"; exit 0\' TERM\n'
-            + 'echo $$ > "$STUB_PIDFILE.tmp"\n'
-            + 'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
-            + 'wait "$Sleeper"\n'
+            + PIDFILE_PUBLISH
+            + 'wait "$Sleeper"\n',
         )
-        stub.chmod(0o755)
 
     def env(self) -> dict[str, str]:
-        return clean_env() | {
-            "PATH": f"{self.stubs}{os.pathsep}{os.environ.get('PATH', '')}",
-            "TMPDIR": str(self.tmp),
-        }
+        return with_stubs(clean_env(), self.stubs) | {"TMPDIR": str(self.tmp)}
 
     def check(
         self, args: list[str], env: dict[str, str], tool: str, expect_term: bool = False
