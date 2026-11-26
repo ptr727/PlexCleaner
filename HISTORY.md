@@ -26,6 +26,10 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
     - A failed MKV file that is not deleted or registered is marked `ProcessFailed` in its sidecar. Later runs skip it until the media file changes. With `SidecarUpdateOnToolChange` on, a new FFprobe, MkvMerge, or MediaInfo version also releases it. That release clears its other failure states too, so the new tools retry it. Run `createsidecar` on a file to process it again.
     - The next run retries a file when a cancel or a tool failure left the run unproven. It also retries one whose rename target holds another file, or that the media tools cannot read.
     - The results file records why each file was judged invalid, and `RegisterInvalidFiles` adds only those files to the `FileIgnoreList`.
+  - A `Ctrl+C` that ends a running tool before PlexCleaner handles the signal exits with code 130 rather than 1.
+    - A tool it ends at startup is no longer reported as not found.
+    - A file it interrupts is kept as `Cancelled` rather than as a tool error.
+    - A tool run ended by a cancel is logged as cancelled at warning level, rather than as a failed execution at error level.
 - Version 3.23:
   - Added a minimum version for every media tool, and PlexCleaner exits with an error at startup when an installed tool is older.
     - The minimums are FFmpeg 8.0, HandBrake 1.10.0, MediaInfo 25.07, MKVToolNix 94.0, and 7-Zip 25.01.

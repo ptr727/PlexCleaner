@@ -96,7 +96,11 @@ public static class Program
         // Invoke command
         int exitCode = commandLineParser.Result.Invoke();
 
-        // A signal interruption reports its own exit code so a caller can tell it from a clean finish or an error
+        // A signal reports its own exit code, and a failure first waits for a handler that a tool the signal ended can outrun
+        if (exitCode != MakeExitCode(ExitCode.Success))
+        {
+            _ = IsCancelledError();
+        }
         if (s_signalExitCode != 0)
         {
             exitCode = s_signalExitCode;

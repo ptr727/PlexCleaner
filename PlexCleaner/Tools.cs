@@ -95,6 +95,10 @@ public static class Tools
             // Query the installed version information
             if (!mediaTool.GetInstalledVersion(out MediaToolInfo mediaToolInfo))
             {
+                if (Program.IsCancelledError())
+                {
+                    return false;
+                }
                 Log.Error(
                     "{Tool} not found : {FileName}",
                     mediaTool.GetToolType(),
@@ -164,6 +168,10 @@ public static class Tools
                     || !mediaTool.GetInstalledVersion(out mediaToolInfo)
                 )
                 {
+                    if (Program.IsCancelledError())
+                    {
+                        return false;
+                    }
                     Log.Error(
                         "{Tool} not found in path {Directory}",
                         mediaTool.GetToolType(),

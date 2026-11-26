@@ -2012,9 +2012,9 @@ public class ProcessFile
     // An unproven verdict retries next run, and a rename collision's sidecar names the other file
     private string? KeepFailedFileReason() =>
         _renameCollision ? "Rename collision"
+        : Program.IsCancelledError() ? "Cancelled"
         : ToolErrorScope.Count > 0 ? "Tool error"
         : ToolErrorScope.SignalCount > 0 ? "Tool signal"
-        : Program.IsCancelledError() ? "Cancelled"
         : null;
 
     public bool HandleFailedFile(string failedOperation)

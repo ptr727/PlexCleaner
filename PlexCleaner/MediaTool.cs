@@ -223,14 +223,50 @@ public abstract partial class MediaTool
             !string.IsNullOrEmpty(primary) ? primary
             : !string.IsNullOrEmpty(stdErr) ? stdErr
             : stdOut;
-        string summary = CleanForLog(Summarize(error));
-        if (string.IsNullOrEmpty(summary))
+        return LogFailedExecution(
+            result.ExitCode,
+            CleanForLog(Summarize(error)),
+            fileName,
+            operation
+        );
+    }
+
+    protected void RecordCancelledExecution(string operation, int processId, string arguments)
+    {
+        Log.Warning(
+            "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
+            GetToolType(),
+            operation,
+            processId,
+            arguments
+        );
+        ToolErrorScope.Record();
+    }
+
+    protected bool LogFailedExecution(
+        int exitCode,
+        string summary,
+        string fileName,
+        string operation
+    )
+    {
+        if (Program.IsCancelledError())
+        {
+            Log.Warning(
+                "Cancelled execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
+                GetToolType(),
+                operation,
+                exitCode,
+                fileName
+            );
+        }
+        else if (string.IsNullOrEmpty(summary))
         {
             Log.Error(
                 "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
                 GetToolType(),
                 operation,
-                result.ExitCode,
+                exitCode,
                 fileName
             );
         }
@@ -240,7 +276,7 @@ public abstract partial class MediaTool
                 "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {Error} : {FileName}",
                 GetToolType(),
                 operation,
-                result.ExitCode,
+                exitCode,
                 summary,
                 fileName
             );
@@ -316,14 +352,7 @@ public abstract partial class MediaTool
         }
         catch (OperationCanceledException)
         {
-            Log.Error(
-                "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                GetToolType(),
-                operation,
-                processId,
-                command.Arguments
-            );
-            ToolErrorScope.Record();
+            RecordCancelledExecution(operation, processId, command.Arguments);
             return false;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))
@@ -388,14 +417,7 @@ public abstract partial class MediaTool
         }
         catch (OperationCanceledException)
         {
-            Log.Error(
-                "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                GetToolType(),
-                operation,
-                processId,
-                command.Arguments
-            );
-            ToolErrorScope.Record();
+            RecordCancelledExecution(operation, processId, command.Arguments);
             return false;
         }
         catch (Exception e) when (Log.Logger.LogAndHandle(e))

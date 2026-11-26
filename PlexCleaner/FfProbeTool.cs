@@ -187,14 +187,7 @@ public partial class FfProbe
             }
             catch (OperationCanceledException)
             {
-                Log.Error(
-                    "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
-                    GetToolType(),
-                    operation,
-                    processId,
-                    command.Arguments
-                );
-                ToolErrorScope.Record();
+                RecordCancelledExecution(operation, processId, command.Arguments);
                 return (false, string.Empty);
             }
             catch (Exception e) when (Log.Logger.LogAndHandle(e))
@@ -335,6 +328,11 @@ public partial class FfProbe
             }
             if (!got)
             {
+                if (Program.IsCancelledError())
+                {
+                    Log.Warning("Cancelled getting analysis packets : {FileName}", fileName);
+                    return false;
+                }
                 Log.Error("Failed to get analysis packets : {FileName}", fileName);
                 LogErrorOutput(error);
                 return false;
