@@ -43,19 +43,6 @@ public static class Program
             return commandLineParser.Result.Invoke();
         }
 
-        PosixSignalRegistration sigIntRegistration = PosixSignalRegistration.Create(
-            PosixSignal.SIGINT,
-            PosixSignalHandler
-        );
-        PosixSignalRegistration sigTermRegistration = PosixSignalRegistration.Create(
-            PosixSignal.SIGTERM,
-            PosixSignalHandler
-        );
-        PosixSignalRegistration sigQuitRegistration = PosixSignalRegistration.Create(
-            PosixSignal.SIGQUIT,
-            PosixSignalHandler
-        );
-
         // Bind all commandline options
         Options = commandLineParser.Bind();
 
@@ -84,6 +71,20 @@ public static class Program
                     "--logappend is deprecated and will be removed; appending is now the default, use --logclear to clear the log file"
                 );
         }
+
+        // Handle termination signals to cancel gracefully and still log the summary before exit
+        PosixSignalRegistration sigIntRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGINT,
+            PosixSignalHandler
+        );
+        PosixSignalRegistration sigTermRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGTERM,
+            PosixSignalHandler
+        );
+        PosixSignalRegistration sigQuitRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGQUIT,
+            PosixSignalHandler
+        );
 
         // Keep the system from going to sleep
         KeepAwake.PreventSleep();

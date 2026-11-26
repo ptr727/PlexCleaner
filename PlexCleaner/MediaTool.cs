@@ -210,18 +210,6 @@ public abstract partial class MediaTool
         [CallerMemberName] string operation = ""
     )
     {
-        if (Program.IsCancelledError())
-        {
-            Log.Warning(
-                "Cancelled execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
-                GetToolType(),
-                operation,
-                result.ExitCode,
-                fileName
-            );
-            return false;
-        }
-
         // ffmpeg can exit 0 yet report a fatal error on stderr (see FfMpegTool), so failures may carry
         // an error summary. Log the summary as its own value with the " : " separator in the template.
         // Folding the separator into a quoted string value instead puts the quote right after the exit
@@ -235,14 +223,38 @@ public abstract partial class MediaTool
             !string.IsNullOrEmpty(primary) ? primary
             : !string.IsNullOrEmpty(stdErr) ? stdErr
             : stdOut;
-        string summary = CleanForLog(Summarize(error));
-        if (string.IsNullOrEmpty(summary))
+        return LogFailedExecution(
+            result.ExitCode,
+            CleanForLog(Summarize(error)),
+            fileName,
+            operation
+        );
+    }
+
+    protected bool LogFailedExecution(
+        int exitCode,
+        string summary,
+        string fileName,
+        string operation
+    )
+    {
+        if (Program.IsCancelledError())
+        {
+            Log.Warning(
+                "Cancelled execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
+                GetToolType(),
+                operation,
+                exitCode,
+                fileName
+            );
+        }
+        else if (string.IsNullOrEmpty(summary))
         {
             Log.Error(
                 "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
                 GetToolType(),
                 operation,
-                result.ExitCode,
+                exitCode,
                 fileName
             );
         }
@@ -252,7 +264,7 @@ public abstract partial class MediaTool
                 "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {Error} : {FileName}",
                 GetToolType(),
                 operation,
-                result.ExitCode,
+                exitCode,
                 summary,
                 fileName
             );

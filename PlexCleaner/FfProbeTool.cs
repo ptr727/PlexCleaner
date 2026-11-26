@@ -335,6 +335,11 @@ public partial class FfProbe
             }
             if (!got)
             {
+                if (Program.IsCancelledError())
+                {
+                    Log.Warning("Cancelled getting analysis packets : {FileName}", fileName);
+                    return false;
+                }
                 Log.Error("Failed to get analysis packets : {FileName}", fileName);
                 LogErrorOutput(error);
                 return false;

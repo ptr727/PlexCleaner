@@ -204,42 +204,12 @@ public partial class FfMpeg
             }
             if (verifyResult == VerifyResult.DecodeError)
             {
-                // Log the unique error lines, a silent non-zero exit has none so omit the empty field.
-                // Include the operation and file name to match the tool-failure logging convention
-                // (see MediaTool.LogFailedResult); VerifyMedia streams stderr so it logs inline rather
-                // than through that helper.
-                string error = CleanForLog(string.Join(" | ", classifier.Errors));
-                if (Program.IsCancelledError())
-                {
-                    Log.Warning(
-                        "Cancelled execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
-                        GetToolType(),
-                        nameof(VerifyMedia),
-                        exitCode,
-                        fileName
-                    );
-                }
-                else if (string.IsNullOrEmpty(error))
-                {
-                    Log.Error(
-                        "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
-                        GetToolType(),
-                        nameof(VerifyMedia),
-                        exitCode,
-                        fileName
-                    );
-                }
-                else
-                {
-                    Log.Error(
-                        "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {Error} : {FileName}",
-                        GetToolType(),
-                        nameof(VerifyMedia),
-                        exitCode,
-                        error,
-                        fileName
-                    );
-                }
+                _ = LogFailedExecution(
+                    exitCode,
+                    CleanForLog(string.Join(" | ", classifier.Errors)),
+                    fileName,
+                    nameof(VerifyMedia)
+                );
             }
             return verifyResult;
         }
