@@ -123,7 +123,7 @@ class InjectorTests(unittest.TestCase):
 
     def test_unknown_argument_is_refused_before_any_write(self) -> None:
         for tool in INJECTORS:
-            for extra in (["--bogus"], ["out.hevc", "-x"]):
+            for extra in (["--bogus"], ["out.hevc", "-x"], ["-1"], ["-1", "out.hevc"]):
                 with self.subTest(tool=tool, extra=extra), tempfile.TemporaryDirectory() as d:
                     src = Path(d) / "in.hevc"
                     src.write_bytes(b"\x00\x00\x00\x01\x40\x01")

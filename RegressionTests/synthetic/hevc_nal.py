@@ -113,6 +113,9 @@ def run_injector(prog: str, description: str, inject: Callable[[bytes], bytes], 
     signal.signal(signal.SIGTERM, on_sigterm)
     try:
         args, extra = ap.parse_known_args()
+        argv = sys.argv[1:]
+        before_end = argv[: argv.index("--")] if "--" in argv else argv
+        extra += [a for a in before_end if a.startswith("-") and a not in extra]
         if extra:
             ap.error(f"unrecognized arguments: {' '.join(extra)}")
         missing = [name for name in ("input", "output") if getattr(args, name) is None]
