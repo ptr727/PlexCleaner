@@ -1,7 +1,7 @@
 # Linter-only configuration for the RegressionTests Python utilities.
 #
 # The scripts are stdlib-only, so this file carries only the ruff and mypy config.
-# README.md "Python tooling" gives the commands, which run the latest tools as the VS Code tasks and CI do.
+# README.md "Python tooling" gives the commands, which the VS Code tasks and the commit hook run.
 
 [tool.ruff]
 target-version = "py313"
