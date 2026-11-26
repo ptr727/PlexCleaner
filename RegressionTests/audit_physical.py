@@ -19,6 +19,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from corpus_common import corpus_dir, error_shape, find_run, parse_log, scratch_dir, stem_of
+from interrupts import atomic_write_text, run_main
 
 
 def shapes_of(errors: Iterable[str]) -> list[str]:
@@ -87,7 +88,9 @@ def main() -> None:
         total_src += len(src)
         total_hit += len(src & clip)
 
-    (reduced / "catalog.json").write_text(json.dumps(collection, indent=2, ensure_ascii=False))
+    atomic_write_text(
+        reduced / "catalog.json", json.dumps(collection, indent=2, ensure_ascii=False)
+    )
     with_src = sum(1 for e in manifest if e["source_error_shapes"])
     print(f"\naudited {audited} cut clips ({with_src} files have source error shapes at all)")
     print(f"files with physical-shape gaps: {gaps}")
@@ -106,4 +109,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

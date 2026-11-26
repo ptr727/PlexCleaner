@@ -20,6 +20,7 @@ import subprocess
 from pathlib import Path
 
 from corpus_common import DECODE_SIGNATURES, make_head_clip, scratch_dir, src_dir
+from interrupts import atomic_write_text, run_child, run_main, stop_child
 
 IMAGE = "docker.io/ptr727/plexcleaner:develop"
 
@@ -34,14 +35,13 @@ TIME_RE = re.compile(r"time=(\d+):(\d\d):(\d\d(?:\.\d+)?)")
 
 
 def sh(cmd: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    return run_child(
         cmd,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
         errors="replace",
-        check=False,
     )
 
 
@@ -129,14 +129,17 @@ def full_decode_locate(src: Path, needles: list[str]) -> float | None:
     last_t = 0.0
     hit: float | None = None
     assert proc.stderr is not None
-    for raw in proc.stderr:
-        for chunk in raw.replace("\r", "\n").split("\n"):
-            tm = TIME_RE.search(chunk)
-            if tm:
-                last_t = int(tm.group(1)) * 3600 + int(tm.group(2)) * 60 + float(tm.group(3))
-            if hit is None and any(n.lower() in chunk.lower() for n in needles):
-                hit = last_t
-    proc.wait()
+    try:
+        for raw in proc.stderr:
+            for chunk in raw.replace("\r", "\n").split("\n"):
+                tm = TIME_RE.search(chunk)
+                if tm:
+                    last_t = int(tm.group(1)) * 3600 + int(tm.group(2)) * 60 + float(tm.group(3))
+                if hit is None and any(n.lower() in chunk.lower() for n in needles):
+                    hit = last_t
+        proc.wait()
+    finally:
+        stop_child(proc)
     return hit
 
 
@@ -164,7 +167,7 @@ def write_region(rules_path: Path, name: str, start: int, end: int, note: str) -
     data = json.loads(rules_path.read_text()) if rules_path.exists() else {}
     data.setdefault("schema", 1)  # keep the file self-describing, matching the shipped example
     data.setdefault("located", {})[name] = {"start": start, "end": end, "note": note}
-    rules_path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    atomic_write_text(rules_path, json.dumps(data, indent=2, ensure_ascii=False))
 
 
 def main() -> None:
@@ -238,4 +241,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

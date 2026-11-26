@@ -26,6 +26,7 @@ from corpus_common import (
     state_flags,
     stem_of,
 )
+from interrupts import atomic_write_text, run_main
 
 
 def build(run):
@@ -89,7 +90,7 @@ def main():
 
     run = find_run(args.run)
     catalog = build(run)
-    out.write_text(json.dumps(catalog, indent=2, ensure_ascii=False))
+    atomic_write_text(out, json.dumps(catalog, indent=2, ensure_ascii=False))
 
     print(f"run={run.name} app={catalog['application']} files={catalog['file_count']}")
     print(f"catalog -> {out}")
@@ -100,4 +101,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

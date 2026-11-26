@@ -18,6 +18,8 @@ import re
 import sys
 from pathlib import Path
 
+from interrupts import run_child
+
 
 def env_path(name: str) -> Path:
     """Return the directory a required REGRESSION_* environment variable names, or exit naming it."""
@@ -175,9 +177,8 @@ def strip_language_ietf(path):
     path = Path(path)
     try:
         ident = json.loads(
-            _sp.run(
+            run_child(
                 ["mkvmerge", "-J", str(path)],
-                check=False,
                 stdin=_sp.DEVNULL,
                 capture_output=True,
                 text=True,
@@ -191,7 +192,7 @@ def strip_language_ietf(path):
     cmd = ["mkvpropedit", str(path)]
     for i in range(1, ntracks + 1):
         cmd += ["--edit", f"track:@{i}", "--delete", "language-ietf"]
-    r = _sp.run(cmd, check=False, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    r = run_child(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
     return r.returncode == 0
 
 
@@ -206,9 +207,8 @@ def set_language_ietf(path):
     path = Path(path)
     try:
         ident = json.loads(
-            _sp.run(
+            run_child(
                 ["mkvmerge", "-J", str(path)],
-                check=False,
                 stdin=_sp.DEVNULL,
                 capture_output=True,
                 text=True,
@@ -223,7 +223,7 @@ def set_language_ietf(path):
     for i, t in enumerate(tracks, start=1):
         lang = t.get("properties", {}).get("language", "und") or "und"
         cmd += ["--edit", f"track:@{i}", "--set", f"language-ietf={lang}"]
-    r = _sp.run(cmd, check=False, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    r = run_child(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
     return r.returncode == 0
 
 
@@ -251,7 +251,7 @@ def make_head_clip(src, out, seconds, run=None, cutter="mkvmerge"):
     def _run(cmd):
         if run:
             return run(cmd)
-        return _sp.run(cmd, check=False, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+        return run_child(cmd, stdin=_sp.DEVNULL, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
 
     if cutter == "mkvmerge" and src.suffix.lower() == ".mkv":
         _run(["mkvmerge", "-o", str(out), "--split", f"parts:00:00:00-{hms(seconds)}", str(src)])
