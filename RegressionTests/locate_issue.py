@@ -188,8 +188,6 @@ def main() -> None:
 
     cat = json.loads(Path(args.catalog).read_text())
     source_dir = src_dir()
-    work = scratch_dir() / "locate"
-    work.mkdir(parents=True, exist_ok=True)
 
     if args.files:
         targets = [e for e in cat["files"] if e["file"] in args.files]
@@ -215,6 +213,8 @@ def main() -> None:
                 write_region(rules_path, name, start, end, f"decode signature at ~{int(t)}s")
         return
 
+    work = scratch_dir() / "locate"
+    work.mkdir(parents=True, exist_ok=True)
     print(f"{'FILE':52} {'SUBTYPES':30} {'HEAD':>6}  RESULT")
     for e in targets:
         name = e["file"]
