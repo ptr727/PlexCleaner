@@ -16,10 +16,7 @@ Standalone use::
 Or import ``build_cc_sei()`` / ``inject(hevc_bytes) -> hevc_bytes`` from another script.
 """
 
-import sys
-from pathlib import Path
-
-from hevc_nal import insert_before_vcl, wrap_sei_t35
+from hevc_nal import insert_before_vcl, run_injector, wrap_sei_t35
 
 
 def build_cc_sei(cc_count: int = 1) -> bytes:
@@ -45,10 +42,9 @@ def inject(data: bytes) -> bytes:
 
 
 def main() -> None:
-    if len(sys.argv) != 3:
-        sys.exit("usage: inject_cc_sei.py <in.hevc> <out.hevc>")
-    Path(sys.argv[2]).write_bytes(inject(Path(sys.argv[1]).read_bytes()))
-    print(f"injected CC SEI before each VCL NAL -> {sys.argv[2]}")
+    run_injector(
+        "inject_cc_sei.py", "Inject CEA-608 closed-caption SEI into an HEVC stream.", inject, "CC"
+    )
 
 
 if __name__ == "__main__":
