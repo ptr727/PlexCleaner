@@ -95,28 +95,18 @@ class ToolSignalTests(unittest.TestCase):
         self.addCleanup(self._dir.cleanup)
 
     def write_stub(self, name: str, create_last_argument: bool = False) -> None:
+        # Leaves a marker only where it is sent SIGTERM, since SIGKILL cannot run the trap.
         stub = self.stubs / name
         create = 'touch "${@: -1}"\n' if create_last_argument else ""
         stub.write_text(
             "#!/bin/bash\n"
             + create
+            + f"sleep {STUB_SLEEP} </dev/null >/dev/null 2>&1 &\n"
+            + "Sleeper=$!\n"
+            + 'trap \'echo TERM > "$STUB_MARKER"; kill "$Sleeper"; exit 0\' TERM\n'
             + 'echo $$ > "$STUB_PIDFILE.tmp"\n'
             + 'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
-            + f"exec sleep {STUB_SLEEP} </dev/null >/dev/null 2>&1\n"
-        )
-        stub.chmod(0o755)
-
-    def write_term_stub(self, name: str) -> None:
-        # Leaves a marker only where it is sent SIGTERM, since SIGKILL cannot run the trap.
-        stub = self.stubs / name
-        stub.write_text(
-            "#!/bin/bash\n"
-            f"sleep {STUB_SLEEP} </dev/null >/dev/null 2>&1 &\n"
-            "Sleeper=$!\n"
-            'trap \'echo TERM > "$STUB_MARKER"; kill "$Sleeper"; exit 0\' TERM\n'
-            'echo $$ > "$STUB_PIDFILE.tmp"\n'
-            'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
-            'wait "$Sleeper"\n'
+            + 'wait "$Sleeper"\n'
         )
         stub.chmod(0o755)
 
@@ -201,7 +191,7 @@ class ToolSignalTests(unittest.TestCase):
         self.write_stub("docker")
         env = self.env() | {"REGRESSION_CORPUS_DIR": str(corpus)}
         args = [str(ROOT / "locate_issue.py"), "--catalog", str(catalog), "--full"]
-        self.check([*args, "--write-rules", str(rules)], env, "locate_issue.py")
+        self.check([*args, "--write-rules", str(rules)], env, "locate_issue.py", expect_term=True)
         self.assertFalse(rules.exists())
         self.assertEqual(sorted(p.name for p in self.dir.iterdir() if p.suffix == ".tmp"), [])
 
@@ -213,7 +203,7 @@ class ToolSignalTests(unittest.TestCase):
         catalog = self.dir / "catalog.json"
         entry = {"file": "a.mp4", "decode_subtypes": [], "detections": [], "state": []}
         catalog.write_text(json.dumps({"files": [entry]}))
-        self.write_term_stub("ffmpeg")
+        self.write_stub("ffmpeg")
         env = self.env() | {
             "REGRESSION_CORPUS_DIR": str(corpus),
             "REGRESSION_SCRATCH_DIR": str(scratch),
@@ -233,7 +223,7 @@ class ToolSignalTests(unittest.TestCase):
         # The stub creates the partial file the build writes, so the signal lands with it on disk.
         self.write_stub("ffmpeg", create_last_argument=True)
         args = [str(ROOT / "synthetic" / "synthesize.py"), "container-mp4", "--out", str(out)]
-        self.check(args, self.env(), "synthesize.py")
+        self.check(args, self.env(), "synthesize.py", expect_term=True)
         self.assertEqual(sorted(p.name for p in self.dir.iterdir() if "out" in p.name), [])
 
 
