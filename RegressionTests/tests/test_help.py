@@ -237,7 +237,7 @@ class HarnessSignalTests(unittest.TestCase):
                     stubs,
                     "docker",
                     '[[ "$1" == pull ]] || exit 0\necho $$ > "$STUB_PIDFILE.tmp"\n'
-                    'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\nexec sleep 30\n',
+                    'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\nexec sleep 120 </dev/null >/dev/null 2>&1\n',
                 )
                 write_stub(
                     stubs,
@@ -265,6 +265,8 @@ class HarnessSignalTests(unittest.TestCase):
                     child = int(pidfile.read_text())
                     proc.send_signal(sig)
                     _, err = proc.communicate(timeout=30)
+                    with self.assertRaises(ProcessLookupError):
+                        os.kill(child, 0)
                 finally:
                     try:
                         os.killpg(proc.pid, signal.SIGKILL)
@@ -273,8 +275,6 @@ class HarnessSignalTests(unittest.TestCase):
                     proc.wait()
                 self.assertEqual(proc.returncode, status, err)
                 self.assertIn(f"interrupted by {name}", err)
-                with self.assertRaises(ProcessLookupError):
-                    os.kill(child, 0)
 
 
 @unittest.skipIf(sys.platform == "win32" or shutil.which("bash") is None, "needs Linux bash")
