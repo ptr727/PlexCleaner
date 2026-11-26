@@ -63,7 +63,7 @@ E.g. `ccextractor -12 -out=report filename`
 
 Using MKV containers directly as input produces unreliable results in testing, either no output or false negatives.
 
-CCExtractor does support input piping, but it is unreliable with broken pipes in testing. It also requires a temporary TS file on disk, used as standard input.
+CCExtractor does support input piping, but it is unreliable with broken pipes in testing. So a temporary TS file on disk is used as standard input.
 
 Even in TS format on disk, it is very sensitive to stream anomalies, e.g. `Error: Broken AVC stream - forbidden_zero_bit not zero ...`, making it unreliable.
 
