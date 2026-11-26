@@ -45,7 +45,7 @@ class HelpTests(unittest.TestCase):
                 self.assertIn("usage:", proc.stdout)
 
     def test_abbreviated_option_is_refused(self) -> None:
-        for tool in TOOLS:
+        for tool in [*TOOLS, "check_results.py", "synthetic/synthesize.py"]:
             with self.subTest(tool=tool):
                 proc = subprocess.run(
                     [sys.executable, str(ROOT / tool), "--hel"],

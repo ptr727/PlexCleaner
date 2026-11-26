@@ -168,6 +168,29 @@ CheckMountpoint() {
     fi
 }
 
+# RunChild Command...
+# Run a long external command in the background and wait for it, so the INT and TERM traps can stop it.
+RunChild() {
+    local Pid Status=0
+    "$@" <&0 &
+    Pid=$!
+    pids=("$Pid")
+    wait "$Pid" || Status=$?
+    pids=()
+    return "$Status"
+}
+
+# StopChildren Status Signal
+# Stop the running child, then exit with the signal's status, which runs the EXIT trap's dataset restore.
+StopChildren() {
+    if ((${#pids[@]})); then
+        kill -TERM "${pids[@]}" 2>/dev/null || :
+        wait "${pids[@]}" || :
+    fi
+    echo "regression-test.sh: interrupted by $2" >&2
+    exit "$1"
+}
+
 # Provision the test dataset as a zero-copy clone of the newest corpus snapshot.
 # Where the clone already originates from the newest snapshot, the run rolls it back to its @backup.
 # A rollback works while media containers or SMB clients hold the mount, where a destroy fails.
@@ -198,10 +221,14 @@ ProvisionDataset() {
     CheckMountpoint
 
     # Clean up retired clones on a best-effort basis, which succeeds once the holders have restarted or closed.
-    local Retired
+    local Retired RetiredOrigin
     for Retired in $(zfs list -H -o name 2>/dev/null || true); do
         [[ "$Retired" == "$TestDataset-retired-"* ]] || continue
-        [[ "$(zfs get -H -o value origin "$Retired" 2>/dev/null)" == "$CorpusDataset@"* ]] || continue
+        RetiredOrigin="$(zfs get -H -o value origin "$Retired" 2>/dev/null || true)"
+        if [[ "$RetiredOrigin" != "$CorpusDataset@"* ]]; then
+            echo "Skipping $Retired, origin '$RetiredOrigin' is not a snapshot of $CorpusDataset, so remove it by hand if it is stale" >&2
+            continue
+        fi
         zfs destroy -r "$Retired" 2>/dev/null &&
             echo "Destroyed retired clone $Retired" ||
             echo "Retired clone $Retired still held; will retry next run" >&2
@@ -271,7 +298,7 @@ RunProcess() {
     echo "Running PlexCleaner process on $ImageRef ($Mode)"
     local -a Launch
     SetLaunch "$ConfigDir/coverage_process.xml"
-    docker run \
+    RunChild docker run \
         "${DockerCommon[@]}" \
         --volume "$HostMedia:$MediaPath:rw" \
         --volume "$HostConfig:$ConfigPath:rw" \
@@ -302,14 +329,14 @@ BuildPlugin() {
 
     # Clone once, then fetch tags and check out the release tag matching the image version
     if [[ ! -d "$PluginBuildDir/.git" ]]; then
-        git clone "$PluginRepo" "$PluginBuildDir" || return 1
+        RunChild git clone "$PluginRepo" "$PluginBuildDir" || return 1
     fi
-    git -C "$PluginBuildDir" fetch --force --tags origin || return 1
-    git -C "$PluginBuildDir" checkout --force "$Version" || return 1
+    RunChild git -C "$PluginBuildDir" fetch --force --tags origin || return 1
+    RunChild git -C "$PluginBuildDir" checkout --force "$Version" || return 1
 
     # Build the plugin (Debug matches the image binary under /PlexCleaner/Debug)
     # The path map gives its PDB the image build's /Builder source root, so a coverage report names one tree.
-    dotnet build "$PluginBuildDir/$Project" --configuration Debug "-p:PathMap=$PluginBuildDir=/Builder" || return 1
+    RunChild dotnet build "$PluginBuildDir/$Project" --configuration Debug "-p:PathMap=$PluginBuildDir=/Builder" || return 1
 
     # Copy the built assembly into the version directory for the custom run
     local Built
@@ -335,7 +362,7 @@ RunPlugin() {
     echo "Running PlexCleaner custom plugin $Dll on $ImageRef"
     local -a Launch
     SetLaunch "$ConfigDir/coverage_custom_${Dll%.dll}.xml"
-    docker run \
+    RunChild docker run \
         "${DockerCommon[@]}" \
         --volume "$HostMedia:$MediaPath:rw" \
         --volume "$HostConfig:$ConfigPath:rw" \
@@ -355,7 +382,7 @@ RunDefaultSettings() {
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
     echo "Running PlexCleaner defaultsettings on $ImageRef"
-    docker run \
+    RunChild docker run \
         "${DockerCommon[@]}" \
         --volume "$HostConfig:$ConfigPath:rw" \
         "$ImageRef" \
@@ -370,7 +397,7 @@ RunCreateSchema() {
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
     echo "Running PlexCleaner createschema on $ImageRef"
-    docker run \
+    RunChild docker run \
         "${DockerCommon[@]}" \
         --volume "$HostConfig:$ConfigPath:rw" \
         "$ImageRef" \
@@ -381,7 +408,7 @@ RunCreateSchema() {
 # RunRegressionTests
 RunRegressionTests() {
     if [[ "$Channel" != "local" ]]; then
-        docker pull "$ImageRef"
+        RunChild docker pull "$ImageRef"
     fi
 
     # Name the results directory after the image build version (used for source sync too)
@@ -495,6 +522,10 @@ if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet
     echo "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'" >&2
     exit 2
 fi
+
+pids=()
+trap 'StopChildren 130 SIGINT' INT
+trap 'StopChildren 143 SIGTERM' TERM
 
 if [[ "$(id -u)" -ne 0 ]]; then
     echo "This script must be run as root" >&2
