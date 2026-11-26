@@ -1,6 +1,8 @@
 """Tests that the regression harness script answers --help, validates its inputs, and stops on a signal."""
 
+import os
 import shutil
+import signal
 import subprocess
 import tempfile
 import unittest
@@ -8,6 +10,7 @@ from pathlib import Path
 
 from script_helpers import (
     NEEDS_BASH,
+    PIDFILE_PUBLISH,
     PIDFILE_STUB,
     interrupt,
     run_script,
@@ -69,6 +72,16 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 64)
         self.assertIn("REGRESSION_THREAD_COUNT", proc.stderr)
 
+    def test_unknown_plugin_is_refused_before_any_host_lookup(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            stubs = Path(d)
+            write_stub(stubs, "id", "exit 1\n")
+            write_stub(stubs, "getent", "exit 2\n")
+            env = with_stubs(clean_env() | HARNESS_ENV, stubs)
+            proc = self.run_harness("quick", "develop", "full", "bogus", env=env)
+        self.assertEqual(proc.returncode, 64, proc.stderr)
+        self.assertIn("'bogus'", proc.stderr)
+
 
 @NEEDS_BASH
 class HarnessSignalTests(unittest.TestCase):
@@ -98,47 +111,67 @@ class HarnessSignalTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
     def test_signal_restores_a_provisioned_dataset(self) -> None:
-        for sig in signals():
-            with self.subTest(signal=sig.name), tempfile.TemporaryDirectory() as d:
-                stubs, env = self.stub_host(d)
-                log = Path(d) / "zfs.log"
-                log.write_text("")
-                config = Path(d) / "config"
-                config.mkdir()
-                (config / "PlexCleaner.json").write_text("{}")
-                env |= {
-                    "REGRESSION_HOST_CONFIG": str(config),
-                    "REGRESSION_PLUGIN_BUILD_DIR": str(Path(d) / "build"),
-                    "STUB_LOG": str(log),
-                }
-                write_stub(
-                    stubs,
-                    "docker",
-                    '[[ "$1 $2" == "image inspect" ]] && echo 1.2.3\n'
-                    '[[ " $* " == *" process "* ]] || exit 0\n'
-                    'cp "$STUB_LOG" "$STUB_LOG.atstart"\n' + PIDFILE_STUB,
-                )
-                write_stub(stubs, "git", "exit 1\n")
-                write_stub(stubs, "chown", "exit 0\n")
-                write_stub(
-                    stubs,
-                    "zfs",
-                    'echo "$*" >> "$STUB_LOG"\ncase "$*" in\n'
-                    '"list -H -t snapshot -o name -s creation pool/corpus") echo pool/corpus@s2 ;;\n'
-                    '"get -H -o value origin pool/test") echo pool/corpus@s2 ;;\n'
-                    '"get -H -o value mountpoint pool/test") echo /m/test ;;\n'
-                    "esac\n",
-                )
-                interrupt(
-                    self,
-                    ["bash", str(HARNESS), "quick", "develop"],
-                    env,
-                    Path(d) / "child.pid",
-                    sig,
-                )
-                before = len((log.parent / "zfs.log.atstart").read_text().splitlines())
-                after = log.read_text().splitlines()[before:]
-                self.assertIn("rollback pool/test@backup", after)
+        for tty in (False, True):
+            for sig in signals():
+                with self.subTest(tty=tty, signal=sig.name), tempfile.TemporaryDirectory() as d:
+                    self.restore_after_signal(Path(d), sig, tty)
+
+    def restore_after_signal(self, d: Path, sig: signal.Signals, tty: bool) -> None:
+        stubs, env = self.stub_host(str(d))
+        log = Path(d) / "zfs.log"
+        log.write_text("")
+        config = Path(d) / "config"
+        config.mkdir()
+        (config / "PlexCleaner.json").write_text("{}")
+        env |= {
+            "REGRESSION_HOST_CONFIG": str(config),
+            "REGRESSION_PLUGIN_BUILD_DIR": str(Path(d) / "build"),
+            "STUB_LOG": str(log),
+        }
+        write_stub(
+            stubs,
+            "docker",
+            '[[ "$1 $2" == "image inspect" ]] && echo 1.2.3\n'
+            'if [[ "$1" == kill ]]; then echo "docker $*" >> "$STUB_LOG"; touch "$STUB_LOG.stopped"; fi\n'
+            '[[ " $* " == *" process "* ]] || exit 0\n'
+            'echo "docker $*" >> "$STUB_LOG"\n'
+            'cp "$STUB_LOG" "$STUB_LOG.atstart"\n'
+            "trap '' TERM\n" + PIDFILE_PUBLISH + "for ((i = 0; i < 1200; i++)); do\n"
+            '    [[ -e "$STUB_LOG.stopped" ]] && exit 0\n'
+            "    sleep 0.1\n"
+            "done\n",
+        )
+        write_stub(stubs, "git", "exit 1\n")
+        write_stub(stubs, "chown", "exit 0\n")
+        write_stub(
+            stubs,
+            "zfs",
+            'echo "$*" >> "$STUB_LOG"\ncase "$*" in\n'
+            '"list -H -t snapshot -o name -s creation pool/corpus") echo pool/corpus@s2 ;;\n'
+            '"get -H -o value origin pool/test") echo pool/corpus@s2 ;;\n'
+            '"get -H -o value mountpoint pool/test") echo /m/test ;;\n'
+            "esac\n",
+        )
+        controller, terminal = os.openpty() if tty else (-1, subprocess.DEVNULL)
+        try:
+            interrupt(
+                self,
+                ["bash", str(HARNESS), "quick", "develop"],
+                env,
+                Path(d) / "child.pid",
+                sig,
+                stdin=terminal,
+            )
+        finally:
+            if tty:
+                os.close(controller)
+                os.close(terminal)
+        lines = log.read_text().splitlines()
+        run = len((log.parent / "zfs.log.atstart").read_text().splitlines()) - 1
+        self.assertEqual(" -it " in lines[run], tty, lines[run])
+        after = lines[run + 1 :]
+        self.assertEqual(after[0], "docker kill --signal TERM PlexCleaner-RegressionTest")
+        self.assertIn("rollback pool/test@backup", after[1:])
 
 
 @NEEDS_BASH

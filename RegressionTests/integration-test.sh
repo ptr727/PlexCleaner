@@ -68,10 +68,12 @@ case "${1-}" in
     usage
     exit 0
     ;;
--*)
-    Refuse "integration-test.sh: unknown option: $1, see --help"
-    ;;
 esac
+for arg in "$@"; do
+    if [[ "$arg" == -* ]]; then
+        Refuse "integration-test.sh: unknown option: $arg, see --help"
+    fi
+done
 if [[ $# -gt 2 ]]; then
     Refuse "integration-test.sh: unknown argument: $3, see --help"
 fi
@@ -80,6 +82,9 @@ if [[ $# -ne 2 ]]; then
 fi
 image="$1"
 work="$2"
+if [[ -e "$work" ]]; then
+    Refuse "integration-test.sh: $work exists, give a new directory"
+fi
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Pinned, so the expected results do not move with the upstream repository.
@@ -96,9 +101,6 @@ if [[ -z "$tool_dll" ]]; then
     exit 1
 fi
 
-if [[ -e "$work" ]]; then
-    Refuse "integration-test.sh: $work exists, give a new directory"
-fi
 mkdir -p "$work/media" "$work/out"
 work="$(cd "$work" && pwd)"
 
