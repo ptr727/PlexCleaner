@@ -11,14 +11,13 @@ Refuse() {
 }
 
 pids=()
-n=0
 RunChild() {
-    local i=$n Status=0
+    local Pid Status=0
     "$@" <&0 &
-    pids[i]=$!
-    n=$((n + 1))
-    wait "${pids[i]}" || Status=$?
-    unset 'pids[i]'
+    Pid=$!
+    pids=("$Pid")
+    wait "$Pid" || Status=$?
+    pids=()
     return "$Status"
 }
 
@@ -33,16 +32,8 @@ OnExit() {
 }
 
 OnSignal() {
-    local Tries=0
     if ((${#pids[@]})); then
         kill -s TERM "${pids[@]}" 2>/dev/null || :
-        while kill -0 "${pids[@]}" 2>/dev/null && ((Tries < 100)); do
-            sleep 0.1 || :
-            Tries=$((Tries + 1))
-        done
-        if kill -0 "${pids[@]}" 2>/dev/null; then
-            kill -s KILL "${pids[@]}" 2>/dev/null || :
-        fi
         wait "${pids[@]}" || :
     fi
     echo "test.sh: interrupted by SIG$1" >&2

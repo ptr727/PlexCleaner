@@ -49,7 +49,9 @@ set -x
 # https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
 echo "Installing VS debug tools to /vsdbg"
-Script="$(wget -q -O - https://aka.ms/getvsdbgsh)"
+set +x
+Script="$(wget -nv -O - https://aka.ms/getvsdbgsh)"
+set -x
 bash -s -- -v latest -l /vsdbg <<<"$Script"
 
 # Get the RID for this OS using the same technique as used by getvsdbg.sh get_dotnet_runtime_id()

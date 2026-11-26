@@ -2,14 +2,12 @@
 
 import os
 import shutil
-import signal
 import subprocess
-import sys
 import tempfile
-import time
 import unittest
 from pathlib import Path
 
+from script_helpers import NEEDS_BASH, PIDFILE_STUB, interrupt, signals, write_stub
 from test_help import ROOT, clean_env
 
 HARNESS = ROOT / "regression-test.sh"
@@ -34,15 +32,7 @@ HARNESS_ENV = {
 }
 
 
-def write_stub(directory: Path, name: str, body: str) -> None:
-    stub = directory / name
-    stub.write_text("#!/bin/bash\n" + body)
-    stub.chmod(0o755)
-
-
-@unittest.skipUnless(
-    sys.platform.startswith("linux") and shutil.which("bash") is not None, "needs Linux with bash"
-)
+@NEEDS_BASH
 class HarnessTests(unittest.TestCase):
     def run_harness(self, *args: str, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -79,66 +69,81 @@ class HarnessTests(unittest.TestCase):
         self.assertIn("REGRESSION_THREAD_COUNT", proc.stderr)
 
 
-@unittest.skipUnless(
-    sys.platform.startswith("linux") and shutil.which("bash") is not None, "needs Linux with bash"
-)
+@NEEDS_BASH
 class HarnessSignalTests(unittest.TestCase):
+    def stub_host(self, d: str) -> tuple[Path, dict[str, str]]:
+        stubs = Path(d) / "bin"
+        stubs.mkdir()
+        write_stub(
+            stubs,
+            "id",
+            'case "$*" in "-u") echo 0 ;; "-u nonroot") echo 1001 ;; *) exit 1 ;; esac\n',
+        )
+        write_stub(stubs, "getent", "echo users:x:100:\n")
+        env = clean_env() | HARNESS_ENV
+        env["PATH"] = f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}"
+        env["STUB_PIDFILE"] = str(Path(d) / "child.pid")
+        return stubs, env
+
     def test_signal_stops_the_running_child(self) -> None:
-        cases = [(signal.SIGTERM, "SIGTERM")]
-        if signal.getsignal(signal.SIGINT) is not signal.SIG_IGN:
-            cases.append((signal.SIGINT, "SIGINT"))
-        for sig, name in cases:
-            with self.subTest(signal=name), tempfile.TemporaryDirectory() as d:
-                stubs = Path(d) / "bin"
-                stubs.mkdir()
-                pidfile = Path(d) / "child.pid"
+        for sig in signals():
+            with self.subTest(signal=sig.name), tempfile.TemporaryDirectory() as d:
+                stubs, env = self.stub_host(d)
+                write_stub(stubs, "docker", '[[ "$1" == pull ]] || exit 0\n' + PIDFILE_STUB)
+                interrupt(
+                    self,
+                    ["bash", str(HARNESS), "quick", "develop"],
+                    env,
+                    Path(d) / "child.pid",
+                    sig,
+                )
+
+    @unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
+    def test_signal_restores_a_provisioned_dataset(self) -> None:
+        for sig in signals():
+            with self.subTest(signal=sig.name), tempfile.TemporaryDirectory() as d:
+                stubs, env = self.stub_host(d)
+                log = Path(d) / "zfs.log"
+                log.write_text("")
+                config = Path(d) / "config"
+                config.mkdir()
+                (config / "PlexCleaner.json").write_text("{}")
+                env |= {
+                    "REGRESSION_HOST_CONFIG": str(config),
+                    "REGRESSION_PLUGIN_BUILD_DIR": str(Path(d) / "build"),
+                    "STUB_LOG": str(log),
+                }
                 write_stub(
                     stubs,
                     "docker",
-                    '[[ "$1" == pull ]] || exit 0\necho $$ > "$STUB_PIDFILE.tmp"\n'
-                    'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\nexec sleep 120 </dev/null >/dev/null 2>&1\n',
+                    '[[ "$1 $2" == "image inspect" ]] && echo 1.2.3\n'
+                    '[[ " $* " == *" process "* ]] || exit 0\n'
+                    'cp "$STUB_LOG" "$STUB_LOG.atstart"\n' + PIDFILE_STUB,
                 )
+                write_stub(stubs, "git", "exit 1\n")
+                write_stub(stubs, "chown", "exit 0\n")
                 write_stub(
                     stubs,
-                    "id",
-                    'case "$*" in "-u") echo 0 ;; "-u nonroot") echo 1001 ;; *) exit 1 ;; esac\n',
+                    "zfs",
+                    'echo "$*" >> "$STUB_LOG"\ncase "$*" in\n'
+                    '"list -H -t snapshot -o name -s creation pool/corpus") echo pool/corpus@s2 ;;\n'
+                    '"get -H -o value origin pool/test") echo pool/corpus@s2 ;;\n'
+                    '"get -H -o value mountpoint pool/test") echo /m/test ;;\n'
+                    "esac\n",
                 )
-                write_stub(stubs, "getent", "echo users:x:100:\n")
-                env = clean_env() | HARNESS_ENV
-                env["PATH"] = f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}"
-                env["STUB_PIDFILE"] = str(pidfile)
-                proc = subprocess.Popen(
+                interrupt(
+                    self,
                     ["bash", str(HARNESS), "quick", "develop"],
-                    env=env,
-                    stdin=subprocess.DEVNULL,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    start_new_session=True,
+                    env,
+                    Path(d) / "child.pid",
+                    sig,
                 )
-                try:
-                    deadline = time.monotonic() + 30
-                    while not pidfile.exists() and time.monotonic() < deadline:
-                        time.sleep(0.05)
-                    self.assertTrue(pidfile.exists(), "the harness never started its child")
-                    child = int(pidfile.read_text())
-                    proc.send_signal(sig)
-                    _, err = proc.communicate(timeout=30)
-                    with self.assertRaises(ProcessLookupError):
-                        os.kill(child, 0)
-                finally:
-                    try:
-                        os.killpg(proc.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-                    proc.wait()
-                self.assertEqual(proc.returncode, -sig, err)
-                self.assertIn(f"interrupted by {name}", err)
+                before = len((log.parent / "zfs.log.atstart").read_text().splitlines())
+                after = log.read_text().splitlines()[before:]
+                self.assertIn("rollback pool/test@backup", after)
 
 
-@unittest.skipUnless(
-    sys.platform.startswith("linux") and shutil.which("bash") is not None, "needs Linux with bash"
-)
+@NEEDS_BASH
 class ProvisionDatasetTests(unittest.TestCase):
     ZFS = """echo "$*" >> "$STUB_LOG"
 case "$*" in
