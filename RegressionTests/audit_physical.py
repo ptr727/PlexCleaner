@@ -15,10 +15,14 @@ Kept-full and verbatim entries are equal by construction (the shipped file IS th
 
 import argparse
 import json
+import sys
 from collections.abc import Iterable
 from pathlib import Path
 
 from corpus_common import corpus_dir, error_shape, find_run, parse_log, scratch_dir, stem_of
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "synthetic"))
+
 from interrupts import atomic_write_text, run_main
 
 

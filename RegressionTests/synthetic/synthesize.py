@@ -29,18 +29,13 @@ Targeting notes - the PlexCleaner behaviors these builders exploit (see the READ
 import argparse
 import os
 import subprocess
-import sys
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
-# The shared interrupt helper sits beside the tools, one directory up from this one.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from hevc_nal import insert_before_vcl
 from inject_cc_sei import build_cc_sei
 from inject_hdr10plus_sei import build_hdr10plus_sei
-
 from interrupts import run_child, run_main
 
 FFMPEG = "ffmpeg"

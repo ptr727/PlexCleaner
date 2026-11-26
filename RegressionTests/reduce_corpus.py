@@ -58,6 +58,9 @@ from corpus_common import (
     stem_of,
     strip_language_ietf,
 )
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "synthetic"))
+
 from interrupts import atomic_write_text, run_child, run_main
 
 IMAGE = "docker.io/ptr727/plexcleaner:develop"

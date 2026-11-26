@@ -17,9 +17,13 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 from corpus_common import DECODE_SIGNATURES, make_head_clip, scratch_dir, src_dir
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "synthetic"))
+
 from interrupts import atomic_write_text, run_child, run_main, stop_child
 
 IMAGE = "docker.io/ptr727/plexcleaner:develop"

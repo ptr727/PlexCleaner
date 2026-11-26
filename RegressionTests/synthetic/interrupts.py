@@ -37,7 +37,7 @@ def install_handler() -> None:
 
 def _reraise(signum: int) -> None:
     if sys.platform == "win32":
-        # os.kill ends a Windows process with the signal number as its status.
+        # On Windows, os.kill ends the process with the signal number as its status.
         sys.exit(130)
     for stream in (sys.stdout, sys.stderr):
         # The reader of a pipe may have gone with the same Ctrl-C.
@@ -99,6 +99,13 @@ def run_child(
     return subprocess.CompletedProcess(proc.args, proc.returncode, stdout, stderr)
 
 
+def _new_file_mode() -> int:
+    # The umask can only be read by setting it, so put it straight back.
+    mask = os.umask(0)
+    os.umask(mask)
+    return 0o666 & ~mask
+
+
 def atomic_write_bytes(path: Path, data: bytes) -> None:
     """Write data to a temporary file beside path, then rename it over path."""
     fd, name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
@@ -106,8 +113,8 @@ def atomic_write_bytes(path: Path, data: bytes) -> None:
     try:
         with os.fdopen(fd, "wb") as f:
             f.write(data)
-        # mkstemp creates the file private, so the target's own mode is kept where it exists.
-        temp.chmod(path.stat().st_mode & 0o7777 if path.exists() else 0o644)
+        # The temporary file is created private, so the target's own mode is kept where it exists.
+        temp.chmod(path.stat().st_mode & 0o7777 if path.exists() else _new_file_mode())
         os.replace(temp, path)
     except BaseException:
         temp.unlink(missing_ok=True)

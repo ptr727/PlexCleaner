@@ -15,6 +15,9 @@ from pathlib import Path
 from typing import Any
 
 from corpus_common import BEFORE_RE, LINE_FILE_RE, LINE_RE, state_flags
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "synthetic"))
+
 from interrupts import atomic_write_text, run_main
 
 Outcome = dict[str, Any]

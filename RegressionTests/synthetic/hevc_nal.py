@@ -12,9 +12,6 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-# The shared interrupt helper sits beside the tools, one directory up from this one.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from interrupts import atomic_write_bytes, run_main
 
 

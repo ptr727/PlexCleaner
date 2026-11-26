@@ -13,6 +13,7 @@ Usage: catalog_corpus.py [--run <version-dir>] [--out catalog.json]
 import argparse
 import json
 import os
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -26,6 +27,9 @@ from corpus_common import (
     state_flags,
     stem_of,
 )
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "synthetic"))
+
 from interrupts import atomic_write_text, run_main
 
 

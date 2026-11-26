@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -12,6 +13,8 @@ from pathlib import Path
 from unittest import mock
 
 from test_help import ROOT, clean_env
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "synthetic"))
 
 import interrupts
 
@@ -56,34 +59,19 @@ class ToolSignalTests(unittest.TestCase):
         self.dir = Path(self._dir.name)
         self.stubs = self.dir / "bin"
         self.stubs.mkdir()
-        self.pidfile = self.dir / "child.pid"
-        self.marker = self.dir / "term.marker"
         self.tmp = self.dir / "tmp"
         self.tmp.mkdir()
-        self.proc: subprocess.Popen[str] | None = None
         self.addCleanup(self._dir.cleanup)
-        self.addCleanup(self._kill_left_over)
 
-    def _kill_left_over(self) -> None:
-        if self.proc is not None:
-            try:
-                os.killpg(self.proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            self.proc.wait()
-        if self.pidfile.exists():
-            try:
-                os.kill(int(self.pidfile.read_text()), signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-
-    def write_stub(self, name: str) -> None:
+    def write_stub(self, name: str, create_last_argument: bool = False) -> None:
         stub = self.stubs / name
+        create = 'touch "${@: -1}"\n' if create_last_argument else ""
         stub.write_text(
             "#!/bin/bash\n"
-            'echo $$ > "$STUB_PIDFILE.tmp"\n'
-            'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
-            f"exec sleep {STUB_SLEEP} </dev/null >/dev/null 2>&1\n"
+            + create
+            + 'echo $$ > "$STUB_PIDFILE.tmp"\n'
+            + 'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
+            + f"exec sleep {STUB_SLEEP} </dev/null >/dev/null 2>&1\n"
         )
         stub.chmod(0o755)
 
@@ -104,15 +92,13 @@ class ToolSignalTests(unittest.TestCase):
     def env(self) -> dict[str, str]:
         return clean_env() | {
             "PATH": f"{self.stubs}{os.pathsep}{os.environ.get('PATH', '')}",
-            "STUB_PIDFILE": str(self.pidfile),
-            "STUB_MARKER": str(self.marker),
             "TMPDIR": str(self.tmp),
         }
 
     def interrupt(
-        self, args: list[str], env: dict[str, str], sig: signal.Signals
+        self, args: list[str], env: dict[str, str], sig: signal.Signals, pidfile: Path
     ) -> tuple[int, str]:
-        self.proc = subprocess.Popen(
+        proc = subprocess.Popen(
             [sys.executable, *args],
             env=env,
             stdin=subprocess.DEVNULL,
@@ -121,15 +107,27 @@ class ToolSignalTests(unittest.TestCase):
             text=True,
             start_new_session=True,
         )
-        deadline = time.monotonic() + 30
-        while not self.pidfile.exists() and time.monotonic() < deadline:
-            time.sleep(0.05)
-        self.assertTrue(self.pidfile.exists(), "the tool never started its child")
-        child = int(self.pidfile.read_text())
-        self.proc.send_signal(sig)
-        _, err = self.proc.communicate(timeout=30)
-        self.assertTrue(self.gone(child), f"the child {child} outlived the tool")
-        return self.proc.returncode, err
+        try:
+            deadline = time.monotonic() + 30
+            while not pidfile.exists() and time.monotonic() < deadline:
+                time.sleep(0.05)
+            self.assertTrue(pidfile.exists(), "the tool never started its child")
+            child = int(pidfile.read_text())
+            proc.send_signal(sig)
+            _, err = proc.communicate(timeout=30)
+            self.assertTrue(self.gone(child), f"the child {child} outlived the tool")
+        finally:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+            if pidfile.exists():
+                try:
+                    os.kill(int(pidfile.read_text()), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+        return proc.returncode, err
 
     @staticmethod
     def gone(pid: int) -> bool:
@@ -151,15 +149,16 @@ class ToolSignalTests(unittest.TestCase):
             cases.append(signal.SIGINT)
         for sig in cases:
             with self.subTest(tool=tool, signal=sig.name):
-                self.pidfile.unlink(missing_ok=True)
-                self.marker.unlink(missing_ok=True)
-                status, err = self.interrupt(args, env, sig)
+                pidfile = self.dir / f"{tool}.{sig.name}.pid"
+                marker = self.dir / f"{tool}.{sig.name}.marker"
+                case_env = env | {"STUB_PIDFILE": str(pidfile), "STUB_MARKER": str(marker)}
+                status, err = self.interrupt(args, case_env, sig, pidfile)
                 self.assertEqual(status, -sig, err)
                 self.assertNotIn("Traceback", err)
                 self.assertEqual(err.count(f"{tool}: interrupted by {sig.name}"), 1, err)
                 self.assertEqual(list(self.tmp.iterdir()), [])
                 if expect_term:
-                    self.assertTrue(self.marker.exists(), "the child was not sent SIGTERM")
+                    self.assertTrue(marker.exists(), "the child was not sent SIGTERM")
 
     def test_locate_issue(self) -> None:
         corpus, rules = self.dir / "corpus", self.dir / "rules.json"
@@ -199,12 +198,32 @@ class ToolSignalTests(unittest.TestCase):
         self.assertEqual(list(scratch.glob("catalog.json*")), [])
 
     def test_synthesize(self) -> None:
-        out = self.dir / "out.mkv"
-        self.write_stub("ffmpeg")
-        args = [str(ROOT / "synthetic" / "synthesize.py"), "container-renamed", "--out", str(out)]
+        out = self.dir / "out.mp4"
+        # The stub creates the partial file the build writes, so the signal lands with it on disk.
+        self.write_stub("ffmpeg", create_last_argument=True)
+        args = [str(ROOT / "synthetic" / "synthesize.py"), "container-mp4", "--out", str(out)]
         self.check(args, self.env(), "synthesize.py")
-        self.assertEqual(list(self.dir.glob("out*.mkv")), [])
-        self.assertEqual(list(self.dir.glob("*.partial*")), [])
+        self.assertEqual(sorted(p.name for p in self.dir.glob("out*")), [])
+
+
+class SyntheticDirectoryTests(unittest.TestCase):
+    def test_synthetic_scripts_run_from_a_copy_of_that_directory_alone(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            copy = Path(d) / "synthetic"
+            shutil.copytree(ROOT / "synthetic", copy, ignore=shutil.ignore_patterns("__pycache__"))
+            for script in ("synthesize.py", "inject_cc_sei.py"):
+                with self.subTest(script=script):
+                    proc = subprocess.run(
+                        [sys.executable, "-B", script, "--help"],
+                        cwd=copy,
+                        env=clean_env(),
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                        timeout=60,
+                    )
+                    self.assertEqual(proc.returncode, 0, proc.stderr)
+                    self.assertIn("usage:", proc.stdout)
 
 
 if __name__ == "__main__":
