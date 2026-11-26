@@ -72,6 +72,8 @@ class AtomicWriteTests(unittest.TestCase):
             second = interrupts.reserve_sibling(out, "partial")
             self.assertNotEqual(first, second)
             self.assertEqual((first.suffix, first.parent), (".mkv", out.parent))
+            if sys.platform != "win32":
+                self.assertEqual(first.stat().st_mode & 0o777, interrupts._new_file_mode())
 
     @unittest.skipIf(sys.platform == "win32", "needs POSIX file modes")
     def test_rewrite_keeps_the_target_mode(self) -> None:

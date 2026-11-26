@@ -129,6 +129,8 @@ def reserve_sibling(path: Path, tag: str) -> Path:
         dir=path.parent, prefix=f".{path.stem}.", suffix=f".{tag}{path.suffix}"
     )
     os.close(fd)
+    # A builder writes into the reserved file and keeps its mode, so it takes the mode a new file would.
+    Path(name).chmod(_new_file_mode())
     return Path(name)
 
 
