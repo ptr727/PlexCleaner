@@ -178,7 +178,7 @@ FFmpeg [`filter_units` filter](https://ffmpeg.org/ffmpeg-bitstream-filters.html#
 E.g.
 
 ```shell
-ffmpeg -loglevel error -i [in-filename] -c copy -map 0 -bsf:v filter_units=remove_types=6 [out-filename]
+ffmpeg -loglevel error -i "<in-filename>" -c copy -map 0 -bsf:v filter_units=remove_types=6 "<out-filename>"
 ```
 
 Closed captions SEI unit for H264 is `6`, `39` for H265, and `178` for MPEG2.
