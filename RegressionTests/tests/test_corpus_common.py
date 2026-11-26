@@ -192,13 +192,16 @@ class FindRunTests(unittest.TestCase):
             root = Path(d)
             self._run(root, "1.0.0-ga", 1000, {"Channel": "develop"})
             self.assertEqual(cc.find_run(str(root / "1.0.0-ga")), root / "1.0.0-ga")
-            with mock.patch.object(cc, "REG_DIR", root):
+            with mock.patch.dict(os.environ, {"REGRESSION_HOST_CONFIG": str(root)}):
                 self.assertEqual(cc.find_run("1.0.0-ga"), root / "1.0.0-ga")
 
     def test_explicit_missing_dir_exits(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
-            with mock.patch.object(cc, "REG_DIR", root), self.assertRaises(SystemExit) as cm:
+            with (
+                mock.patch.dict(os.environ, {"REGRESSION_HOST_CONFIG": str(root)}),
+                self.assertRaises(SystemExit) as cm,
+            ):
                 cc.find_run("0.0.0-gmissing")
         self.assertIn(
             str(root / "0.0.0-gmissing" / "PlexCleaner_process.log"), str(cm.exception.code)
@@ -227,7 +230,7 @@ class FindRunTests(unittest.TestCase):
             self._run(root, "0.9.0-gz", 500, {"Channel": "develop", "Corpus": "full"})
             self._run(root, "1.0.0-ga", 1000, {"Channel": "develop", "Corpus": "full"})
             self._run(root, "1.0.1-gb-reduced", 2000, {"Channel": "develop", "Corpus": "reduced"})
-            with mock.patch.object(cc, "REG_DIR", root):
+            with mock.patch.dict(os.environ, {"REGRESSION_HOST_CONFIG": str(root)}):
                 self.assertEqual(cc.find_run(None), root / "1.0.0-ga")
                 self.assertEqual(cc.find_run(None, corpus="reduced"), root / "1.0.1-gb-reduced")
 
@@ -236,7 +239,7 @@ class FindRunTests(unittest.TestCase):
             root = Path(d)
             self._run(root, "1.0.0-ga", 1000, {"Channel": "develop", "Corpus": "full"})
             self._run(root, "1.0.1-gb", 2000, {"Channel": "latest", "Corpus": "full"})
-            with mock.patch.object(cc, "REG_DIR", root):
+            with mock.patch.dict(os.environ, {"REGRESSION_HOST_CONFIG": str(root)}):
                 self.assertEqual(cc.find_run(None), root / "1.0.0-ga")
                 self.assertEqual(cc.find_run(None, channel="latest"), root / "1.0.1-gb")
 
@@ -245,16 +248,43 @@ class FindRunTests(unittest.TestCase):
             root = Path(d)
             self._run(root, "1.0.0-ga", 1000, {"Channel": "develop"})
             self._run(root, "1.0.1-gb-reduced", 2000, {"Channel": "develop", "Corpus": "reduced"})
-            with mock.patch.object(cc, "REG_DIR", root):
+            with mock.patch.dict(os.environ, {"REGRESSION_HOST_CONFIG": str(root)}):
                 self.assertEqual(cc.find_run(None), root / "1.0.0-ga")
 
     def test_no_matching_run_exits(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             self._run(root, "1.0.1-gb-reduced", 2000, {"Channel": "develop", "Corpus": "reduced"})
-            with mock.patch.object(cc, "REG_DIR", root), self.assertRaises(SystemExit) as cm:
+            with (
+                mock.patch.dict(os.environ, {"REGRESSION_HOST_CONFIG": str(root)}),
+                self.assertRaises(SystemExit) as cm,
+            ):
                 cc.find_run(None)
         self.assertIn("no develop full-corpus run", str(cm.exception.code))
+
+
+class EnvPathTests(unittest.TestCase):
+    def test_set_variable_is_the_path(self) -> None:
+        with mock.patch.dict(os.environ, {"REGRESSION_CORPUS_DIR": "/corpus"}):
+            self.assertEqual(cc.src_dir(), Path("/corpus/full"))
+
+    def test_unset_variable_exits_naming_it(self) -> None:
+        for name, getter in (
+            ("REGRESSION_HOST_CONFIG", cc.reg_dir),
+            ("REGRESSION_CORPUS_DIR", cc.corpus_dir),
+            ("REGRESSION_SCRATCH_DIR", cc.scratch_dir),
+        ):
+            env = {k: v for k, v in os.environ.items() if k != name}
+            with mock.patch.dict(os.environ, env, clear=True), self.assertRaises(SystemExit) as cm:
+                getter()
+            self.assertIn(name, str(cm.exception.code))
+
+    def test_empty_variable_exits(self) -> None:
+        with (
+            mock.patch.dict(os.environ, {"REGRESSION_HOST_CONFIG": ""}),
+            self.assertRaises(SystemExit),
+        ):
+            cc.reg_dir()
 
 
 class HeadClipTests(unittest.TestCase):

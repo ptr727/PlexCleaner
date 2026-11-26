@@ -46,19 +46,19 @@ import sys
 from pathlib import Path
 
 from corpus_common import (
-    SRC_DIR,
     classify_signature,
     hms,
     make_head_clip,
     parse_log,
+    reg_dir,
+    scratch_dir,
     set_language_ietf,
+    src_dir,
     state_flags,
     stem_of,
     strip_language_ietf,
 )
 
-# Default paths for the reference server; override on the command line for another environment.
-SCRATCH = Path("/data/media/PlexCleaner/scratch-trim")
 IMAGE = "docker.io/ptr727/plexcleaner:develop"
 APP = "/PlexCleaner/Debug/PlexCleaner"
 
@@ -275,7 +275,7 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
             "--user",
             f"{uid}:{gid}",
             "--env",
-            "TZ=America/Los_Angeles",
+            "TZ",
             "--volume",
             f"{media}:/media:rw",
             "--volume",
@@ -336,8 +336,8 @@ def main() -> None:
     ap.add_argument("--rules", help="external region rules file (default: next to --catalog)")
     ap.add_argument(
         "--settings",
-        default="/data/media/PlexCleaner/RegressionTest",
-        help="dir containing the PlexCleaner.json to process clips with",
+        help="dir containing the PlexCleaner.json to process clips with "
+        "(default: $REGRESSION_HOST_CONFIG)",
     )
     ap.add_argument("--mode", choices=["validate", "generate"], default="validate")
     ap.add_argument("--out", help="output dir for the reduced set (generate mode)")
@@ -359,8 +359,10 @@ def main() -> None:
     )
 
     sources = args.sources or sorted(entries)
-    settings_dir = Path(args.settings)
-    work_root = SCRATCH / "work"
+    settings_dir = Path(args.settings) if args.settings else reg_dir()
+    source_dir = src_dir()
+    scratch = scratch_dir()
+    work_root = scratch / "work"
     work_root.mkdir(parents=True, exist_ok=True)
     out_dir = Path(args.out) if args.out else None
     if out_dir:
@@ -371,7 +373,7 @@ def main() -> None:
     print(f"{'FILE':54} {'SRC':>7} {'CLIP':>7} {'RATIO':>6}  RESULT")
     for name in sources:
         e = entries.get(name)
-        src = SRC_DIR / name
+        src = source_dir / name
         stem = stem_of(name)
         short = stem[:53]
         if e is None or not src.exists():
@@ -566,7 +568,7 @@ def main() -> None:
         )
 
     print(f"\nPASS={passes} FAIL={fails} kept-full={kept}")
-    mpath = (out_dir or SCRATCH) / "catalog.json"
+    mpath = (out_dir or scratch) / "catalog.json"
     mpath.write_text(
         json.dumps(
             {"schema": 1, "collection": "reduced", "file_count": len(manifest), "files": manifest},

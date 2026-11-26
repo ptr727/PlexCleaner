@@ -22,9 +22,9 @@ Test a local build:
 
 Test a published image against local media and settings:
   docker run -it --rm --pull always --user "${USER_NONROOT_ID:?}:${USERS_GROUP_ID:?}" --name PlexCleaner-Test \
-    --env TZ=America/Los_Angeles \
-    --volume /data/media/test:/Test/Media:rw \
-    --volume /data/media/PlexCleaner/PlexCleaner-Develop.json:/Test/PlexCleaner.json:rw \
+    --env TZ=Etc/UTC \
+    --volume /path/to/media:/Test/Media:rw \
+    --volume /path/to/PlexCleaner.json:/Test/PlexCleaner.json:rw \
     docker.io/ptr727/plexcleaner:ubuntu /Test/test.sh
 EOF
     exit 0
