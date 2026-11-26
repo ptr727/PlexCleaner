@@ -55,13 +55,37 @@ rather than guessing from the repo's contents.
   workflow YAML file resolves on a throwaway branch off `main`, not on `develop`. Full recovery and
   conflict-resolution commands: `references/branch-protection-and-promotion.md`.
 - **A merge or release ends with worktree cleanup and the base clone on current `develop`.** Run the `repo-worktree` post-merge procedure after a feature squash merge. Run it again after a promotion or release completes, unless the user explicitly asks to retain a checkout or branch. Remove finished task, conflict-resolution, installer, and release helpers. Never delete `develop`, and never leave the base clone on `main` merely because `main` was promoted or released.
-- **Issue-closing keywords (`Closes #N`, `Fixes #N`) go in the `develop -> main` promotion PR, not
-  the feature -> `develop` PR.** GitHub auto-closes an issue only when the closing keyword merges
-  into the **default branch** (`main`), so a feature -> `develop` PR merge never fires it.
-  Reference the issue in the `develop` PR body if useful, but the actual closing keyword belongs on
-  the promotion PR. Closing by hand is the ordinary route wherever the keyword cannot fire. Cases include a
+- **Issue-closing keywords (`Closes #N`, `Fixes #N`) go in the `develop -> main` promotion PR's
+  body, and nowhere else.** The keywords are `close`, `closes`, `closed`, `fix`, `fixes`, `fixed`,
+  `resolve`, `resolves`, and `resolved`. Each closes the issue it directly precedes once the text
+  holding it reaches the **default branch** (`main`). A feature -> `develop` PR targets another
+  branch, so it registers no closing reference itself. Its squash commit's message is still what
+  the repository's squash setting composes, read live with
+  `gh api "repos/<owner>/<repo>" --jq .squash_merge_commit_message`. Where that reads `PR_BODY`, as
+  it does in the hub, the PR body becomes the commit message. So a `Fixes #N` in that body lands
+  on `develop` and closes #N when the promotion brings the commit to `main`. That holds whatever
+  the promotion body says. A direct-push commit message on `develop` behaves the same way. So a
+  feature PR body or a direct-push commit carries no closing keyword. It names the issues it fixes,
+  where it names them, in the inert `Closes on promotion: #N, #M` line. The promotion PR's body
+  carries one closing keyword per issue those lines name. In an operational repository that line
+  is required, as "Operational repositories (the complete delta)" below sets. That delta also lets
+  a rollback's `Reopens on promotion:` line take an issue out of the promotion body. Closing by hand is the ordinary route wherever the keyword cannot fire. Cases include a
   promotion that already merged without it, or completed work with no promotion imminent. Closing by hand is
   not a repair for a botched promotion. Cite the squash SHA and re-read that commit before closing.
+- **A closing keyword fires inside a sentence that negates it.** GitHub matches the keyword and
+  the reference alone, with at most a colon between them, and reads no other word. So each of
+  `does not fix #N` and `narrowed rather than closed: #N` closes its issue. Where text names an
+  issue it leaves open, keep every keyword away from the reference, as in `#N stays open`. Reading the
+  text misses this. So check a promotion PR mechanically after opening it and after each body
+  amendment. Check it again when reporting it ready and before merging it, since a merge into
+  `develop` moves the range.
+  Compare the set
+  `gh pr view "<number>" --repo "<owner>/<repo>" --json closingIssuesReferences --jq '[.closingIssuesReferences[].number]'`
+  prints with the intended set. Then scan the range's commit messages, since a keyword there closes
+  its issue at the promotion merge too:
+  `git log --format=%B origin/main..origin/develop | grep -n -i -E '\b(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+[[:alnum:]_./:-]*(#|/issues/)[0-9]'`,
+  run after `git fetch origin`. Each line it prints is a closure the promotion merge makes
+  whatever its body says. Name any unintended one in the promotion PR's ready report.
 - **Neither ruleset requires branches to be up to date before merging.** The reasons differ on
   each branch (a graph-based check that would fail every release on `main`, a check that stalls
   bot auto-merge on `develop`). Detail: `references/branch-protection-and-promotion.md`.
@@ -136,10 +160,18 @@ stays the same:
   The host write guard allows the in-place commit only once the repository's
   `.github/agent-policy.json` on `main` lists `develop` in its `guard` section. The maintainer's
   merge to `main` therefore grants the exemption, and until then the guard denies it.
-- **A direct push names the issues it fixes in its commit message**, as one line such as
-  `Closes on promotion: #N, #M`. The words `on promotion:` keep GitHub from reading the line as a closing keyword. The promotion
-  PR carrying the push puts a closing keyword in its own body for each issue the line names, per the
-  closing-keyword bullet above. Its body takes no closing keyword for a push without the line.
+- **A change reaching `develop` names the issues it fixes in one line**, such as
+  `Closes on promotion: #N, #M`. A direct push writes the line in its commit message. A pull
+  request into `develop` writes it in its body. The promotion reads a merged pull request's line
+  from its body, never from its commits. The words `on promotion:` keep GitHub from reading the line as a closing keyword. The promotion
+  PR carrying the change puts a closing keyword in its own body for each issue the line names, per the
+  closing-keyword bullet above. Its body takes no closing keyword for a change without the line.
+  A change that undoes a fix not yet on `main` names that fix's issues in one
+  `Reopens on promotion:` line, written where a `Closes on promotion:` line would go. A rollback
+  committed as an ordinary change is one. The line is required because a rollback often carries
+  no revert marker for the range to show. The promotion body takes no closing keyword for an issue
+  that line names. Where the range names one issue on both lines, the line of the latest change
+  naming it decides.
 - **A PR into `develop` stays available, and CI runs on it, reported but not required.** Dropping
   the requirement permits the direct push. It does not withdraw the pull request, so a change worth
   reviewing takes one and both paths into `develop` are legitimate.
@@ -153,7 +185,9 @@ stays the same:
   That would withdraw the allowance the model exists to give.
 - **The `main` promotion gate is unchanged.** The shared `main` ruleset still **enforces** the
   required `Check pull request workflow status job` on the `develop -> main` PR. For an operational
-  repo that check is lint/validation only, never unit tests. It is editorconfig/EOL plus a domain linter
+  repo that check is lint/validation, with unit tests only for a .NET test project or a Python suite
+  the validator runs. A test in the repo's own `.github/actions/validate/action.yml` hook counts too.
+  The check is editorconfig/EOL plus a domain linter
   such as a Home Assistant or ESPHome config validation. So `develop` stays the live surface
   and a broken config can never reach `main`.
 - **Release only by manual dispatch.** Operational repos carry `releaseTrigger: dispatch-only` and

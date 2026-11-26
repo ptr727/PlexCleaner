@@ -59,6 +59,10 @@ from corpus_common import (
     strip_language_ietf,
 )
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "synthetic"))
+
+from interrupts import atomic_write_text, run_child, run_main
+
 IMAGE = "docker.io/ptr727/plexcleaner:develop"
 APP = "/PlexCleaner/Debug/PlexCleaner"
 
@@ -135,7 +139,7 @@ def make_clip(
     if cutter == "ffmpeg":
         # ffmpeg region cut gives cleaner timestamps at the cut boundary (a mkvmerge region cut can
         # add a spurious verify->repaired hiccup on remux-grade HEVC), at the usual IETF-strip cost
-        subprocess.run(
+        run_child(
             [
                 "ffmpeg",
                 "-hide_banner",
@@ -156,16 +160,14 @@ def make_clip(
                 "-bitexact",
                 str(out),
             ],
-            check=False,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
     else:
         # mkvmerge region cut preserves timestamp defects (ffmpeg -copyts normalizes some away)
-        subprocess.run(
+        run_child(
             ["mkvmerge", "-o", str(out), "--split", f"parts:{hms(start)}-{hms(end)}", str(src)],
-            check=False,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -184,11 +186,10 @@ def mp4_track_names(src: Path) -> dict[int, str]:
     Read them with the image's ffprobe, since the host's may not read them at all.
     A failed read returns no names, and the gate then rejects a clip missing them.
     """
-    proc = subprocess.run(
+    proc = run_child(
         ["docker", "run", "--rm", "--volume", f"{src.parent}:/source:ro", IMAGE,
          "ffprobe", "-v", "error", "-show_entries", "stream=index:stream_tags=name",
          "-of", "json", f"/source/{src.name}"],
-        check=False,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
@@ -221,10 +222,9 @@ def make_artificial_container(src: Path, out: Path, seconds: int) -> bool:
         for index, name in mp4_track_names(src).items()
         for arg in (f"-metadata:s:{index}", f"title={name}")
     ]
-    proc = subprocess.run(
+    proc = run_child(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
          "-t", str(seconds), "-map", "0", "-c", "copy", *titles, "-f", "mp4", str(out)],
-        check=False,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -267,7 +267,7 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
     uid, gid = os.getuid(), os.getgid()
     # Capture the container output so a failed run (crash or container that never starts) can be
     # diagnosed; on success it is discarded, on failure its tail is printed with the error below.
-    proc = subprocess.run(
+    proc = run_child(
         [
             "docker",
             "run",
@@ -292,7 +292,6 @@ def process_clip(workdir: Path, settings_dir: Path) -> tuple[dict, dict[str, set
             "--parallel",
             "--testsnippets",
         ],
-        check=False,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -455,9 +454,8 @@ def main() -> None:
                 # both cutters add their own track tags (ffmpeg DURATION / mkvmerge statistics);
                 # when the source had none, strip them in place (no remux, defects untouched) so
                 # the clip does not pick up a spurious ClearedTags state
-                subprocess.run(
+                run_child(
                     ["mkvpropedit", str(pristine), "--tags", "all:"],
-                    check=False,
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
@@ -569,15 +567,16 @@ def main() -> None:
 
     print(f"\nPASS={passes} FAIL={fails} kept-full={kept}")
     mpath = (out_dir or scratch) / "catalog.json"
-    mpath.write_text(
+    atomic_write_text(
+        mpath,
         json.dumps(
             {"schema": 1, "collection": "reduced", "file_count": len(manifest), "files": manifest},
             indent=2,
             ensure_ascii=False,
-        )
+        ),
     )
     print(f"catalog: {mpath}")
 
 
 if __name__ == "__main__":
-    main()
+    run_main(main)

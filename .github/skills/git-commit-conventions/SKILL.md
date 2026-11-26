@@ -157,19 +157,16 @@ Each line names a setting, whether the target matches the probe, and the scope a
 
 ## Never force push
 
-Do not run `git push --force` or `git push --force-with-lease` under any circumstances. Force
+In a fleet repository, do not run `git push --force` or `git push --force-with-lease` under any circumstances. Force
 pushing rewrites shared history and can cause data loss. This holds regardless of how confident
 the rewrite looks, a rejected push is recoverable, a force-pushed one is not.
 
+The maintainer's fork of a third-party repository is not a fleet repository. There `upstream-contribution-workflow` names the branches that may take `--force-with-lease`, and each push still waits for his explicit, current go-ahead.
+
 ## History rewrites re-identify only what changed
 
-**Do not rewrite a commit that does not need to change.** A history rewrite (e.g. `git filter-repo`
-to strip PII) re-signs every touched commit with the rewriter's key. If that commit is still
-committed by a bot (`dependabot[bot]`, `github-actions[bot]`) or GitHub's own web-flow, the signature will not match the committer. The require-signed-commits rule then rejects it. Scope the
-rewrite to only the commits that must change. Set `committer` (and `author`) to the rewriter's
-identity on any non-own commit that must be modified. Verify with `git log --show-signature` after
-any rewrite. See `references/history-rewrite.md` for the full rule.
+**Do not rewrite history unless a commit must change, and re-sign every commit the rewrite reaches.** A rewrite cascades, since a commit's hash covers its parents' hashes, so it reaches every descendant of the earliest commit it changes. `git filter-repo` (for example, to strip PII) strips the signature from every commit it processes and signs nothing. So the rewritten history lands unsigned, which the require-signed-commits rule rejects. State each branch's reach before rewriting, and re-sign in a pass that signs each commit. GitHub verifies a signature against the commit's `committer`. So in that pass set `committer` to the rewriter's signing identity on every commit another identity committed, such as a bot's. Keep its `author`, since verification reads only the committer. Verify through GitHub's API (`commit.verification.verified` and `reason`), since `git log --show-signature` cannot see GitHub's committer match. See `references/history-rewrite.md` for the full rule.
 
 ## Never run destructive git commands without being asked
 
-`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`, and other commands that discard work require explicit developer instruction. Never use them as a convenience inside a larger task. One narrow cleanup exception applies to `git branch -D <exact-task-branch>` after a squash merge. It requires live proof, per `repo-worktree`, that the pull request for that exact branch merged. The same proof must show that the worktree is clean and the branch is at the verified head SHA or behind it. The exception never applies to `develop`, an unmerged branch, an unresolved pull request, or a branch with uncommitted work. A `backlog-burndown` orchestrator has that instruction for the linked worktree of a worker it told to abandon, once that worker has ended. That skill's "Cleanup Is the Orchestrator's" states it. The orchestrator runs `git reset --hard` and then `git clean -fd` in that worktree, and nowhere else.
+`git reset --hard`, `git checkout .`, `git restore .`, `git clean -f`, and other commands that discard work require explicit developer instruction. Never use them as a convenience inside a larger task. One narrow cleanup exception applies to `git branch -D "<exact-task-branch>"` after a squash merge. It requires live proof, per `repo-worktree`, that the pull request for that exact branch merged. The same proof must show that the worktree is clean and the branch is at the verified head SHA or behind it. The exception never applies to `develop`, an unmerged branch, an unresolved pull request, or a branch with uncommitted work. A `backlog-burndown` orchestrator has that instruction for the linked worktree of a worker it told to abandon, once that worker has ended. That skill's "Cleanup Is the Orchestrator's" states it. The orchestrator runs `git reset --hard` and then `git clean -fd` in that worktree, and nowhere else.

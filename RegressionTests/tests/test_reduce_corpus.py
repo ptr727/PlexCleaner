@@ -73,7 +73,7 @@ class ReduceCorpusTests(unittest.TestCase):
         }
         src = Path("/corpus/a b [x].mkv")
         done = subprocess.CompletedProcess([], 0, json.dumps(probe))
-        with mock.patch.object(reduce_corpus.subprocess, "run", return_value=done) as fake:
+        with mock.patch.object(reduce_corpus, "run_child", return_value=done) as fake:
             self.assertEqual(reduce_corpus.mp4_track_names(src), {0: "Commentary", 3: "Signs"})
         args = fake.call_args.args[0]
         self.assertIn("/corpus:/source:ro", args)
@@ -83,7 +83,7 @@ class ReduceCorpusTests(unittest.TestCase):
     def test_mp4_track_names_failed(self) -> None:
         done = subprocess.CompletedProcess([], 1, "")
         with (
-            mock.patch.object(reduce_corpus.subprocess, "run", return_value=done),
+            mock.patch.object(reduce_corpus, "run_child", return_value=done),
             mock.patch("sys.stderr"),
         ):
             self.assertEqual(reduce_corpus.mp4_track_names(Path("/corpus/a.mkv")), {})
@@ -98,7 +98,7 @@ class ReduceCorpusTests(unittest.TestCase):
 
             with (
                 mock.patch.object(reduce_corpus, "mp4_track_names", return_value={2: "Signs"}),
-                mock.patch.object(reduce_corpus.subprocess, "run", side_effect=run) as fake,
+                mock.patch.object(reduce_corpus, "run_child", side_effect=run) as fake,
             ):
                 self.assertTrue(reduce_corpus.make_artificial_container(Path("/a.mkv"), out, 60))
             args = fake.call_args.args[0]
@@ -120,7 +120,7 @@ class ReduceCorpusTests(unittest.TestCase):
             with (
                 mock.patch.object(reduce_corpus.os, "getuid", return_value=1000, create=True),
                 mock.patch.object(reduce_corpus.os, "getgid", return_value=100, create=True),
-                mock.patch.object(reduce_corpus.subprocess, "run", side_effect=run) as fake,
+                mock.patch.object(reduce_corpus, "run_child", side_effect=run) as fake,
             ):
                 _, states = reduce_corpus.process_clip(workdir, settings_dir)
             args = fake.call_args.args[0]

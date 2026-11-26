@@ -577,7 +577,7 @@ See detailed command documentation below for all options and usage examples.
 ---
 
 Use the `PlexCleaner --help` commandline option to get a list of commands and options.\
-To get help for a specific command run `PlexCleaner <command> --help`.
+To get help for a specific command run `PlexCleaner "<command>" --help`.
 
 ```text
 > PlexCleaner --help
@@ -883,7 +883,7 @@ PlexCleaner publishes always-on runtime metrics via `System.Diagnostics.Metrics`
 Read the meter with [`dotnet-counters`][dotnet-counters-link]:
 
 - Local: `dotnet-counters monitor -p <pid> --counters PlexCleaner.Process`
-- Docker: `docker exec <container> counters` (a bundled wrapper that runs the same command against the in-container process)
+- Docker: `docker exec "<container>" counters` (a bundled wrapper that runs the same command against the in-container process)
 
 The meter is also OpenTelemetry and [`dotnet-monitor`][dotnet-monitor-link] compatible if you want an HTTP or Prometheus surface.
 

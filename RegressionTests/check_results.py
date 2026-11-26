@@ -16,6 +16,10 @@ from typing import Any
 
 from corpus_common import BEFORE_RE, LINE_FILE_RE, LINE_RE, state_flags
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "synthetic"))
+
+from interrupts import atomic_write_text, run_main
+
 Outcome = dict[str, Any]
 
 BUILD_INFO = "buildinfo.json"
@@ -339,9 +343,7 @@ def main(argv: list[str] | None = None) -> int:
 
     actual = outcomes(json.loads(args.results.read_text(encoding="utf-8")))
     if args.write:
-        args.expected.write_text(
-            json.dumps(actual, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        atomic_write_text(args.expected, json.dumps(actual, indent=2, sort_keys=True) + "\n")
         print(f"wrote {len(actual)} outcomes to {args.expected}")
         return 0
 
@@ -357,4 +359,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    run_main(main)

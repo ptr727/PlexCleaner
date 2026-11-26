@@ -2,16 +2,16 @@
 name: upstream-contribution-workflow
 description: >-
   Governs how the maintainer contributes to a third-party repository he does not control, distinct
-  from the fleet's own branching model: a dirty work branch on his fork for the work and review
-  iteration, its fork-internal PR kept open and never merged, squashed once clean to a second branch
-  carrying only the intended history, that clean branch opened as the upstream PR, and reviewer
-  feedback applied to the dirty branch first, then re-squashed. Use this whenever about to open a
+  from the fleet's own branching model: a dirty work branch on his fork for the iteration, its
+  fork-internal PR kept open and never merged, squashed once clean to a second branch carrying only
+  the intended history, that clean branch opened as the upstream PR, and reviewer feedback applied
+  to the dirty branch first. Use this whenever about to open a
   pull request against a repository outside the ptr727 fleet, whenever forking a third-party project
   to contribute, whenever an upstream reviewer requests changes on a PR opened this way, whenever a
   fork-internal iteration PR looks ready to merge or close, whenever the upstream base branch moves
-  under a contribution in flight, and whenever choosing an issue or PR template for such a
-  repository. Triggers regardless of the target repo's own type or workflow model, whose conventions
-  this skill never assumes match the fleet's.
+  under a contribution, whenever an upstream's CI rejects merge commits or it forbids
+  rewriting a published PR, and whenever choosing such a repository's issue or PR template.
+  Triggers regardless of the target repo's type or workflow model, never assumed to match the fleet's.
 ---
 
 # Upstream Contribution Workflow
@@ -56,10 +56,10 @@ fleet's internal model so the two are never conflated.
    required-check history a rewrite would orphan. That rule stays absolute there, with no exception.
    It has no jurisdiction here**. That is because this clean presentation branch lives on the maintainer's own
    fork, outside the fleet entirely, and carries nobody's work but this squash. Force-with-lease
-   is scoped just as tightly regardless. It applies only to this one branch, only on the maintainer's own fork,
-   and never to the dirty work branch. That branch is the append-only iteration log this whole workflow exists
-   to preserve. If force-with-lease is ever refused or unavailable, open a fresh PR from a newly
-   named clean branch rather than fighting the push.
+   is scoped just as tightly regardless. It applies only to this one branch, only on the maintainer's own fork. The dirty work branch takes it only in the one case "The iteration PR is never merged" below names. That branch is the append-only iteration log this whole workflow exists to preserve. **Each force-with-lease push still waits for the maintainer's explicit, current go-ahead.** Force-pushing is an irreversible step that stays his, per `GOVERNANCE.md` "Communicating with the User", and this skill decides only where one may happen. If the clean branch's force-with-lease push is refused or unavailable, open a fresh PR from a newly
+   named clean branch rather than fighting the push. A dirty-branch lease push that is refused or unavailable never takes this route. "The iteration PR is never merged" below says what it takes instead.
+
+   **Where the upstream forbids rewriting a published pull request branch, keep the clean branch append-only instead.** Its contribution guidelines or its reviewers say so. Commit each round's change on top of the clean branch as a new commit, and push it without force. The squash then happens through the upstream's own squash merge, never as a rewrite of the published branch. Where the upstream does not squash on merge and wants one commit, stop and ask the maintainer for an approved route. On every other upstream, the re-squash above is unchanged.
 
 **The dirty branch is always the working copy. The clean branch is always the presentation copy.**
 Never reverse this: never iterate directly on the branch that's open against upstream, and never
@@ -75,17 +75,49 @@ iteration PR is the place where upstream drift is absorbed and its fallout fixed
 upstream PR has to absorb that drift. So merging or closing the iteration PR removes that place.
 
 When the upstream base moves, sync the mirror branch from upstream and merge the mirror branch into
-the dirty branch. In that case, also fix whatever breaks in the iteration PR. Bringing the mirror branch in is a merge rather than a rebase,
-since the dirty branch is append-only and is never force-pushed. Then re-squash onto the new mirror
-tip whenever the clean branch needs to follow, per step 5.
+the dirty branch. In that case, also fix whatever breaks in the iteration PR. Bringing the mirror branch in is a merge rather than a rebase, since the dirty branch is append-only. A dirty branch stacked on another takes the lower branch's changes the same way. Then re-squash onto the new mirror tip whenever the clean branch needs to follow, per step 5. An append-only clean branch, per step 5, has no recorded way to follow a moved base. So stop and ask the maintainer before it follows one. Stop too before it takes a round from a dirty branch that has merged the moved mirror, since that round carries upstream's code.
+
+**Where the upstream's own CI rejects merge commits, rebase the dirty branch instead.** Such a check fails any pull request whose commits include a merge, and stops the rest of the upstream's checks from running. So a merge there costs the iteration PR the CI coverage it exists to provide. The rebase applies only in that case, and only to the dirty branch on the maintainer's own fork. Rebase it onto the mirror branch. On a stack, rebase the lower branch first. Then move the upper branch with `git rebase --onto "<lower>" "<lower-old-head>" "<upper>"`, its old head read from the lower branch's backup. Before each rebase, push the branch's old head to a named backup branch on the fork, and confirm the fork holds it. That backup keeps the replaced iteration log readable. A rebase also drops every merge commit, and with it any manual edit or conflict resolution the merge held. The chain below stops after the rebase where the old head carried one. Read each with `git show --remerge-diff "<merge>"` and reapply what it holds beyond the sync, or stop and ask the maintainer. Then run only the lease push. Otherwise push the rebased branch with `--force-with-lease`, pinned to that old head, under the go-ahead step 5 requires:
+
+```sh
+old=$(git rev-parse --verify work/x) && bak=refs/heads/backup/work-x-1 &&
+  git push origin "$old:$bak" &&
+  { [ "$(git ls-remote origin "$bak" | cut -f1)" = "$old" ] || { echo "backup not confirmed: $bak" >&2; false; }; } &&
+  git rebase "$mirror" work/x &&
+  { merges=$(git rev-list --merges "$mirror..$old") && [ -z "$merges" ] || { echo "merge scan failed or the rebase dropped merge commits, read each with git show --remerge-diff" >&2; false; }; } &&
+  git push --force-with-lease="work/x:$old" origin work/x
+```
+
+PowerShell equivalent:
+
+```powershell
+if (-not $mirror) { throw 'set $mirror to the mirror branch first' }
+$old = git rev-parse --verify work/x
+if ($LASTEXITCODE -ne 0) { throw 'branch not found: work/x' }
+$bak = 'refs/heads/backup/work-x-1'
+git push origin "${old}:$bak"
+if ($LASTEXITCODE -ne 0) { throw "backup push failed: $bak" }
+if ("$(git ls-remote origin $bak)".Split("`t")[0] -ne $old) { throw "backup not confirmed: $bak" }
+git rebase $mirror work/x
+if ($LASTEXITCODE -ne 0) { throw 'rebase stopped, resolve it before pushing' }
+$merges = git rev-list --merges "$mirror..$old"
+if ($LASTEXITCODE -ne 0) { throw 'merge scan failed, so the check did not run' }
+if ($merges) { throw 'the rebase dropped merge commits, read each with git show --remerge-diff' }
+git push --force-with-lease="work/x:$old" origin work/x
+if ($LASTEXITCODE -ne 0) { throw 'lease push refused: work/x' }
+```
+
+Set `mirror` to the mirror branch's name first. Number the backup branch per rebase, raising the suffix each time, so a later rebase never overwrites an earlier backup. Stop where the confirmation fails, since the force-push would then leave the old head on no remote branch. Where the rebase stops on a conflict, resolve it and run `git rebase --continue`. Then read the old head back from the backup branch with `git ls-remote origin "<backup-ref>"`. The merge check did not run in that case, so run `git rev-list --merges "$mirror..<old-head>"` with that value. A scan that exits non-zero checked nothing, so fix its cause and rerun it before anything else. Read any merge it names, as above. Where the merge check stops the chain instead, first fix a failed scan's cause and rerun it. Then read and reapply any merge it names. Run only the lease push, pinned to the old head.
+
+A lease push that fails, or that the fork does not allow, stops the chain. Re-fetch with `git fetch origin`. A fetch that fails leaves `origin/work/x` stale, so stop and report that rather than comparing against it. Then list the fork's branch against the old head with `git log --oneline --left-right "<old-head>...origin/work/x"`. Read the old head back from the backup branch as above. A `>` entry is a commit the fork gained that the rebase never saw, so the fork moved under you. `<` entries alone are old-head commits the fork's branch lacks now, such as ones never pushed or ones a reset dropped. An empty list means the push failed for another reason, such as a fork refusing force pushes or a failed connection. Whatever the list shows, stop and ask the maintainer, showing it. Never push the branch again in the meantime. A repeat of the pinned push is refused again. An unpinned `--force-with-lease` after that fetch, or a bare `--force`, overwrites whatever the fork gained. Never open a fresh pull request from a new dirty branch either, since that drops the iteration log this workflow keeps. The rebased local branch and the backup branch both stay as they are until he answers.
 
 For example, the fork's mirror branch and upstream both sit at commit `A`, with the iteration PR
 from `work/x` into the mirror branch green. Upstream advances to `B`. The fork syncs its mirror
 branch to `B`, merges `B` into `work/x`, and fixes the breakage in the iteration PR. Had `work/x`
 been merged into the mirror branch at `A`, the mirror branch could not have fast-forwarded to `B`.
 
-The contribution ends when upstream merges or declines the upstream PR. Only then close the
-iteration PR, unmerged, and delete the dirty and clean branches. A merged change then reaches the
+The contribution ends once the PR of every clean branch the dirty branch feeds is merged or
+closed, with no slice left to cut. Only then close the iteration PR, unmerged, and delete the dirty and clean branches. Leave each backup branch for the maintainer to delete. A merged change then reaches the
 mirror branch through the next sync from upstream, the same way anyone else's change does.
 
 ## Use the upstream repo's own conventions, not the fleet's
