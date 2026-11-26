@@ -111,12 +111,17 @@ class HarnessSignalTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
     def test_signal_restores_a_provisioned_dataset(self) -> None:
-        for tty in (False, True):
+        for tty, kill_works in ((False, True), (True, True), (False, False)):
             for sig in signals():
-                with self.subTest(tty=tty, signal=sig.name), tempfile.TemporaryDirectory() as d:
-                    self.restore_after_signal(Path(d), sig, tty)
+                with (
+                    self.subTest(tty=tty, kill_works=kill_works, signal=sig.name),
+                    tempfile.TemporaryDirectory() as d,
+                ):
+                    self.restore_after_signal(Path(d), sig, tty, kill_works)
 
-    def restore_after_signal(self, d: Path, sig: signal.Signals, tty: bool) -> None:
+    def restore_after_signal(
+        self, d: Path, sig: signal.Signals, tty: bool, kill_works: bool
+    ) -> None:
         stubs, env = self.stub_host(str(d))
         log = Path(d) / "zfs.log"
         log.write_text("")
@@ -128,18 +133,23 @@ class HarnessSignalTests(unittest.TestCase):
             "REGRESSION_PLUGIN_BUILD_DIR": str(Path(d) / "build"),
             "STUB_LOG": str(log),
         }
+        stop = 'touch "$STUB_LOG.stopped"' if kill_works else "exit 1"
+        process_run = (
+            "trap '' TERM\n" + PIDFILE_PUBLISH + "for ((i = 0; i < 1200; i++)); do\n"
+            '    [[ -e "$STUB_LOG.stopped" ]] && exit 0\n'
+            "    sleep 0.1\n"
+            "done\n"
+            if kill_works
+            else PIDFILE_STUB
+        )
         write_stub(
             stubs,
             "docker",
             '[[ "$1 $2" == "image inspect" ]] && echo 1.2.3\n'
-            'if [[ "$1" == kill ]]; then echo "docker $*" >> "$STUB_LOG"; touch "$STUB_LOG.stopped"; fi\n'
+            f'if [[ "$1" == kill ]]; then echo "docker $*" >> "$STUB_LOG"; {stop}; fi\n'
             '[[ " $* " == *" process "* ]] || exit 0\n'
             'echo "docker $*" >> "$STUB_LOG"\n'
-            'cp "$STUB_LOG" "$STUB_LOG.atstart"\n'
-            "trap '' TERM\n" + PIDFILE_PUBLISH + "for ((i = 0; i < 1200; i++)); do\n"
-            '    [[ -e "$STUB_LOG.stopped" ]] && exit 0\n'
-            "    sleep 0.1\n"
-            "done\n",
+            'cp "$STUB_LOG" "$STUB_LOG.atstart"\n' + process_run,
         )
         write_stub(stubs, "git", "exit 1\n")
         write_stub(stubs, "chown", "exit 0\n")
