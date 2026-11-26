@@ -1,13 +1,15 @@
-"""Tests that the harness and the corpus tools answer --help with no REGRESSION_* variable set."""
+"""Tests that the harness and the Python tools answer --help and refuse unknown arguments."""
 
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 TOOLS = ["audit_physical.py", "catalog_corpus.py", "locate_issue.py", "reduce_corpus.py"]
+INJECTORS = ["synthetic/inject_cc_sei.py", "synthetic/inject_hdr10plus_sei.py"]
 ROOT = Path(__file__).resolve().parent.parent
 HARNESS = ROOT / "regression-test.sh"
 HARNESS_VARIABLES = [
@@ -54,6 +56,50 @@ class HelpTests(unittest.TestCase):
         )
         self.assertNotEqual(proc.returncode, 0)
         self.assertRegex(proc.stderr, r"REGRESSION_[A-Z_]+ is not set")
+
+
+class InjectorTests(unittest.TestCase):
+    @staticmethod
+    def run_injector(tool: str, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, str(ROOT / tool), *args],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=60,
+        )
+
+    def test_help_on_stdout(self) -> None:
+        for tool in INJECTORS:
+            for flag in ("--help", "-h"):
+                with self.subTest(tool=tool, flag=flag):
+                    proc = self.run_injector(tool, flag)
+                    self.assertEqual(proc.returncode, 0, proc.stderr)
+                    self.assertTrue(proc.stdout.startswith(f"usage: {Path(tool).name}"))
+
+    def test_unknown_argument_is_refused_before_any_write(self) -> None:
+        for tool in INJECTORS:
+            for extra in (["--bogus"], ["out.hevc", "-x"]):
+                with self.subTest(tool=tool, extra=extra), tempfile.TemporaryDirectory() as d:
+                    src = Path(d) / "in.hevc"
+                    src.write_bytes(b"\x00\x00\x00\x01\x40\x01")
+                    proc = self.run_injector(
+                        tool,
+                        str(src),
+                        *[str(Path(d) / e) if e.endswith(".hevc") else e for e in extra],
+                    )
+                    self.assertEqual(proc.returncode, 2)
+                    self.assertIn("unrecognized arguments", proc.stderr)
+                    self.assertEqual(sorted(p.name for p in Path(d).iterdir()), ["in.hevc"])
+
+    def test_injects_into_named_output(self) -> None:
+        for tool in INJECTORS:
+            with self.subTest(tool=tool), tempfile.TemporaryDirectory() as d:
+                src, out = Path(d) / "in.hevc", Path(d) / "out.hevc"
+                src.write_bytes(b"\x00\x00\x00\x01\x40\x01\x00\x00\x00\x01\x02\x01")
+                proc = self.run_injector(tool, str(src), str(out))
+                self.assertEqual(proc.returncode, 0, proc.stderr)
+                self.assertGreater(out.stat().st_size, src.stat().st_size)
 
 
 @unittest.skipIf(sys.platform == "win32" or shutil.which("bash") is None, "needs Linux bash")

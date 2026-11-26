@@ -17,10 +17,7 @@ Standalone use::
 Or import ``build_hdr10plus_sei()`` / ``inject(hevc_bytes) -> hevc_bytes`` from another script.
 """
 
-import sys
-from pathlib import Path
-
-from hevc_nal import BitWriter, insert_before_vcl, wrap_sei_t35
+from hevc_nal import BitWriter, insert_before_vcl, run_injector, wrap_sei_t35
 
 # ST 2094-40 distribution percentages (the standard nine)
 _PERCENTAGES = (1, 5, 10, 25, 50, 75, 90, 95, 99)
@@ -54,10 +51,12 @@ def inject(data: bytes) -> bytes:
 
 
 def main() -> None:
-    if len(sys.argv) != 3:
-        sys.exit("usage: inject_hdr10plus_sei.py <in.hevc> <out.hevc>")
-    Path(sys.argv[2]).write_bytes(inject(Path(sys.argv[1]).read_bytes()))
-    print(f"injected HDR10+ SEI before each VCL NAL -> {sys.argv[2]}")
+    run_injector(
+        "inject_hdr10plus_sei.py",
+        "Inject an HDR10+ (SMPTE ST 2094-40) SEI into an HEVC stream.",
+        inject,
+        "HDR10+",
+    )
 
 
 if __name__ == "__main__":

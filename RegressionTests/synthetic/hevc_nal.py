@@ -3,9 +3,16 @@
 Both the closed-caption and HDR10+ injectors build a ``user_data_registered_itu_t_t35`` SEI
 (payload type 4) and insert it before every VCL NAL. This module holds the parts they share: bit
 packing, wrapping a T.35 payload into a prefix-SEI NAL, and walking the Annex-B start codes.
+It also holds the command line both injectors run.
 """
 
+import argparse
 import re
+import signal
+import sys
+from collections.abc import Callable
+from pathlib import Path
+from types import FrameType
 
 
 class BitWriter:
@@ -86,3 +93,29 @@ def insert_before_vcl(data: bytes, sei: bytes) -> bytes:
             out += sei
         out += b"\x00\x00\x00\x01" + nal
     return bytes(out)
+
+
+def run_injector(prog: str, description: str, inject: Callable[[bytes], bytes], label: str) -> None:
+    """Read the input stream, inject the SEI, and write the output stream, as an injector's CLI."""
+    ap = argparse.ArgumentParser(prog=prog, description=description)
+    ap.add_argument("input", type=Path, help="input Annex-B HEVC stream")
+    ap.add_argument("output", type=Path, help="output Annex-B HEVC stream")
+    unknown = [a for a in sys.argv[1:] if a.startswith("-") and a not in ("-h", "--help")]
+    if unknown:
+        ap.error(f"unrecognized arguments: {' '.join(unknown)}")
+    args = ap.parse_args()
+
+    terminated = False
+
+    def on_sigterm(_signum: int, _frame: FrameType | None) -> None:
+        nonlocal terminated
+        terminated = True
+        raise KeyboardInterrupt
+
+    signal.signal(signal.SIGTERM, on_sigterm)
+    try:
+        args.output.write_bytes(inject(args.input.read_bytes()))
+    except KeyboardInterrupt:
+        print(f"{prog}: interrupted by {'SIGTERM' if terminated else 'SIGINT'}", file=sys.stderr)
+        sys.exit(143 if terminated else 130)
+    print(f"injected {label} SEI before each VCL NAL -> {args.output}")
