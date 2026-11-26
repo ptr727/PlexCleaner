@@ -311,7 +311,7 @@ flowchart TD
         MB{"event / author / in-repo?"}:::gate
         MB -- "opened/reopened<br/>dependabot[bot]<br/>(every tier)" --> EN["enable auto-merge<br/>--squash develop / --merge main<br/>(App token)"]
         MB -- "synchronize by maintainer<br/>on a bot branch" --> DIS["disable auto-merge<br/>(App token)"]
-        MB -- "auto_merge_disabled<br/>recorded under the App" --> RE["re-arm once on the same head<br/>(App token)"]
+        MB -- "auto_merge_disabled<br/>on a head the bot pushed" --> RE["re-arm once on the same head<br/>(App token)"]
     end
     EN --> CK{"required check passes?"}:::gate
     RE --> CK
@@ -546,7 +546,8 @@ Each is a **MUST**, stated as input -> output plus the failure it prevents.
   `opened`/`reopened`, squashing on `develop` and merge-committing on `main` by the PR's base ref. It disables
   auto-merge when a maintainer pushes to a bot branch. The caller also triggers on `auto_merge_disabled`.
   The task re-arms a disable GitHub records under the App on a pull request the merge-bot armed. It re-arms
-  once, pinned to the head it read, after the base branch settles. A second disable on that head, or a refused merge, fails the
+  once, pinned to the head it read, after the base branch settles. It re-arms only a head the bot itself
+  pushed, so the maintainer-push disable stays in place. A second disable on that head, or a refused merge, fails the
   job visibly. A disable a person made stays in place. Concurrency keyed on PR number. This repo passes no
   `rules` or `delete-branch` input: it has no tracker branch outside the task's built-in codegen and
   upstream-version pairs, and auto-delete-on-merge stays off.
