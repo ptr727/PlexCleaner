@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout code step
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Filter changed paths step
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -71,7 +73,7 @@ jobs:
 
   validate:
     name: Validate sources job
-    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@fb08376e63d21fc4a6372fe5160df13916eebbb8 # 2.0.1528
+    uses: ptr727/ProjectTemplate/.github/workflows/validate-task.yml@de513317022bb94c49116c01cc26a177ee9fdf35 # 2.0.1595
     permissions:
       contents: read
     secrets:
@@ -86,7 +88,7 @@ jobs:
     name: Smoke build job
     needs: [changes]
     if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.release == 'true'
-    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@fb08376e63d21fc4a6372fe5160df13916eebbb8 # 2.0.1528
+    uses: ptr727/ProjectTemplate/.github/workflows/build-release-task.yml@de513317022bb94c49116c01cc26a177ee9fdf35 # 2.0.1595
     permissions:
       contents: read
     secrets:
@@ -116,6 +118,8 @@ jobs:
     steps:
       - name: Checkout code step
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Run integration coverage step
         uses: ./.github/actions/integration-coverage
         with:

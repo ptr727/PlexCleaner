@@ -4,7 +4,7 @@ name: Merge bot pull request action
 # The trigger is pull_request_target so the called workflow resolves from the trusted base rather than the PR head, and no job checks out PR code.
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize, closed]
+    types: [opened, reopened, synchronize, closed, auto_merge_disabled]
 
 # GOVERNANCE.md "Workflow YAML Conventions" Concurrency exception (1).
 concurrency:
@@ -18,7 +18,7 @@ jobs:
 
   merge-bot:
     name: Merge bot pull request job
-    uses: ptr727/ProjectTemplate/.github/workflows/merge-bot-task.yml@fb08376e63d21fc4a6372fe5160df13916eebbb8 # 2.0.1528
+    uses: ptr727/ProjectTemplate/.github/workflows/merge-bot-task.yml@de513317022bb94c49116c01cc26a177ee9fdf35 # 2.0.1595
     secrets:
       CODEGEN_APP_CLIENT_ID: ${{ secrets.CODEGEN_APP_CLIENT_ID }}
       CODEGEN_APP_PRIVATE_KEY: ${{ secrets.CODEGEN_APP_PRIVATE_KEY }}
