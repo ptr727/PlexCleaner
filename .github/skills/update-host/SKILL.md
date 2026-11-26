@@ -39,14 +39,14 @@ Each Windows command stops on a failed download, so a stale earlier copy of the 
 
 ## What the Setup Does
 
-1. Upgrades the coding-agent tools already installed, and adds none.
+1. Upgrades the coding-agent tools already installed, and adds none. A failed upgrade does not stop the later steps. Once they finish, the setup names the tools as not current and exits non-zero.
 2. Installs the fleet skills for Codex, opencode, and Claude Code, from a tree the bootstrap keeps.
 3. Installs the Claude Code safety kit where Claude Code is present, and skips it with a line saying so where it is not.
 4. Writes the host-wide rules to the global instruction file of each of Codex and opencode that is installed. A Codex `AGENTS.override.md` that is not blank takes precedence over that file, so the status reports it as SHADOWED and the setup warns. Neither touches the override.
 
 ## Report It
 
-Report each step's status as the output states it, in the order above, and name every step the status run lists as not current. Then say plainly:
+Report each step's status as the output states it, in the order above, and name every step the status run lists as not current. The status lists the agent tools without judging them, so also name each tool the setup run reported as failed or skipped, with its reason. Then say plainly:
 
 - Restart agent sessions to load the new hooks and rules. A running session keeps what it started with.
 - Codex and opencode get the rules but no hooks yet. No hook guards their sessions yet, so those sessions are not mechanically guarded.

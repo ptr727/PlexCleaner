@@ -2,8 +2,8 @@
 
 Full detail for the "Branching" rules in `SKILL.md`. Load this when configuring or reconstructing
 branch protection on a fleet repo, or when executing a `develop -> main` promotion. Also load it
-when recovering a lost `develop`, resolving an EOL-only promotion conflict, or working on the
-dual-target bot wiring (Dependabot, codegen, the merge-bot). It is not for an ordinary
+when recovering a lost `develop`, cutting a conflicted promotion, the EOL-only case included, or
+recovering a squash into `main`. Load it too when working on the dual-target bot wiring (Dependabot, codegen, the merge-bot). It is not for an ordinary
 feature-branch PR, which the SKILL.md summary covers.
 
 ## Configuring branch protection: don't hand-build the rules
@@ -11,7 +11,7 @@ feature-branch PR, which the SKILL.md summary covers.
 From a hub checkout at `main`, create **exactly two rulesets named `develop` and `main`** from the
 hub's `repo-config/*.json` payloads. Use a hub checkout at `develop` instead
 while the repository's registry entry has merged there but not yet reached `main`. Run
-`repo-config/configure.sh apply <owner>/<repo> release|operational` from that checkout. The names
+`repo-config/configure.sh apply "<owner>/<repo>" release` (substitute `operational` for an operational repo) from that checkout. The names
 are load-bearing because governance content and workflows reference them. The registry
 `workflowModel` selects the `develop` payload for a registered repository. `apply` refuses a
 repository outside the registry, writing nothing. Once `apply` has created both rulesets, delete
@@ -27,17 +27,28 @@ These traps were learned the hard way:
   exactly this reason) deletes `develop` itself. Merge a promotion
   with a plain `gh pr merge --merge`, no `--delete-branch`. If `develop` is ever lost this way,
   restore it to the merged PR's head SHA. That SHA is still reachable as the merge commit's second parent:
-  `gh api -X POST "repos/<owner>/<repo>/git/refs" -f ref=refs/heads/develop -f sha="$(gh pr view <n> --json headRefOid --jq .headRefOid)"`.
+  `gh api -X POST "repos/<owner>/<repo>/git/refs" -f ref=refs/heads/develop -f sha="$(gh pr view "<n>" --json headRefOid --jq .headRefOid)"`.
 - **Spurious EOL-only conflicts resolve by taking `develop`.** When `develop`'s `.editorconfig`
   line-ending default has changed while `main` hasn't caught up yet, `develop -> main` conflicts
   *whole-file* on every renormalized path. An example of that default changing is the fleet-wide CRLF-to-LF flip.
   `develop`'s `required_linear_history` plus PR rulesets forbid resolving on `develop` (no merge
   commit, no force-push). So resolve on a throwaway branch off `main`:
   `git checkout -b promote/develop-to-main origin/main && git merge origin/develop`. Take
-  `develop`'s side for the EOL-conflicted files (`git checkout --theirs <file>`) **after
+  `develop`'s side for the EOL-conflicted files (`git checkout --theirs "<file>"`) **after
   confirming each is content-identical modulo EOL, or that `develop` is a strict superset**
   (`diff <(git show ":2:<file>" | tr -d '\r') <(git show ":3:<file>" | tr -d '\r')`). Then open
   that branch into `main`. Verify no genuine `main`-only content is dropped (build/test where the repo supports it).
+- **A conflicted promotion lands from a branch cut from `main` that merges `develop`.** The EOL-only case above is one instance. A bot bump that landed on `main` and `develop` separately, beside a line `develop` changed, is another. This procedure covers a `develop` that is a strict superset of `main`'s content. The steps:
+  1. Run `git fetch origin`, then cut the branch in a worktree of its own: `git worktree add -b promote/develop-to-main "<worktree>" origin/main`. Run `git merge origin/develop` there.
+  2. Take `develop`'s side on each conflict only after the strict-superset check above shows `main` holds nothing `develop` lacks there. Stage each resolved file and commit the merge, so `HEAD` holds it.
+  3. Confirm the merged tree equals `develop`'s before the push: `git diff origin/develop HEAD --stat` prints nothing.
+  4. A path it prints holds content `develop` lacks. Redo a resolution that kept `main`'s side. Land genuine `main`-only content on `develop` through a feature pull request first. Then run `git fetch origin develop` and merge `origin/develop` again.
+  5. Open the branch as the promotion pull request in place of the one headed by `develop`. Carry the superseded pull request's whole body, its closing set included.
+  6. Carry its labels too, `comments` among them. Without that label, a local strict pass on the new head reports every comment line the feature pull requests landed as `comment-added`.
+  7. Close the superseded pull request with a comment naming the new one.
+  8. Land each later `develop` fix on the branch in the same worktree. Run `git fetch origin develop`, then `git merge --no-ff origin/develop`. Re-run the tree check, then push the branch.
+  9. Merge it like any promotion, with `--merge`. The merge commit restores the merge base, so the next promotion runs from `develop` again.
+- **A squash into `main` is recovered with that same cut.** The `main` ruleset allows only merge commits, yet its admin bypass lets a squash through. A squashed promotion leaves `main` with `develop`'s content but not its history. The merge base stays at the previous merge commit. So the next promotion conflicts wherever a later `develop` change edits a line the squash already carried. Where it merges cleanly instead, it keeps any such line a later `develop` change removed. GitHub runs no pull request workflow while the promotion conflicts. So the hub's `validate-task.yml` `Check promotion history step` fails the next promotion that merges cleanly. It names each single-parent commit on `main`'s first-parent chain since its previous promotion merge. Recover with the conflicted-promotion cut above, resolving each conflict as its step 2 states. The cut merges from the same stale base, so it can keep a removed line too. Its tree check then prints that path. Restore `develop`'s version of each such path the squash carried with `git checkout origin/develop -- "<path>"`. Remove one `develop` has since deleted with `git rm "<path>"`. Then commit. The step passes a head that already holds each commit it named, and the merge then restores the merge base. Never rewrite or force-push `main` to undo the squash.
 
 ## Why both rulesets omit "Require branches to be up to date before merging"
 
@@ -52,7 +63,7 @@ The flag is off on `main` and on `develop`, for related but distinct reasons.
   and the linearity invariant.
 - **Develop**: the check stalls bot auto-merge when two bot PRs against `develop` land within the
   same window. As soon as the first merges, the second flips to `mergeStateStatus: BEHIND` and
-  GitHub's auto-merge will not fire while strict is on. The merge-bot only *enables* auto-merge on
+  GitHub's auto-merge will not fire while strict is on. The merge-bot arms auto-merge on
   `opened`/`reopened` and never auto-updates bot branches, and Dependabot's rebase isn't real-time.
   So the second PR sits OPEN with all checks green indefinitely. Squash mechanics still rebase the
   diff onto `develop`'s tip on merge, and `required_linear_history` still enforces linearity.
@@ -83,12 +94,19 @@ during long-running develop features. Codegen content can also be production-cri
 So both branches need fresh codegen on their own cadence.
 
 **Maintainer-pushed commits on a bot PR auto-disable auto-merge.** The merge-bot's
-`merge-dependabot` and `merge-codegen` jobs only fire on `opened`/`reopened` events (auto-merge is
-enabled exactly once per PR). A maintainer may push commits to a bot's branch. Such a push is a `synchronize`
+`merge-dependabot` and `merge-app` jobs arm auto-merge only on `opened`/`reopened` events. Its
+`rearm-auto-merge` job leaves the disable below in place, since the head is then not the bot's own push. A maintainer may push commits to a bot's branch. Such a push is a `synchronize`
 event with an actor that isn't the same bot. When it happens, the merge-bot's
 `disable-auto-merge-on-maintainer-push` job fires and calls `gh pr merge --disable-auto`. The
 maintainer's commits stay in the PR but won't auto-merge with the bot's content. Re-enable
-auto-merge manually (`gh pr merge --auto <PR>` or the GitHub UI) when ready.
+auto-merge manually (`gh pr merge --auto "<PR>"` or the GitHub UI) when ready.
+
+**A disable GitHub makes is re-armed once, then fails visibly.** GitHub can disable an armed
+auto-merge with every check green. It does so for a merge that would write workflow content the
+App may not write. The caller stub triggers on `auto_merge_disabled`, so the merge-bot's
+`rearm-auto-merge` job answers such a disable. It re-arms once the base branch has settled. Where
+every check is green, `gh` merges at once instead, so a refused merge fails the job. That makes the
+stall visible rather than recovering it. WORKFLOW.md D8.1 is the contract.
 
 ## Codegen determinism
 

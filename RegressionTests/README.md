@@ -81,7 +81,7 @@ A Python tool's command-line arguments, such as `--run`, `--out`, `--settings`, 
 Each run writes `buildinfo.json` beside its results. It records the image and every input that shapes the outcome. Those inputs are the mode, the corpus, the corpus snapshot cloned, and the process options. They also cover the settings file's SHA-256, whether coverage ran, and the plugins built. Writing it needs `jq` on the host. Compare a run against a baseline run in one step:
 
 ```shell
-python3 check_results.py --baseline <baseline>/Results_process.json --results <candidate>/Results_process.json
+python3 check_results.py --baseline "<baseline>"/Results_process.json --results "<candidate>"/Results_process.json
 ```
 
 The comparison first checks the two runs' inputs. It reads each run's tool versions from the `<Tool> : Version:` lines at the start of its `PlexCleaner_process.log`. A log lacking the version of any tool PlexCleaner checks at startup records no tool versions. It warns of each input other than the image and the plugins that differs, or that either run does not record. A plugin difference is only noted, since the plugins run after `Results_process.json` is written. So a corpus refresh, a thread-count change, a settings change, or a tool update shows beside the outcome differences it can explain. It then prints one line per file whose result, new name, `Modified` flag, `State` flags, failed operation, or invalid reason differs.

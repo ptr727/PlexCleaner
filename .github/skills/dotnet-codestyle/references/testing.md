@@ -16,9 +16,11 @@
        int actual = GetValue();
 
        // Assert
-       actual.Should().Be(expected);
+       _ = actual.Should().Be(expected);
    }
    ```
+
+   The `_ =` discard is what IDE0058 requires of an assertion whose result goes unused.
 
 2. **Organization**: Arrange-Act-Assert pattern.
 3. **Naming**: descriptive names with underscores.

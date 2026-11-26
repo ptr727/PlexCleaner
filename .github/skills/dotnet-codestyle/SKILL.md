@@ -43,8 +43,11 @@ All builds must complete without warnings, enforced as follows:
 - **Analyzer configuration.** `<EnableNETAnalyzers>true</EnableNETAnalyzers>` with
   `<AnalysisLevel>latest-all</AnalysisLevel>` and `<AnalysisMode>All</AnalysisMode>` (the full
   analyzer set), plus `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`. With that, any diagnostic
-  surfaced as a warning fails the build. Such a diagnostic must be fixed or deliberately suppressed at the
-  narrowest scope that fits (see Analyzer suppressions below), never left to accumulate.
+  the build surfaces as a warning fails it. `EnforceCodeStyleInBuild` is left unset, so the IDE code-style
+  rules do not run in the build, and the `dotnet format style` step fails on their warnings instead. Such a diagnostic must be fixed or deliberately suppressed at the
+  narrowest scope that fits (see Analyzer suppressions below), never left to accumulate. IDE0079 is
+  the exception, since neither that step nor the build reports it. Remove a suppression the IDE
+  flags under IDE0079 only once the format step and every configuration and target framework CI builds pass without it.
 - **CI lint backstop.** CI runs the clean-compile checks on every PR as the authoritative gate.
   Husky.Net is wired from the canonical `catalog/snippets/husky/` config in the hub, hub-local
   and not carried into every fleet repo. Its hook needs a .NET tool manifest declaring
@@ -60,9 +63,7 @@ All builds must complete without warnings, enforced as follows:
   per-clone enablement steps.
 
 **A new port is not a license to silence diagnostics.** Brownfield or just-ported status never
-justifies relaxing analyzer severities or muting newly surfaced warnings. Fix them. (The only
-brownfield allowance in the fleet is the one-time git-signing / line-ending migration described in
-GOVERNANCE.md and README.md. That migration has nothing to do with code analysis.)
+justifies relaxing analyzer severities or muting newly surfaced warnings. Fix them.
 
 ### Central build and package configuration
 
@@ -105,16 +106,28 @@ Shared MSBuild configuration is centralized at the repository root, never duplic
 
   The major tracks the repo's .NET TFM (`net10.0`), never a `netstandard` target an analyzer or
   source-generator project carries beside it. It moves only with that TFM (`11.0.100` alongside
-  `net11.0`), and such a project's fixed `LangVersion` moves with them. The hub's workflows and composite actions install the SDK line through
-  `setup-dotnet`'s `dotnet-version`, and the hub's devcontainer snippet through its image tag. A
-  repo calling them therefore cannot move to a new major alone, since CI would then find no
-  compatible SDK. Such a move starts in the hub, as a fleet-wide change. The hub's steps and image
-  provide both lines until every repo has moved. A repo still on
-  `10.0.100` would otherwise find no compatible SDK once the hub installs only the new line.
+  `net11.0`), and such a project's fixed `LangVersion` moves with them. The line is the
+  repository's own choice, per `CODESTYLE.md` "Toolchain Versions", so a repository may lead or
+  lag the hub's baseline. Its move edits `global.json`, the TFM, its devcontainer image tag, and
+  any analyzer project's fixed `LangVersion` together, in that repository alone. A resync carries
+  the baseline's `rollForward` and `allowPrerelease` and never changes the repository's
+  `sdk.version`. The hub's workflows install the line the calling repo's own `global.json`
+  selects, through `setup-dotnet`'s `global-json-file`, so CI follows each repo's file. A repo
+  carrying no `sdk` block yet gets `10.x`, the baseline's major, which the hub's tests hold to the
+  baseline. The hub's host installers install the line the `catalog/snippets/configs/global.json`
+  baseline selects, named in each installer and held equal to the baseline by the hub's tests.
+  The Linux one adds the newest line the feed carries, and every other line under `--optional`.
+  The Windows one adds the two majors below it under `-Optional`. A fleet-wide move is a hub change to that
+  baseline, the installers, that fallback, and the devcontainer snippet's image tag. A repository
+  not yet moved keeps building on its own line.
 
-  A developer host now needs a release SDK on the line, 10.0.x today. A host holding only a newer
-  major, or only a 10.0 preview, fails with a clear "A compatible .NET SDK was not found" error
-  rather than silently drifting. Install the line's SDK beside the newer one.
+  A developer host now needs a release SDK on the repository's line, 10.0.x for the fleet default
+  today. A host holding only another major, or only a 10.0 preview, fails with a clear error. It
+  reads "A compatible .NET SDK was not found" rather than silently drifting. The hub's host
+  installers install the fleet default line's SDK by default. A host building a repository on
+  another line adds that line's SDK. The Linux `--optional` set, the Windows `-Optional` set for
+  an older major, or a direct install provides it. On Linux, a package feed carrying no package for the default line is named in a
+  warning and in the report.
 
 **`LangVersion` is left unset** in every `.props` or `.targets` file the repo holds and every
 project targeting a .NET TFM. The SDK's own targets derive it, which is the point. The C# version then follows the TFM (`net10.0` gives C# 14 under any SDK). Never set it
@@ -172,7 +185,8 @@ updates, dependency upgrades, benchmarks) on top:
 Key rules: no `var` (always explicit types), file-scoped namespaces, Allman braces, Nullable
 enabled, modern C# features (primary constructors, pattern matching, collection expressions). Every
 public surface has XML documentation. Private fields use `_camelCase`, static fields `s_camelCase`,
-constants PascalCase. Member ordering follows StyleCop SA1201.
+constants PascalCase. Member ordering follows StyleCop SA1201 by kind first, then SA1202 by access
+within one kind.
 
 For language features, naming, code structure, and XML documentation examples, see
 `references/conventions.md`.
@@ -202,6 +216,11 @@ The .NET mechanics, narrowest first:
   when the rule is genuinely not applicable to any project. Relaxing a batch of `CA*` rules (or
   `dotnet_analyzer_diagnostic.severity`) to push a brownfield port through the build is exactly
   what this forbids.
+
+A code-style option in the root `.editorconfig` takes a `dotnet_diagnostic.<RULE>.severity = warning`
+entry for each rule it configures. An option alone leaves its rule at the default severity, often
+hidden, which the format gate never reports. A formatting option is the exception, since CSharpier
+owns formatting and IDE0055 stays `none`.
 
 ## Error handling and logging
 
@@ -245,12 +264,21 @@ The .NET mechanics, narrowest first:
 
 ## Code patterns
 
-1. **Guard clauses**: prefer early returns for validation and error handling.
+1. **Guard clauses**: prefer early returns for validation and error handling. A guard that CA1510
+   to CA1513 match calls the throw helper its rule names, such as `ArgumentNullException.ThrowIfNull`.
+   That holds even where IDE0046 offers a conditional `return` for it. A `netstandard` project
+   lacks those helpers, so a guard there that IDE0016, IDE0046, or IDE0270 matches takes the throw
+   expression instead. A local assigned and then
+   null-checked takes `?? throw` on the assignment, per IDE0270. IDE0046 makes any other such
+   shape a single conditional `return`, a throw expression included. That shape is an `if` and
+   the `return`, `throw`, or `else` right after it, each branch only returning a value or throwing. Both
+   branches throwing is not that shape. Write that shape as the conditional `return` from the start.
 2. **Async all the way**: avoid blocking calls (`.Result`, `.Wait()`), use `async`/`await`.
 3. **Cancellation tokens**: accept `CancellationToken` as the last parameter and pass it through.
 4. **ConfigureAwait**: in library code, use `ConfigureAwait(false)` unless context is required. Do
    not call `ConfigureAwait(false)` in xUnit tests (see xUnit1030).
-5. **Disposables**: use `await using` for async disposables, prefer `using` declarations.
+5. **Disposables**: use `await using` for async disposables. A `using` declaration is required
+   wherever IDE0063 matches.
 6. **LINQ vs loops**: use LINQ for clarity, loops for hot paths or allocations.
 7. **HTTP**: reuse `HttpClient` via factory, never per-request instantiation.
 8. **Collections**: prefer `IReadOnlyList<T>`/`IReadOnlyCollection<T>` for public APIs.
@@ -269,7 +297,7 @@ parameterized tests. A test project on `xunit.v3` 4.0.0 or later is MTP-based, a
 
 ## Project configuration
 
-.NET 10.0 target, AOT-compatible (`IsAotCompatible=true`, with `VerifyReferenceAotCompatibility=true` only under the `PublishAot` condition),
+Target the repository's own .NET line, .NET 10.0 for the fleet default. AOT-compatible (`IsAotCompatible=true`, with `VerifyReferenceAotCompatibility=true` only under the `PublishAot` condition),
 SourceLink, embedded untracked sources, `InternalsVisibleTo` for test/benchmark access. See
 `references/project-config.md` for the full property list.
 

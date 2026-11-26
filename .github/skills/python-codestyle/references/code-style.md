@@ -100,7 +100,11 @@
   rejects non-ASCII output from a child writing UTF-8. No static check in the ruff, pyright, or
   mypy toolchain looks for the omission in a subprocess call. Naming the encoding settles how the
   bytes are translated, not what a byte or character outside that encoding is worth. Each call
-  decides that with its own `errors` argument, and the strict default decides it by raising.
+  decides that with its own `errors` argument, and the strict default decides it by raising. A
+  call whose child is a Python interpreter also owes that child the matching encoder. Below
+  Python 3.15 the child's own streams take the locale encoding too. Pass `PYTHONIOENCODING=utf-8`
+  in the child's environment. A child run with `-I` or `-E` ignores that variable, so give it
+  `-X utf8` on its command line instead.
 
 <!-- External -->
 

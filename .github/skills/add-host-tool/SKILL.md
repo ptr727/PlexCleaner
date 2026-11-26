@@ -25,12 +25,12 @@ description: >-
 - Prefer the distribution package when it meets the floor.
 - Use the platform's established package manager and official package identifier.
 - Keep install and upgrade idempotent.
-- Before an apt-managed install, detect and remove an unowned downloaded copy that shadows it.
-- Before a downloaded install, detect and remove a conflicting package-managed copy.
+- Before an apt-managed install, detect an unowned downloaded copy that shadows it. Report it with the command that removes it by hand, per `GOVERNANCE.md` "Design Before Code". Skip that tool's install until the copy is gone, since the shadowing copy would keep answering on PATH.
+- Before a downloaded install, detect a conflicting package-managed copy. Report it and skip the install the same way.
 - Preserve report, list, explicit selection, install, upgrade, reinstall, and dry-run behavior.
-- Do not test a Windows mutation on Linux or a Linux mutation on Windows.
+- Hand each native mutation to the operator on its own platform, never a Windows mutation on Linux or a Linux mutation on Windows.
 
-When a platform is unavailable, verify its registry and tests without claiming a native install. Hand off the exact native commands and expected observations to the operator.
+Verify each platform's registry and tests without claiming a native install, whether or not the platform is available. Hand off the exact native commands and expected observations to the operator.
 
 ## Update the Complete Surface
 
@@ -42,5 +42,6 @@ Update the platform installers, `spec/host-tools.json`, `docs/host-setup.md`, an
 2. Run the repository's formatting, lint, type, and test gates required by the changed files.
 3. On the current native platform, exercise list and report first.
 4. Exercise install and upgrade dry runs.
-5. Apply the install, repeat it to prove idempotence, and run the host gate.
+5. Hand the operator the exact native commands for the install, a repeat install proving
+   idempotence, and the host gate, with the expected observations. Verify what the operator reports.
 6. Record untested platforms explicitly and leave cross-platform verification open.
