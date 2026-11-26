@@ -43,6 +43,19 @@ public static class Program
             return commandLineParser.Result.Invoke();
         }
 
+        PosixSignalRegistration sigIntRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGINT,
+            PosixSignalHandler
+        );
+        PosixSignalRegistration sigTermRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGTERM,
+            PosixSignalHandler
+        );
+        PosixSignalRegistration sigQuitRegistration = PosixSignalRegistration.Create(
+            PosixSignal.SIGQUIT,
+            PosixSignalHandler
+        );
+
         // Bind all commandline options
         Options = commandLineParser.Bind();
 
@@ -72,20 +85,6 @@ public static class Program
                 );
         }
 
-        // Handle termination signals to cancel gracefully and still log the summary before exit
-        PosixSignalRegistration sigIntRegistration = PosixSignalRegistration.Create(
-            PosixSignal.SIGINT,
-            PosixSignalHandler
-        );
-        PosixSignalRegistration sigTermRegistration = PosixSignalRegistration.Create(
-            PosixSignal.SIGTERM,
-            PosixSignalHandler
-        );
-        PosixSignalRegistration sigQuitRegistration = PosixSignalRegistration.Create(
-            PosixSignal.SIGQUIT,
-            PosixSignalHandler
-        );
-
         // Keep the system from going to sleep
         KeepAwake.PreventSleep();
         using System.Timers.Timer keepAwakeTimer = new(30 * 1000);
@@ -96,7 +95,11 @@ public static class Program
         // Invoke command
         int exitCode = commandLineParser.Result.Invoke();
 
-        // A signal interruption reports its own exit code so a caller can tell it from a clean finish or an error
+        // A signal reports its own exit code, and a failure first waits for a handler that a tool the signal ended can outrun
+        if (exitCode != MakeExitCode(ExitCode.Success))
+        {
+            _ = IsCancelledError();
+        }
         if (s_signalExitCode != 0)
         {
             exitCode = s_signalExitCode;

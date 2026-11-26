@@ -316,7 +316,7 @@ public abstract partial class MediaTool
         }
         catch (OperationCanceledException)
         {
-            Log.Error(
+            Log.Warning(
                 "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
                 operation,
@@ -388,7 +388,7 @@ public abstract partial class MediaTool
         }
         catch (OperationCanceledException)
         {
-            Log.Error(
+            Log.Warning(
                 "Cancelled execution of {ToolType} : {Operation:l} : ProcessId: {ProcessId}, Arguments: {Arguments}",
                 GetToolType(),
                 operation,
