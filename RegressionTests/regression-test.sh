@@ -181,7 +181,7 @@ RunChild() {
 }
 
 # StopChildren Status Signal
-# Stop the running child, then exit with the signal's status, which runs the EXIT trap's dataset restore.
+# Stop the running child, then exit with the signal's status, so a provisioned dataset's EXIT trap restores it.
 StopChildren() {
     if ((${#pids[@]})); then
         kill -TERM "${pids[@]}" 2>/dev/null || :
