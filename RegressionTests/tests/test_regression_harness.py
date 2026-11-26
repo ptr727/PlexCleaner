@@ -7,7 +7,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from script_helpers import NEEDS_BASH, PIDFILE_STUB, interrupt, signals, write_stub
+from script_helpers import (
+    NEEDS_BASH,
+    PIDFILE_STUB,
+    interrupt,
+    run_script,
+    signals,
+    stubbed_env,
+    write_stub,
+)
 from test_help import ROOT, clean_env
 
 HARNESS = ROOT / "regression-test.sh"
@@ -35,14 +43,7 @@ HARNESS_ENV = {
 @NEEDS_BASH
 class HarnessTests(unittest.TestCase):
     def run_harness(self, *args: str, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
-            ["bash", str(HARNESS), *args],
-            env=env,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=60,
-        )
+        return run_script(HARNESS, *args, env=env)
 
     def test_help_lists_every_variable(self) -> None:
         proc = self.run_harness("--help", env=clean_env())
@@ -80,10 +81,7 @@ class HarnessSignalTests(unittest.TestCase):
             'case "$*" in "-u") echo 0 ;; "-u nonroot") echo 1001 ;; *) exit 1 ;; esac\n',
         )
         write_stub(stubs, "getent", "echo users:x:100:\n")
-        env = clean_env() | HARNESS_ENV
-        env["PATH"] = f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}"
-        env["STUB_PIDFILE"] = str(Path(d) / "child.pid")
-        return stubs, env
+        return stubs, stubbed_env(clean_env() | HARNESS_ENV, stubs, Path(d) / "child.pid")
 
     def test_signal_stops_the_running_child(self) -> None:
         for sig in signals():

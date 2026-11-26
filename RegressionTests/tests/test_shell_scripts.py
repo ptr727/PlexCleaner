@@ -2,12 +2,19 @@
 
 import json
 import os
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-from script_helpers import NEEDS_BASH, PIDFILE_STUB, interrupt, signals, write_stub
+from script_helpers import (
+    NEEDS_BASH,
+    PIDFILE_STUB,
+    interrupt,
+    run_script,
+    signals,
+    stubbed_env,
+    write_stub,
+)
 from test_help import ROOT, clean_env
 
 REPO = ROOT.parent
@@ -19,18 +26,6 @@ SCRIPTS = [
     ROOT / "integration-test.sh",
     ROOT / "regression-test.sh",
 ]
-
-
-def run_script(script: Path, *args: str, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["bash", str(script), *args],
-        env=env,
-        stdin=subprocess.DEVNULL,
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=60,
-    )
 
 
 @NEEDS_BASH
@@ -58,6 +53,13 @@ class RefusalTests(unittest.TestCase):
                 self.assertEqual(proc.stdout, "")
                 self.assertIn("extra", proc.stderr)
 
+    def test_extra_integration_argument_exits_64_naming_it(self) -> None:
+        proc = run_script(
+            ROOT / "integration-test.sh", "image:tag", "/some/new/path", "extra", env=clean_env()
+        )
+        self.assertEqual(proc.returncode, 64, proc.stderr)
+        self.assertIn("extra", proc.stderr)
+
     @unittest.skipUnless(Path("/etc/os-release").is_file(), "needs /etc/os-release")
     def test_failing_command_with_status_64_exits_1(self) -> None:
         with tempfile.TemporaryDirectory() as d:
@@ -71,13 +73,6 @@ class RefusalTests(unittest.TestCase):
 
 @NEEDS_BASH
 class InterruptTests(unittest.TestCase):
-    @staticmethod
-    def stubbed_env(env: dict[str, str], stubs: Path, pidfile: Path) -> dict[str, str]:
-        return env | {
-            "PATH": f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}",
-            "STUB_PIDFILE": str(pidfile),
-        }
-
     @unittest.skipIf(Path("/Test/Media").exists(), "the host has /Test/Media")
     def test_test_script_stops_its_download_and_removes_it(self) -> None:
         wget = (
@@ -93,7 +88,7 @@ class InterruptTests(unittest.TestCase):
                 tmp = Path(d) / "tmp"
                 tmp.mkdir()
                 pidfile = Path(d) / "child.pid"
-                env = self.stubbed_env(clean_env() | {"TMPDIR": str(tmp)}, stubs, pidfile)
+                env = stubbed_env(clean_env() | {"TMPDIR": str(tmp)}, stubs, pidfile)
                 interrupt(self, ["bash", str(REPO / "Docker" / "test.sh")], env, pidfile, sig)
                 zip_file = tmp / "PlexCleaner-Test" / "matroska-test-files.zip"
                 self.assertFalse(zip_file.exists())
@@ -110,7 +105,7 @@ class InterruptTests(unittest.TestCase):
                 dll.parent.mkdir(parents=True)
                 dll.write_bytes(b"")
                 pidfile = Path(d) / "child.pid"
-                env = self.stubbed_env(
+                env = stubbed_env(
                     clean_env() | {"NUGET_PACKAGES": str(Path(d) / "nuget")}, stubs, pidfile
                 )
                 argv = [

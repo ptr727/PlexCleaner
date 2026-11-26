@@ -35,7 +35,7 @@ case "${1-}" in
     fi
     echo "Usage: install-debug-tools.sh"
     echo "Installs vsdbg to /vsdbg and the .NET diagnostic tools to /dotnet-tools."
-    echo "Exits 0 on success, 64 for a refused argument, and 1 when the run fails."
+    echo "Exits 0 on success, 64 for a refused argument, and another non-zero status when the run fails."
     exit 0
     ;;
 esac

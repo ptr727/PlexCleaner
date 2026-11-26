@@ -35,7 +35,7 @@ case "${1-}" in
     fi
     echo "Usage: version.sh"
     echo "Prints the OS, .NET, PlexCleaner, and media tool versions."
-    echo "Exits 0 on success, 64 for a refused argument, and 1 when the run fails."
+    echo "Exits 0 on success, 64 for a refused argument, and another non-zero status when the run fails."
     exit 0
     ;;
 esac

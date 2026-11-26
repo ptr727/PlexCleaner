@@ -53,7 +53,8 @@ Optional environment:
                             the process and plugin runs under coverage collection,
                             each writing a Cobertura coverage_<run>.xml beside its log
 The corpus tools in this directory also read REGRESSION_CORPUS_DIR and REGRESSION_SCRATCH_DIR, see README.md.
-Exits 0 on success, 64 for a refused argument or required input, and 1 when the run fails.
+Exits 0 on success, and 64 when it refuses an argument or an unset or malformed variable before any change.
+Any other non-zero status is a run that failed.
 EOF
 }
 

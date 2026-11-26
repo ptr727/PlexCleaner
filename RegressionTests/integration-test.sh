@@ -15,7 +15,7 @@ WORKDIR must not exist, and receives the media, the results, the log, and the co
   WORKDIR/out/PlexCleaner.log
 
 Requires docker, python3, and the restored local .NET tools, from: dotnet tool restore
-Exits 0 on success, 64 for a refused argument, and 1 when the run fails.
+Exits 0 on success, 64 for a refused argument, and another non-zero status when the run fails.
 EOF
 }
 
@@ -72,6 +72,9 @@ case "${1-}" in
     Refuse "integration-test.sh: unknown option: $1, see --help"
     ;;
 esac
+if [[ $# -gt 2 ]]; then
+    Refuse "integration-test.sh: unknown argument: $3, see --help"
+fi
 if [[ $# -ne 2 ]]; then
     Refuse "integration-test.sh: expected IMAGE and WORKDIR, see --help"
 fi

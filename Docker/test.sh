@@ -56,7 +56,7 @@ Usage: test.sh
 Runs the PlexCleaner commands against the media in /Test/Media, downloading the Matroska test files when it is missing.
 Uses /Test/PlexCleaner.json when present, otherwise the default settings.
 Writes its output under $TMPDIR/PlexCleaner-Test, or /tmp when TMPDIR is unset, so it runs as a non-root user.
-Exits 0 on success, 64 for a refused argument, and 1 when the run fails.
+Exits 0 on success, 64 for a refused argument, and another non-zero status when the run fails.
 Run it as the nonroot user and users group that own the media:
   USER_NONROOT_ID=1001  # Replace with your own, from: id -u nonroot
   USERS_GROUP_ID=100    # Replace with your own, from: getent group users | cut -d: -f3

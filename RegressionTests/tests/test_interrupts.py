@@ -3,15 +3,14 @@
 import json
 import os
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
-import time
 import unittest
 from pathlib import Path
 from unittest import mock
 
+from script_helpers import interrupt, signals
 from test_help import ROOT, clean_env
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "synthetic"))
@@ -118,65 +117,15 @@ class ToolSignalTests(unittest.TestCase):
             "TMPDIR": str(self.tmp),
         }
 
-    def interrupt(
-        self, args: list[str], env: dict[str, str], sig: signal.Signals, pidfile: Path
-    ) -> tuple[int, str]:
-        proc = subprocess.Popen(
-            [sys.executable, *args],
-            env=env,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-        try:
-            deadline = time.monotonic() + 30
-            while not pidfile.exists() and time.monotonic() < deadline:
-                time.sleep(0.05)
-            self.assertTrue(pidfile.exists(), "the tool never started its child")
-            child = int(pidfile.read_text())
-            proc.send_signal(sig)
-            _, err = proc.communicate(timeout=30)
-            self.assertTrue(self.gone(child), f"the child {child} outlived the tool")
-        finally:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            proc.wait()
-            if pidfile.exists():
-                try:
-                    os.kill(int(pidfile.read_text()), signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-        return proc.returncode, err
-
-    @staticmethod
-    def gone(pid: int) -> bool:
-        # A child killed but not waited for lingers until init reaps it, so allow it a moment.
-        deadline = time.monotonic() + 5
-        while time.monotonic() < deadline:
-            try:
-                os.kill(pid, 0)
-            except ProcessLookupError:
-                return True
-            time.sleep(0.05)
-        return False
-
     def check(
         self, args: list[str], env: dict[str, str], tool: str, expect_term: bool = False
     ) -> None:
-        cases = [signal.SIGTERM]
-        if signal.getsignal(signal.SIGINT) is not signal.SIG_IGN:
-            cases.append(signal.SIGINT)
-        for sig in cases:
+        for sig in signals():
             with self.subTest(tool=tool, signal=sig.name):
                 pidfile = self.dir / f"{tool}.{sig.name}.pid"
                 marker = self.dir / f"{tool}.{sig.name}.marker"
                 case_env = env | {"STUB_PIDFILE": str(pidfile), "STUB_MARKER": str(marker)}
-                status, err = self.interrupt(args, case_env, sig, pidfile)
-                self.assertEqual(status, -sig, err)
+                err = interrupt(self, [sys.executable, *args], case_env, pidfile, sig, grace=5)
                 self.assertNotIn("Traceback", err)
                 self.assertEqual(err.count(f"{tool}: interrupted by {sig.name}"), 1, err)
                 self.assertEqual(list(self.tmp.iterdir()), [])
