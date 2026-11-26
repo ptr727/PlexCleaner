@@ -15,26 +15,68 @@ WORKDIR must not exist, and receives the media, the results, the log, and the co
   WORKDIR/out/PlexCleaner.log
 
 Requires docker, python3, and the restored local .NET tools, from: dotnet tool restore
+Exits 0 on success, 64 for a refused argument, and another non-zero status when the run fails.
 EOF
 }
+
+Refused=0
+
+Refuse() {
+    echo "$1" >&2
+    Refused=1
+    exit 64
+}
+
+pids=()
+RunChild() {
+    local Pid Status=0
+    "$@" <&0 &
+    Pid=$!
+    pids=("$Pid")
+    wait "$Pid" || Status=$?
+    pids=()
+    return "$Status"
+}
+
+OnExit() {
+    local Status=$?
+    if ((Status == 64 && Refused == 0)); then
+        exit 1
+    fi
+}
+
+OnSignal() {
+    if ((${#pids[@]})); then
+        kill -s TERM "${pids[@]}" 2>/dev/null || :
+        wait "${pids[@]}" || :
+    fi
+    echo "integration-test.sh: interrupted by SIG$1" >&2
+    trap - "$1"
+    kill -s "$1" "$$" || :
+    exit "$2"
+}
+
+trap OnExit EXIT
+trap 'OnSignal INT 130' INT
+trap 'OnSignal TERM 143' TERM
 
 case "${1-}" in
 -h | --help)
     if [[ $# -ne 1 ]]; then
-        echo "integration-test.sh: unknown argument: $2, see --help" >&2
-        exit 2
+        Refuse "integration-test.sh: unknown argument: $2, see --help"
     fi
     usage
     exit 0
     ;;
 -*)
-    echo "integration-test.sh: unknown option: $1, see --help" >&2
-    exit 2
+    Refuse "integration-test.sh: unknown option: $1, see --help"
     ;;
 esac
+if [[ $# -gt 2 ]]; then
+    Refuse "integration-test.sh: unknown argument: $3, see --help"
+fi
 if [[ $# -ne 2 ]]; then
-    echo "integration-test.sh: expected IMAGE and WORKDIR, see --help" >&2
-    exit 2
+    Refuse "integration-test.sh: expected IMAGE and WORKDIR, see --help"
 fi
 image="$1"
 work="$2"
@@ -55,14 +97,14 @@ if [[ -z "$tool_dll" ]]; then
 fi
 
 if [[ -e "$work" ]]; then
-    echo "integration-test.sh: $work exists, give a new directory" >&2
-    exit 2
+    Refuse "integration-test.sh: $work exists, give a new directory"
 fi
 mkdir -p "$work/media" "$work/out"
 work="$(cd "$work" && pwd)"
 
 # The image has no python3, so a root throwaway container adds it, then returns the media to the caller.
-docker run --rm --env OWNER="$(id -u):$(id -g)" --env MATROSKA_COMMIT="$matroska_commit" \
+# shellcheck disable=SC2016 # The container's shell expands the variables, not this one.
+RunChild docker run --init --rm --env OWNER="$(id -u):$(id -g)" --env MATROSKA_COMMIT="$matroska_commit" \
     --volume "$repo/RegressionTests/synthetic:/synthetic:ro" --volume "$work/media:/media" \
     --entrypoint /bin/bash "$image" -c '
 set -Eeuo pipefail
@@ -76,7 +118,7 @@ wget -q -O /tmp/matroska.zip "https://github.com/ietf-wg-cellar/matroska-test-fi
 
 # RegisterInvalidFiles writes to the settings file, so the run gets a copy.
 cp "$repo/Docker/PlexCleaner.coverage.json" "$work/out/PlexCleaner.json"
-docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE_TELEMETRY_OPTOUT=1 \
+RunChild docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp --env DOTNET_COVERAGE_TELEMETRY_OPTOUT=1 \
     --volume "$(dirname "$tool_dll"):/dotnet-coverage:ro" --volume "$work/media:/Test/Media" \
     --volume "$work/out:/tmp/PlexCleaner-Test" --volume "$work/out/PlexCleaner.json:/Test/PlexCleaner.json" \
     --entrypoint dotnet "$image" /dotnet-coverage/dotnet-coverage.dll \

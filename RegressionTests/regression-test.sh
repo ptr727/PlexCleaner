@@ -53,14 +53,63 @@ Optional environment:
                             the process and plugin runs under coverage collection,
                             each writing a Cobertura coverage_<run>.xml beside its log
 The corpus tools in this directory also read REGRESSION_CORPUS_DIR and REGRESSION_SCRATCH_DIR, see README.md.
+Exits 0 on success, and 64 when it refuses an argument or an unset or malformed variable before any change.
+Any other non-zero status is a run that failed.
 EOF
 }
 
 UnknownArgument() {
     echo "regression-test.sh: unknown argument: '$1'" >&2
     Usage >&2
-    exit 2
+    Refuse
 }
+
+Refused=0
+Provisioned=0
+
+Refuse() {
+    if (($#)); then
+        echo "$1" >&2
+    fi
+    Refused=1
+    exit 64
+}
+
+pids=()
+RunChild() {
+    local Pid Status=0
+    "$@" <&0 &
+    Pid=$!
+    pids=("$Pid")
+    wait "$Pid" || Status=$?
+    pids=()
+    return "$Status"
+}
+
+OnExit() {
+    local Status=$?
+    if ((Provisioned)); then
+        RestoreDataset
+    fi
+    if ((Status == 64 && Refused == 0)); then
+        exit 1
+    fi
+}
+
+OnSignal() {
+    if ((${#pids[@]})); then
+        kill -s TERM "${pids[@]}" 2>/dev/null || :
+        wait "${pids[@]}" || :
+    fi
+    echo "regression-test.sh: interrupted by SIG$1" >&2
+    trap - "$1"
+    kill -s "$1" "$$" || :
+    exit "$2"
+}
+
+trap OnExit EXIT
+trap 'OnSignal INT 130' INT
+trap 'OnSignal TERM 143' TERM
 
 case "${1-}" in
 -h | --help)
@@ -82,19 +131,16 @@ esac
 for Name in REGRESSION_HOST_CONFIG REGRESSION_TEST_MEDIA REGRESSION_PLUGIN_BUILD_DIR \
     REGRESSION_CORPUS_DATASET REGRESSION_TEST_DATASET REGRESSION_THREAD_COUNT; do
     if [[ -z "${!Name-}" ]]; then
-        echo "regression-test.sh: required environment variable $Name is not set" >&2
-        exit 2
+        Refuse "regression-test.sh: required environment variable $Name is not set"
     fi
 done
 for Name in REGRESSION_HOST_CONFIG REGRESSION_TEST_MEDIA REGRESSION_PLUGIN_BUILD_DIR; do
     if [[ "${!Name}" != /* ]]; then
-        echo "regression-test.sh: $Name is not an absolute path: '${!Name}'" >&2
-        exit 2
+        Refuse "regression-test.sh: $Name is not an absolute path: '${!Name}'"
     fi
 done
 if [[ ! "$REGRESSION_THREAD_COUNT" =~ ^[1-9][0-9]*$ ]]; then
-    echo "regression-test.sh: REGRESSION_THREAD_COUNT is not a positive integer: '$REGRESSION_THREAD_COUNT'" >&2
-    exit 2
+    Refuse "regression-test.sh: REGRESSION_THREAD_COUNT is not a positive integer: '$REGRESSION_THREAD_COUNT'"
 fi
 HostConfig="$REGRESSION_HOST_CONFIG"
 HostMedia="$REGRESSION_TEST_MEDIA"
@@ -164,31 +210,8 @@ SetLaunch() {
 CheckMountpoint() {
     if [[ "$(zfs get -H -o value mountpoint "$TestDataset")" != "$HostMedia" ]]; then
         echo "regression-test.sh: REGRESSION_TEST_MEDIA $HostMedia is not the mountpoint of $TestDataset" >&2
-        exit 2
+        exit 1
     fi
-}
-
-# RunChild Command...
-# Run a long external command in the background and wait for it, so the INT and TERM traps can stop it.
-RunChild() {
-    local Pid Status=0
-    "$@" <&0 &
-    Pid=$!
-    pids=("$Pid")
-    wait "$Pid" || Status=$?
-    pids=()
-    return "$Status"
-}
-
-# StopChildren Status Signal
-# Stop the running child, then exit with the signal's status, so a provisioned dataset's EXIT trap restores it.
-StopChildren() {
-    if ((${#pids[@]})); then
-        kill -TERM "${pids[@]}" 2>/dev/null || :
-        wait "${pids[@]}" || :
-    fi
-    echo "regression-test.sh: interrupted by $2" >&2
-    exit "$1"
 }
 
 # Provision the test dataset as a zero-copy clone of the newest corpus snapshot.
@@ -212,7 +235,7 @@ ProvisionDataset() {
     if zfs list "$TestDataset" >/dev/null 2>&1; then
         if [[ "$Origin" != "$CorpusDataset@"* ]]; then
             echo "regression-test.sh: REGRESSION_TEST_DATASET $TestDataset is not a clone of $CorpusDataset, refusing to retire it" >&2
-            exit 2
+            exit 1
         fi
         zfs rename "$TestDataset" "$TestDataset-retired-$(date +%s)"
     fi
@@ -479,13 +502,13 @@ RunRegressionTests() {
     ProvisionDataset
     # Roll the clone back to its pristine @backup even if processing or a plugin aborts under set -e.
     # A failed run then never leaves the shared test dataset mutated, and the clean restore disarms the trap.
-    trap 'RestoreDataset' EXIT
+    Provisioned=1
     RunProcess "$Version"
     for Dll in "${BuiltPlugins[@]}"; do
         RunPlugin "$Version" "$Dll"
     done
     RestoreDataset
-    trap - EXIT
+    Provisioned=0
 }
 
 Tag="${2-develop}"
@@ -519,13 +542,8 @@ done
 
 CoverageTool="${REGRESSION_COVERAGE_TOOL-}"
 if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet-coverage.dll") ]]; then
-    echo "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'" >&2
-    exit 2
+    Refuse "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'"
 fi
-
-pids=()
-trap 'StopChildren 130 SIGINT' INT
-trap 'StopChildren 143 SIGTERM' TERM
 
 if [[ "$(id -u)" -ne 0 ]]; then
     echo "This script must be run as root" >&2

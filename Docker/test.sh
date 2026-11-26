@@ -2,17 +2,61 @@
 
 set -Eeuo pipefail
 
+Refused=0
+
+Refuse() {
+    echo "test.sh: unknown argument: $1, it takes no arguments, see --help" >&2
+    Refused=1
+    exit 64
+}
+
+pids=()
+RunChild() {
+    local Pid Status=0
+    "$@" <&0 &
+    Pid=$!
+    pids=("$Pid")
+    wait "$Pid" || Status=$?
+    pids=()
+    return "$Status"
+}
+
+OnExit() {
+    local Status=$?
+    if [[ -n "${TestPath-}" ]]; then
+        rm -f -- "$TestPath/matroska-test-files.zip"
+    fi
+    if ((Status == 64 && Refused == 0)); then
+        exit 1
+    fi
+}
+
+OnSignal() {
+    if ((${#pids[@]})); then
+        kill -s TERM "${pids[@]}" 2>/dev/null || :
+        wait "${pids[@]}" || :
+    fi
+    echo "test.sh: interrupted by SIG$1" >&2
+    trap - "$1"
+    kill -s "$1" "$$" || :
+    exit "$2"
+}
+
+trap OnExit EXIT
+trap 'OnSignal INT 130' INT
+trap 'OnSignal TERM 143' TERM
+
 case "${1-}" in
 -h | --help)
     if [[ $# -ne 1 ]]; then
-        echo "test.sh: unknown argument: $2, it takes no arguments, see --help" >&2
-        exit 2
+        Refuse "$2"
     fi
     cat <<'EOF'
 Usage: test.sh
 Runs the PlexCleaner commands against the media in /Test/Media, downloading the Matroska test files when it is missing.
 Uses /Test/PlexCleaner.json when present, otherwise the default settings.
-Writes its output under /tmp/PlexCleaner-Test, so it runs as a non-root user.
+Writes its output under $TMPDIR/PlexCleaner-Test, or /tmp when TMPDIR is unset, so it runs as a non-root user.
+Exits 0 on success, 64 for a refused argument, and another non-zero status when the run fails.
 Run it as the nonroot user and users group that own the media:
   USER_NONROOT_ID=1001  # Replace with your own, from: id -u nonroot
   USERS_GROUP_ID=100    # Replace with your own, from: getent group users | cut -d: -f3
@@ -31,8 +75,7 @@ EOF
     ;;
 esac
 if [[ $# -ne 0 ]]; then
-    echo "test.sh: unknown argument: $1, it takes no arguments, see --help" >&2
-    exit 2
+    Refuse "$1"
 fi
 
 # Use debug build for testing
@@ -46,7 +89,7 @@ SettingsFile=/Test/PlexCleaner.json
 
 # The image's /Test is root-owned, so output goes under /tmp, which any user can write.
 # A fixed path keeps a mounted settings file from registering new media paths on every run.
-TestPath=/tmp/PlexCleaner-Test
+TestPath="${TMPDIR:-/tmp}/PlexCleaner-Test"
 mkdir -p "$TestPath"
 
 set -x
@@ -55,16 +98,16 @@ set -x
 if [ ! -d "$MediaPath" ]; then
     MediaPath="$TestPath/Media"
     # Download Matroska test files: https://github.com/ietf-wg-cellar/matroska-test-files
-    wget --progress=bar:force -O "$TestPath/matroska-test-files.zip" https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip
-    7z e -aoa -o"$MediaPath" "$TestPath/matroska-test-files.zip" '*.mkv' -r
+    RunChild wget --progress=bar:force -O "$TestPath/matroska-test-files.zip" https://github.com/ietf-wg-cellar/matroska-test-files/archive/refs/heads/master.zip
+    RunChild 7z e -aoa -o"$MediaPath" "$TestPath/matroska-test-files.zip" '*.mkv' -r
     rm "$TestPath/matroska-test-files.zip"
 fi
 
 # Basic commands (no settings file required)
-$PlexCleanerApp --version
-$PlexCleanerApp --help
-$PlexCleanerApp defaultsettings --settingsfile "$TestPath/PlexCleaner.default.json"
-$PlexCleanerApp createschema --schemafile "$TestPath/PlexCleaner.schema.json"
+RunChild $PlexCleanerApp --version
+RunChild $PlexCleanerApp --help
+RunChild $PlexCleanerApp defaultsettings --settingsfile "$TestPath/PlexCleaner.default.json"
+RunChild $PlexCleanerApp createschema --schemafile "$TestPath/PlexCleaner.schema.json"
 
 # Test for "/Test/PlexCleaner.json" file
 if [ ! -e "$SettingsFile" ]; then
@@ -74,7 +117,7 @@ if [ ! -e "$SettingsFile" ]; then
 fi
 
 # Basic commands (settings file required)
-$PlexCleanerApp getversioninfo --settingsfile "$SettingsFile"
+RunChild $PlexCleanerApp getversioninfo --settingsfile "$SettingsFile"
 
 # Not supported on Linux
 # $PlexCleanerApp checkfornewtools --settingsfile "$SettingsFile"
@@ -83,26 +126,26 @@ $PlexCleanerApp getversioninfo --settingsfile "$SettingsFile"
 # Take care of order of commands to not interfere with sidecar logic
 
 # Run process command first
-$PlexCleanerApp process --settingsfile "$SettingsFile" --logfile "$TestPath/PlexCleaner.log" --logwarning --mediafiles "$MediaPath" --testsnippets --resultsfile "$TestPath/Results.json"
+RunChild $PlexCleanerApp process --settingsfile "$SettingsFile" --logfile "$TestPath/PlexCleaner.log" --logwarning --mediafiles "$MediaPath" --testsnippets --resultsfile "$TestPath/Results.json"
 
 # Info/Testing commands
-$PlexCleanerApp verify --settingsfile "$SettingsFile" --mediafiles "$MediaPath" --quickscan
-$PlexCleanerApp testmediainfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp updatesidecar --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp getsidecarinfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp gettagmap --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp getmediainfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp gettoolinfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp verify --settingsfile "$SettingsFile" --mediafiles "$MediaPath" --quickscan
+RunChild $PlexCleanerApp testmediainfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp updatesidecar --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp getsidecarinfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp gettagmap --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp getmediainfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp gettoolinfo --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
 
 # Run createsidecar after sidecar state is no longer required
-$PlexCleanerApp createsidecar --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp createsidecar --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
 
 # Processing commands
-$PlexCleanerApp remux --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp reencode --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp deinterlace --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp removesubtitles --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
-$PlexCleanerApp removeclosedcaptions --settingsfile "$SettingsFile" --mediafiles "$MediaPath" --quickscan
+RunChild $PlexCleanerApp remux --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp reencode --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp deinterlace --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp removesubtitles --settingsfile "$SettingsFile" --mediafiles "$MediaPath"
+RunChild $PlexCleanerApp removeclosedcaptions --settingsfile "$SettingsFile" --mediafiles "$MediaPath" --quickscan
 
 # Not readily testable
 # $PlexCleanerApp monitor --settingsfile "$SettingsFile" --mediafiles "$MediaPath"

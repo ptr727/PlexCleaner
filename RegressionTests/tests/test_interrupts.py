@@ -1,17 +1,15 @@
 """Tests that each tool dies by the signal it is sent, and the atomic write leaves no stray file."""
 
 import json
-import os
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
-import time
 import unittest
 from pathlib import Path
 from unittest import mock
 
+from script_helpers import PIDFILE_PUBLISH, interrupt, signals, with_stubs, write_stub
 from test_help import ROOT, clean_env
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "synthetic"))
@@ -97,86 +95,30 @@ class ToolSignalTests(unittest.TestCase):
         self.addCleanup(self._dir.cleanup)
 
     def write_stub(self, name: str, create_last_argument: bool = False) -> None:
-        # Leaves a marker only where it is sent SIGTERM, since SIGKILL cannot run the trap.
-        stub = self.stubs / name
         create = 'touch "${@: -1}"\n' if create_last_argument else ""
-        stub.write_text(
-            "#!/bin/bash\n"
-            + create
+        write_stub(
+            self.stubs,
+            name,
+            create
             + f"sleep {STUB_SLEEP} </dev/null >/dev/null 2>&1 &\n"
             + "Sleeper=$!\n"
             + 'trap \'echo TERM > "$STUB_MARKER"; kill "$Sleeper"; exit 0\' TERM\n'
-            + 'echo $$ > "$STUB_PIDFILE.tmp"\n'
-            + 'mv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
-            + 'wait "$Sleeper"\n'
+            + PIDFILE_PUBLISH
+            + 'wait "$Sleeper"\n',
         )
-        stub.chmod(0o755)
 
     def env(self) -> dict[str, str]:
-        return clean_env() | {
-            "PATH": f"{self.stubs}{os.pathsep}{os.environ.get('PATH', '')}",
-            "TMPDIR": str(self.tmp),
-        }
-
-    def interrupt(
-        self, args: list[str], env: dict[str, str], sig: signal.Signals, pidfile: Path
-    ) -> tuple[int, str]:
-        proc = subprocess.Popen(
-            [sys.executable, *args],
-            env=env,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-        try:
-            deadline = time.monotonic() + 30
-            while not pidfile.exists() and time.monotonic() < deadline:
-                time.sleep(0.05)
-            self.assertTrue(pidfile.exists(), "the tool never started its child")
-            child = int(pidfile.read_text())
-            proc.send_signal(sig)
-            _, err = proc.communicate(timeout=30)
-            self.assertTrue(self.gone(child), f"the child {child} outlived the tool")
-        finally:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            proc.wait()
-            if pidfile.exists():
-                try:
-                    os.kill(int(pidfile.read_text()), signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-        return proc.returncode, err
-
-    @staticmethod
-    def gone(pid: int) -> bool:
-        # A child killed but not waited for lingers until init reaps it, so allow it a moment.
-        deadline = time.monotonic() + 5
-        while time.monotonic() < deadline:
-            try:
-                os.kill(pid, 0)
-            except ProcessLookupError:
-                return True
-            time.sleep(0.05)
-        return False
+        return with_stubs(clean_env(), self.stubs) | {"TMPDIR": str(self.tmp)}
 
     def check(
         self, args: list[str], env: dict[str, str], tool: str, expect_term: bool = False
     ) -> None:
-        cases = [signal.SIGTERM]
-        if signal.getsignal(signal.SIGINT) is not signal.SIG_IGN:
-            cases.append(signal.SIGINT)
-        for sig in cases:
+        for sig in signals():
             with self.subTest(tool=tool, signal=sig.name):
                 pidfile = self.dir / f"{tool}.{sig.name}.pid"
                 marker = self.dir / f"{tool}.{sig.name}.marker"
                 case_env = env | {"STUB_PIDFILE": str(pidfile), "STUB_MARKER": str(marker)}
-                status, err = self.interrupt(args, case_env, sig, pidfile)
-                self.assertEqual(status, -sig, err)
+                err = interrupt(self, [sys.executable, *args], case_env, pidfile, sig, grace=5)
                 self.assertNotIn("Traceback", err)
                 self.assertEqual(err.count(f"{tool}: interrupted by {sig.name}"), 1, err)
                 self.assertEqual(list(self.tmp.iterdir()), [])

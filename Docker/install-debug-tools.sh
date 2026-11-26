@@ -2,20 +2,60 @@
 
 set -Eeuo pipefail
 
+Refused=0
+
+Refuse() {
+    echo "install-debug-tools.sh: unknown argument: $1, it takes no arguments, see --help" >&2
+    Refused=1
+    exit 64
+}
+
+pids=()
+RunChild() {
+    local Pid Status=0
+    "$@" <&0 &
+    Pid=$!
+    pids=("$Pid")
+    wait "$Pid" || Status=$?
+    pids=()
+    return "$Status"
+}
+
+OnExit() {
+    local Status=$?
+    if ((Status == 64 && Refused == 0)); then
+        exit 1
+    fi
+}
+
+OnSignal() {
+    if ((${#pids[@]})); then
+        kill -s TERM "${pids[@]}" 2>/dev/null || :
+        wait "${pids[@]}" || :
+    fi
+    echo "install-debug-tools.sh: interrupted by SIG$1" >&2
+    trap - "$1"
+    kill -s "$1" "$$" || :
+    exit "$2"
+}
+
+trap OnExit EXIT
+trap 'OnSignal INT 130' INT
+trap 'OnSignal TERM 143' TERM
+
 case "${1-}" in
 -h | --help)
     if [[ $# -ne 1 ]]; then
-        echo "install-debug-tools.sh: unknown argument: $2, it takes no arguments, see --help" >&2
-        exit 2
+        Refuse "$2"
     fi
     echo "Usage: install-debug-tools.sh"
     echo "Installs vsdbg to /vsdbg and the .NET diagnostic tools to /dotnet-tools."
+    echo "Exits 0 on success, 64 for a refused argument, and another non-zero status when the run fails."
     exit 0
     ;;
 esac
 if [[ $# -ne 0 ]]; then
-    echo "install-debug-tools.sh: unknown argument: $1, it takes no arguments, see --help" >&2
-    exit 2
+    Refuse "$1"
 fi
 
 set -x
@@ -24,10 +64,10 @@ set -x
 # https://learn.microsoft.com/en-us/visualstudio/debugger/remote-debugging-dotnet-core-linux-with-ssh
 # https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes
 echo "Installing VS debug tools to /vsdbg"
-wget -O ./getvsdbg.sh https://aka.ms/getvsdbgsh
-chmod ug=rwx,o=rx getvsdbg.sh
-./getvsdbg.sh -v latest -l /vsdbg
-rm -f getvsdbg.sh
+set +x
+Script="$(wget -nv -O - https://aka.ms/getvsdbgsh)"
+set -x
+bash -s -- -v latest -l /vsdbg <<<"$Script"
 
 # Get the RID for this OS using the same technique as used by getvsdbg.sh get_dotnet_runtime_id()
 __RuntimeID=
@@ -74,7 +114,7 @@ get_dotnet_runtime_id
 # https://github.com/dotnet/diagnostics/blob/main/documentation/single-file-tools.md
 echo "Installing .NET diagnostic tools for $__RuntimeID to /dotnet-tools"
 mkdir -p /dotnet-tools
-wget -O /dotnet-tools/dotnet-counters https://aka.ms/dotnet-counters/$__RuntimeID
+RunChild wget -O /dotnet-tools/dotnet-counters https://aka.ms/dotnet-counters/$__RuntimeID
 chmod ug=rwx,o=rx /dotnet-tools/dotnet-counters
-wget -O /dotnet-tools/dotnet-dump https://aka.ms/dotnet-dump/$__RuntimeID
+RunChild wget -O /dotnet-tools/dotnet-dump https://aka.ms/dotnet-dump/$__RuntimeID
 chmod ug=rwx,o=rx /dotnet-tools/dotnet-dump
