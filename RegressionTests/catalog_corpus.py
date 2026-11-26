@@ -79,7 +79,7 @@ def build(run):
 
 
 def main():
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(allow_abbrev=False)
     ap.add_argument("--run", help="version dir (default newest full-corpus develop run)")
     ap.add_argument(
         "--out", help="catalog file (default: $REGRESSION_CORPUS_DIR/full/catalog.json)"
