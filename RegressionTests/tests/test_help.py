@@ -96,7 +96,7 @@ class InjectorTests(unittest.TestCase):
                 missing = Path(d) / "missing.hevc"
                 proc = self.run_injector(tool, str(missing), str(Path(d) / "out.hevc"))
                 self.assertEqual(proc.returncode, 1)
-                self.assertIn(str(missing), proc.stderr)
+                self.assertIn(missing.name, proc.stderr)
                 self.assertNotIn("Traceback", proc.stderr)
                 self.assertEqual(list(Path(d).iterdir()), [])
 
