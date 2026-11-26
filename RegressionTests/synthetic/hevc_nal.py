@@ -97,13 +97,11 @@ def insert_before_vcl(data: bytes, sei: bytes) -> bytes:
 
 def run_injector(prog: str, description: str, inject: Callable[[bytes], bytes], label: str) -> None:
     """Read the input stream, inject the SEI, and write the output stream, as an injector's CLI."""
-    ap = argparse.ArgumentParser(prog=prog, description=description)
-    ap.add_argument("input", type=Path, help="input Annex-B HEVC stream")
-    ap.add_argument("output", type=Path, help="output Annex-B HEVC stream")
-    unknown = [a for a in sys.argv[1:] if a.startswith("-") and a not in ("-h", "--help")]
-    if unknown:
-        ap.error(f"unrecognized arguments: {' '.join(unknown)}")
-    args = ap.parse_args()
+    ap = argparse.ArgumentParser(
+        prog=prog, usage="%(prog)s [-h] input output", description=description
+    )
+    ap.add_argument("input", type=Path, nargs="?", help="input Annex-B HEVC stream")
+    ap.add_argument("output", type=Path, nargs="?", help="output Annex-B HEVC stream")
 
     terminated = False
 
@@ -114,6 +112,12 @@ def run_injector(prog: str, description: str, inject: Callable[[bytes], bytes], 
 
     signal.signal(signal.SIGTERM, on_sigterm)
     try:
+        args, extra = ap.parse_known_args()
+        if extra:
+            ap.error(f"unrecognized arguments: {' '.join(extra)}")
+        missing = [name for name in ("input", "output") if getattr(args, name) is None]
+        if missing:
+            ap.error(f"the following arguments are required: {', '.join(missing)}")
         args.output.write_bytes(inject(args.input.read_bytes()))
     except KeyboardInterrupt:
         print(f"{prog}: interrupted by {'SIGTERM' if terminated else 'SIGINT'}", file=sys.stderr)
