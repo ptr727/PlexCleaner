@@ -29,7 +29,7 @@ Utility to optimize media files for Direct Play in Plex, Emby, Jellyfin, etc.
   - A `Ctrl+C` that ends a running tool before PlexCleaner handles the signal exits with code 130 rather than 1.
     - A tool it ends at startup is no longer reported as not found.
     - A file it interrupts is kept as `Cancelled` rather than as a tool error.
-    - The tool run a cancel ends is logged as cancelled at warning level, rather than as a failed execution at error level.
+    - A tool run ended by a cancel is logged as cancelled at warning level, rather than as a failed execution at error level.
 - Version 3.23:
   - Added a minimum version for every media tool, and PlexCleaner exits with an error at startup when an installed tool is older.
     - The minimums are FFmpeg 8.0, HandBrake 1.10.0, MediaInfo 25.07, MKVToolNix 94.0, and 7-Zip 25.01.
