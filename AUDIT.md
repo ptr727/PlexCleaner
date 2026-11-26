@@ -10,7 +10,7 @@ This is a release-model repository. The self-audit covers the `main` and `develo
 
 ## General Settings and Rulesets
 
-Fetch the hub and check out `main`. Check out `develop` instead while this repository's registry entry has not yet reached `main`. Run `repo-config/configure.sh check ptr727/PlexCleaner release` from that checkout. The command checks what `repo-config/configure.sh apply` writes, and the deployment environments the registry declares. It reports each ruleset's `bypass_actors` without asserting them, since who may bypass a ruleset is a human decision no payload declares. The token needs project access as well as admin on the repository, since the command reads the fleet project link through GraphQL.
+Fetch the hub and check out `main`. Check out `develop` instead while this repository's registry entry has not yet reached `main`. Fast-forward that branch to its remote with `git pull --ff-only`, since a fetch alone leaves an existing local branch where it was. Run `repo-config/configure.sh check ptr727/PlexCleaner release` from that checkout. The command checks what `repo-config/configure.sh apply` writes, and the deployment environments the registry declares. It reports each ruleset's `bypass_actors` without asserting them, since who may bypass a ruleset is a human decision no payload declares. The token needs project access as well as admin on the repository, since the command reads the fleet project link through GraphQL.
 
 The result must be exactly two rulesets named `develop` and `main`. A missing ruleset or a divergent payload is a **defect**, and a duplicate or stray ruleset is a **drift finding**.
 
