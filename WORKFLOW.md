@@ -311,7 +311,7 @@ flowchart TD
         MB{"event / author / in-repo?"}:::gate
         MB -- "opened/reopened<br/>dependabot[bot]<br/>(every tier)" --> EN["enable auto-merge<br/>--squash develop / --merge main<br/>(App token)"]
         MB -- "synchronize by maintainer<br/>on a bot branch" --> DIS["disable auto-merge<br/>(App token)"]
-        MB -- "auto_merge_disabled<br/>on a head the bot pushed" --> RE["re-arm once on the same head<br/>(App token)"]
+        MB -- "auto_merge_disabled under the App<br/>on a head the bot pushed" --> RE["re-arm once on the same head<br/>(App token)"]
     end
     EN --> CK{"required check passes?"}:::gate
     RE --> CK
