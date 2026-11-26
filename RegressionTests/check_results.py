@@ -318,7 +318,7 @@ def compare_runs(baseline: Path, results: Path) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     against = ap.add_mutually_exclusive_group(required=True)
     against.add_argument("--expected", type=Path, help="expected outcomes JSON file")
     against.add_argument(

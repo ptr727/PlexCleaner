@@ -18,11 +18,11 @@ from pathlib import Path
 
 from corpus_common import (
     MEDIA_EXTS,
-    SRC_DIR,
     buckets_for,
     classify_signature,
     find_run,
     parse_log,
+    src_dir,
     state_flags,
     stem_of,
 )
@@ -79,17 +79,20 @@ def build(run):
 
 
 def main():
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(allow_abbrev=False)
     ap.add_argument("--run", help="version dir (default newest full-corpus develop run)")
-    ap.add_argument("--out", default=str(SRC_DIR / "catalog.json"))
+    ap.add_argument(
+        "--out", help="catalog file (default: $REGRESSION_CORPUS_DIR/full/catalog.json)"
+    )
     args = ap.parse_args()
+    out = Path(args.out) if args.out else src_dir() / "catalog.json"
 
     run = find_run(args.run)
     catalog = build(run)
-    Path(args.out).write_text(json.dumps(catalog, indent=2, ensure_ascii=False))
+    out.write_text(json.dumps(catalog, indent=2, ensure_ascii=False))
 
     print(f"run={run.name} app={catalog['application']} files={catalog['file_count']}")
-    print(f"catalog -> {args.out}")
+    print(f"catalog -> {out}")
     bc = Counter(b for e in catalog["files"] for b in e["buckets"])
     print("bucket distribution:")
     for b, n in bc.most_common():

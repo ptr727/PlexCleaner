@@ -448,7 +448,7 @@ def build_corpus(out_dir: Path) -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     group = ap.add_mutually_exclusive_group()
     group.add_argument(
         "target", nargs="?", choices=sorted(TARGETS), help="which synthetic fixture to build"

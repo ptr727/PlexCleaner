@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# The corpus lives in the snapshotted dataset hddpool/media/troublesome, with full/ and reduced/ subsets.
-# Each run provisions hddpool/media/test as a zero-copy ZFS clone of the newest corpus snapshot.
+# The corpus lives in the snapshotted dataset REGRESSION_CORPUS_DATASET, with full/ and reduced/ subsets.
+# Each run provisions REGRESSION_TEST_DATASET as a zero-copy ZFS clone of the newest corpus snapshot.
 # Rollbacks inside the run use the clone's @backup snapshot.
 #
 # Results go into a directory named after the image's "version" label, such as 3.20.7-g3235a8a055, so they stay comparable across versions.
@@ -38,11 +38,21 @@ Usage: regression-test.sh [quick|full] [tag] [full|reduced] [plugin...]
   corpus   full or reduced corpus subdirectory of the test clone to process (default full)
   plugin   registry plugin names to run after processing (default MatroskaHeaderCleanup)
 Runs as root, since it clones and rolls back ZFS datasets.
+sudo resets the environment, so pass the variables through, as in: sudo env REGRESSION_...=... TZ=... regression-test.sh
 
-Environment:
+Required environment:
+  REGRESSION_HOST_CONFIG       absolute host directory holding PlexCleaner.json and the per-version results
+  REGRESSION_TEST_MEDIA        absolute host mountpoint of REGRESSION_TEST_DATASET
+  REGRESSION_PLUGIN_BUILD_DIR  absolute host directory the plugins are cloned and built in
+  REGRESSION_CORPUS_DATASET    snapshotted ZFS dataset holding the corpus
+  REGRESSION_TEST_DATASET      ZFS dataset each run provisions as a clone of the newest corpus snapshot
+  REGRESSION_THREAD_COUNT      parallel file-processing thread count
+Optional environment:
+  TZ                        time zone handed to the container
   REGRESSION_COVERAGE_TOOL  absolute host directory holding dotnet-coverage.dll, which runs
                             the process and plugin runs under coverage collection,
                             each writing a Cobertura coverage_<run>.xml beside its log
+The corpus tools in this directory also read REGRESSION_CORPUS_DIR and REGRESSION_SCRATCH_DIR, see README.md.
 EOF
 }
 
@@ -69,15 +79,41 @@ quick | full) ;;
 *) UnknownArgument "$Mode" ;;
 esac
 
+for Name in REGRESSION_HOST_CONFIG REGRESSION_TEST_MEDIA REGRESSION_PLUGIN_BUILD_DIR \
+    REGRESSION_CORPUS_DATASET REGRESSION_TEST_DATASET REGRESSION_THREAD_COUNT; do
+    if [[ -z "${!Name-}" ]]; then
+        echo "regression-test.sh: required environment variable $Name is not set" >&2
+        exit 2
+    fi
+done
+for Name in REGRESSION_HOST_CONFIG REGRESSION_TEST_MEDIA REGRESSION_PLUGIN_BUILD_DIR; do
+    if [[ "${!Name}" != /* ]]; then
+        echo "regression-test.sh: $Name is not an absolute path: '${!Name}'" >&2
+        exit 2
+    fi
+done
+if [[ ! "$REGRESSION_THREAD_COUNT" =~ ^[1-9][0-9]*$ ]]; then
+    echo "regression-test.sh: REGRESSION_THREAD_COUNT is not a positive integer: '$REGRESSION_THREAD_COUNT'" >&2
+    exit 2
+fi
+HostConfig="$REGRESSION_HOST_CONFIG"
+HostMedia="$REGRESSION_TEST_MEDIA"
+PluginBuildDir="$REGRESSION_PLUGIN_BUILD_DIR"
+CorpusDataset="$REGRESSION_CORPUS_DATASET"
+TestDataset="$REGRESSION_TEST_DATASET"
+Snapshot="$TestDataset@backup"
+ThreadCount="$REGRESSION_THREAD_COUNT"
+
+# Quick mode keeps full-file scanning, and writes short test snippets to shorten remux and re-encode.
+ProcessOptions=(--parallel --threadcount "$ThreadCount")
+if [[ "$Mode" == "quick" ]]; then
+    ProcessOptions+=(--testsnippets)
+fi
+
 # Paths
 PlexCleanerApp="/PlexCleaner/Debug/PlexCleaner"
 MediaPath="/Test/Media"
 ConfigPath="/Test/Config"
-HostMedia="/data/media/test"
-HostConfig="/data/media/PlexCleaner/RegressionTest"
-CorpusDataset="hddpool/media/troublesome"
-TestDataset="hddpool/media/test"
-Snapshot="hddpool/media/test@backup"
 Image="docker.io/ptr727/plexcleaner"
 # Live master settings copied into each build's version directory
 Settings="PlexCleaner.json"
@@ -89,17 +125,6 @@ declare -A PluginRegistry=(
 )
 DefaultPlugin="MatroskaHeaderCleanup"
 PluginRepo="https://github.com/ptr727/PlexCleaner.git"
-PluginBuildDir="/data/media/PlexCleaner/PluginBuild"
-
-# Parallel file-processing thread count, doubling the default of 4 since the server has ample cores
-ThreadCount=8
-
-# Process options, always run in parallel.
-# Quick mode keeps full-file scanning, and writes short test snippets to shorten remux and re-encode.
-ProcessOptions=(--parallel --threadcount "$ThreadCount")
-if [[ "$Mode" == "quick" ]]; then
-    ProcessOptions+=(--testsnippets)
-fi
 
 # Run as this host's nonroot user and users group, and abort when either does not exist rather than run as root.
 USER_NONROOT_ID=$(id -u nonroot)
@@ -114,7 +139,7 @@ DockerCommon=(
     --rm
     --name PlexCleaner-RegressionTest
     --user "$USER_NONROOT_ID:$USERS_GROUP_ID"
-    --env TZ=America/Los_Angeles
+    --env TZ
 )
 
 # SetLaunch Report
@@ -135,6 +160,37 @@ SetLaunch() {
     fi
 }
 
+# Refuse a REGRESSION_TEST_MEDIA that is not where the test dataset mounts, since the runs mount it read-write.
+CheckMountpoint() {
+    if [[ "$(zfs get -H -o value mountpoint "$TestDataset")" != "$HostMedia" ]]; then
+        echo "regression-test.sh: REGRESSION_TEST_MEDIA $HostMedia is not the mountpoint of $TestDataset" >&2
+        exit 2
+    fi
+}
+
+# RunChild Command...
+# Run a long external command in the background and wait for it, so the INT and TERM traps can stop it.
+RunChild() {
+    local Pid Status=0
+    "$@" <&0 &
+    Pid=$!
+    pids=("$Pid")
+    wait "$Pid" || Status=$?
+    pids=()
+    return "$Status"
+}
+
+# StopChildren Status Signal
+# Stop the running child, then exit with the signal's status, so a provisioned dataset's EXIT trap restores it.
+StopChildren() {
+    if ((${#pids[@]})); then
+        kill -TERM "${pids[@]}" 2>/dev/null || :
+        wait "${pids[@]}" || :
+    fi
+    echo "regression-test.sh: interrupted by $2" >&2
+    exit "$1"
+}
+
 # Provision the test dataset as a zero-copy clone of the newest corpus snapshot.
 # Where the clone already originates from the newest snapshot, the run rolls it back to its @backup.
 # A rollback works while media containers or SMB clients hold the mount, where a destroy fails.
@@ -143,7 +199,10 @@ SetLaunch() {
 ProvisionDataset() {
     local Origin
     Origin="$(zfs get -H -o value origin "$TestDataset" 2>/dev/null || true)"
-    if [[ "$Origin" == "$CorpusSnap" ]]; then
+    if [[ -n "$Origin" ]]; then
+        CheckMountpoint
+    fi
+    if [[ "$Origin" == "$CorpusSnap" ]] && zfs list -H -t snapshot "$Snapshot" >/dev/null 2>&1; then
         echo "Test clone current ($CorpusSnap) - rolling back"
         zfs rollback "$Snapshot"
         return
@@ -151,14 +210,25 @@ ProvisionDataset() {
 
     echo "Provisioning $TestDataset as a clone of $CorpusSnap"
     if zfs list "$TestDataset" >/dev/null 2>&1; then
+        if [[ "$Origin" != "$CorpusDataset@"* ]]; then
+            echo "regression-test.sh: REGRESSION_TEST_DATASET $TestDataset is not a clone of $CorpusDataset, refusing to retire it" >&2
+            exit 2
+        fi
         zfs rename "$TestDataset" "$TestDataset-retired-$(date +%s)"
     fi
     zfs clone "$CorpusSnap" "$TestDataset"
     zfs snapshot "$Snapshot"
+    CheckMountpoint
 
     # Clean up retired clones on a best-effort basis, which succeeds once the holders have restarted or closed.
-    local Retired
-    for Retired in $(zfs list -H -o name 2>/dev/null | grep -E "^$TestDataset-retired-" || true); do
+    local Retired RetiredOrigin
+    for Retired in $(zfs list -H -o name 2>/dev/null || true); do
+        [[ "$Retired" == "$TestDataset-retired-"* ]] || continue
+        RetiredOrigin="$(zfs get -H -o value origin "$Retired" 2>/dev/null || true)"
+        if [[ "$RetiredOrigin" != "$CorpusDataset@"* ]]; then
+            echo "Skipping $Retired, origin '$RetiredOrigin' is not a snapshot of $CorpusDataset, so remove it by hand if it is stale" >&2
+            continue
+        fi
         zfs destroy -r "$Retired" 2>/dev/null &&
             echo "Destroyed retired clone $Retired" ||
             echo "Retired clone $Retired still held; will retry next run" >&2
@@ -228,7 +298,7 @@ RunProcess() {
     echo "Running PlexCleaner process on $ImageRef ($Mode)"
     local -a Launch
     SetLaunch "$ConfigDir/coverage_process.xml"
-    docker run \
+    RunChild docker run \
         "${DockerCommon[@]}" \
         --volume "$HostMedia:$MediaPath:rw" \
         --volume "$HostConfig:$ConfigPath:rw" \
@@ -259,14 +329,14 @@ BuildPlugin() {
 
     # Clone once, then fetch tags and check out the release tag matching the image version
     if [[ ! -d "$PluginBuildDir/.git" ]]; then
-        git clone "$PluginRepo" "$PluginBuildDir" || return 1
+        RunChild git clone "$PluginRepo" "$PluginBuildDir" || return 1
     fi
-    git -C "$PluginBuildDir" fetch --force --tags origin || return 1
-    git -C "$PluginBuildDir" checkout --force "$Version" || return 1
+    RunChild git -C "$PluginBuildDir" fetch --force --tags origin || return 1
+    RunChild git -C "$PluginBuildDir" checkout --force "$Version" || return 1
 
     # Build the plugin (Debug matches the image binary under /PlexCleaner/Debug)
     # The path map gives its PDB the image build's /Builder source root, so a coverage report names one tree.
-    dotnet build "$PluginBuildDir/$Project" --configuration Debug "-p:PathMap=$PluginBuildDir=/Builder" || return 1
+    RunChild dotnet build "$PluginBuildDir/$Project" --configuration Debug "-p:PathMap=$PluginBuildDir=/Builder" || return 1
 
     # Copy the built assembly into the version directory for the custom run
     local Built
@@ -292,7 +362,7 @@ RunPlugin() {
     echo "Running PlexCleaner custom plugin $Dll on $ImageRef"
     local -a Launch
     SetLaunch "$ConfigDir/coverage_custom_${Dll%.dll}.xml"
-    docker run \
+    RunChild docker run \
         "${DockerCommon[@]}" \
         --volume "$HostMedia:$MediaPath:rw" \
         --volume "$HostConfig:$ConfigPath:rw" \
@@ -312,7 +382,7 @@ RunDefaultSettings() {
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
     echo "Running PlexCleaner defaultsettings on $ImageRef"
-    docker run \
+    RunChild docker run \
         "${DockerCommon[@]}" \
         --volume "$HostConfig:$ConfigPath:rw" \
         "$ImageRef" \
@@ -327,7 +397,7 @@ RunCreateSchema() {
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
     echo "Running PlexCleaner createschema on $ImageRef"
-    docker run \
+    RunChild docker run \
         "${DockerCommon[@]}" \
         --volume "$HostConfig:$ConfigPath:rw" \
         "$ImageRef" \
@@ -338,7 +408,7 @@ RunCreateSchema() {
 # RunRegressionTests
 RunRegressionTests() {
     if [[ "$Channel" != "local" ]]; then
-        docker pull "$ImageRef"
+        RunChild docker pull "$ImageRef"
     fi
 
     # Name the results directory after the image build version (used for source sync too)
@@ -452,6 +522,10 @@ if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet
     echo "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'" >&2
     exit 2
 fi
+
+pids=()
+trap 'StopChildren 130 SIGINT' INT
+trap 'StopChildren 143 SIGTERM' TERM
 
 if [[ "$(id -u)" -ne 0 ]]; then
     echo "This script must be run as root" >&2

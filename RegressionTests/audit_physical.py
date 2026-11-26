@@ -18,10 +18,7 @@ import json
 from collections.abc import Iterable
 from pathlib import Path
 
-from corpus_common import error_shape, find_run, parse_log, stem_of
-
-# Default paths for the reference server; override on the command line for another environment.
-SCRATCH = Path("/data/media/PlexCleaner/scratch-trim")
+from corpus_common import corpus_dir, error_shape, find_run, parse_log, scratch_dir, stem_of
 
 
 def shapes_of(errors: Iterable[str]) -> list[str]:
@@ -29,22 +26,21 @@ def shapes_of(errors: Iterable[str]) -> list[str]:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     ap.add_argument("--run", help="ground-truth run dir (default: newest full-corpus develop run)")
     ap.add_argument(
         "--reduced",
-        default="/data/media/troublesome/reduced",
-        help="reduced collection dir holding catalog.json",
+        help="reduced collection dir holding catalog.json (default: $REGRESSION_CORPUS_DIR/reduced)",
     )
     ap.add_argument(
         "--work",
-        default=str(SCRATCH / "work"),
-        help="root of the per-clip processing logs from the reduce run",
+        help="root of the per-clip processing logs from the reduce run "
+        "(default: $REGRESSION_SCRATCH_DIR/work)",
     )
     args = ap.parse_args()
 
-    reduced = Path(args.reduced)
-    work = Path(args.work)
+    reduced = Path(args.reduced) if args.reduced else corpus_dir() / "reduced"
+    work = Path(args.work) if args.work else scratch_dir() / "work"
     run = find_run(args.run)
     ground = parse_log(run / "PlexCleaner_process.log")
     collection = json.loads((reduced / "catalog.json").read_text())
