@@ -103,7 +103,7 @@ mkdir -p "$work/media" "$work/out"
 work="$(cd "$work" && pwd)"
 
 # The image has no python3, so a root throwaway container adds it, then returns the media to the caller.
-# shellcheck disable=SC2016
+# shellcheck disable=SC2016 # The container's shell expands the variables, not this one.
 RunChild docker run --init --rm --env OWNER="$(id -u):$(id -g)" --env MATROSKA_COMMIT="$matroska_commit" \
     --volume "$repo/RegressionTests/synthetic:/synthetic:ro" --volume "$work/media:/media" \
     --entrypoint /bin/bash "$image" -c '

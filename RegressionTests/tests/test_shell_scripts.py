@@ -101,7 +101,6 @@ class InterruptTests(unittest.TestCase):
                 stubs.mkdir()
                 write_stub(stubs, "wget", wget)
                 write_stub(stubs, "mkdir", "exit 0\n")
-                write_stub(stubs, "chmod", "exit 0\n")
                 pidfile = Path(d) / "child.pid"
                 env = stubbed_env(clean_env(), stubs, pidfile)
                 script = REPO / "Docker" / "install-debug-tools.sh"
