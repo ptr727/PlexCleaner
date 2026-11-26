@@ -328,7 +328,6 @@ Every repo's GitHub repository details (the About panel) follow a fixed conventi
 ## Repository Layout
 
 - [`AGENTS.md`](./AGENTS.md): the agent entry point, carrying context and delegation rules plus the map to the sections above.
-- [`CLAUDE.md`](./CLAUDE.md): imports `AGENTS.md`, since Claude Code reads `CLAUDE.md` and never `AGENTS.md` on its own. Carries no rule of its own.
 - [`GOVERNANCE.md`](./GOVERNANCE.md), [`CODESTYLE.md`](./CODESTYLE.md), [`WORKFLOW.md`](./WORKFLOW.md), [`OPERATIONS.md`](./OPERATIONS.md), [`AUDIT.md`](./AUDIT.md): the governance, operations, and audit docs. This file is the cross-cutting-rules authority.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md): the architecture, processing pipeline, and design patterns. Read it before changing processing, sidecar, media-tool, or language-tag code.
 - [`PlexCleaner/`](./PlexCleaner/) (`PlexCleaner.csproj`): the CLI application, orchestrating FFmpeg, HandBrake, MkvToolNix, MediaInfo, and 7-Zip to optimize media for Direct Play. Target framework .NET 10.0. AOT is opt-in (`<PublishAot>false</PublishAot>` by default, matching the shipped builds), and the plugin loader compiles only in non-AOT builds. Internals are exposed to the test project via `InternalsVisibleTo`.
