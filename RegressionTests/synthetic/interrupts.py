@@ -108,6 +108,8 @@ def _new_file_mode() -> int:
 
 def atomic_write_bytes(path: Path, data: bytes) -> None:
     """Write data to a temporary file beside path, then rename it over path."""
+    # A symlinked target is written through, so the link itself survives the rename.
+    path = Path(os.path.realpath(path))
     fd, name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
     temp = Path(name)
     try:
@@ -119,6 +121,15 @@ def atomic_write_bytes(path: Path, data: bytes) -> None:
     except BaseException:
         temp.unlink(missing_ok=True)
         raise
+
+
+def reserve_sibling(path: Path, tag: str) -> Path:
+    """Create an empty, uniquely named sibling of path that keeps its extension, and return it."""
+    fd, name = tempfile.mkstemp(
+        dir=path.parent, prefix=f".{path.stem}.", suffix=f".{tag}{path.suffix}"
+    )
+    os.close(fd)
+    return Path(name)
 
 
 def atomic_write_text(path: Path, text: str, encoding: str = "utf-8") -> None:

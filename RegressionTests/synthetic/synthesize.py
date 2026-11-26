@@ -36,7 +36,7 @@ from pathlib import Path
 from hevc_nal import insert_before_vcl
 from inject_cc_sei import build_cc_sei
 from inject_hdr10plus_sei import build_hdr10plus_sei
-from interrupts import run_child, run_main
+from interrupts import reserve_sibling, run_child, run_main
 
 FFMPEG = "ffmpeg"
 FFPROBE = "ffprobe"
@@ -442,7 +442,7 @@ CORPUS_NAMES: dict[str, str] = {
 
 def build_target(target: str, out: Path) -> None:
     """Build a target into a partial sibling that keeps the extension, then rename it onto ``out``."""
-    partial = out.with_name(f"{out.stem}.partial{out.suffix}")
+    partial = reserve_sibling(out, "partial")
     try:
         TARGETS[target](partial)
         os.replace(partial, out)

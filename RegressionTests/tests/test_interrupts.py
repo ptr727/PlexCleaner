@@ -42,6 +42,37 @@ class AtomicWriteTests(unittest.TestCase):
             self.assertEqual(target.read_text(), "old")
             self.assertEqual([p.name for p in Path(d).iterdir()], ["catalog.json"])
 
+    def test_interrupt_mid_write_keeps_the_old_content_and_leaves_no_temp(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            target = Path(d) / "catalog.json"
+            target.write_text("old")
+            with (
+                mock.patch("os.replace", side_effect=KeyboardInterrupt),
+                self.assertRaises(KeyboardInterrupt),
+            ):
+                interrupts.atomic_write_text(target, "new")
+            self.assertEqual(target.read_text(), "old")
+            self.assertEqual([p.name for p in Path(d).iterdir()], ["catalog.json"])
+
+    @unittest.skipIf(sys.platform == "win32", "needs POSIX symlinks")
+    def test_write_through_a_symlink_keeps_the_link(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            real = Path(d) / "real.json"
+            real.write_text("old")
+            link = Path(d) / "catalog.json"
+            link.symlink_to(real)
+            interrupts.atomic_write_text(link, "new")
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(real.read_text(), "new")
+
+    def test_reserved_sibling_is_unique_and_keeps_the_extension(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "out.mkv"
+            first = interrupts.reserve_sibling(out, "partial")
+            second = interrupts.reserve_sibling(out, "partial")
+            self.assertNotEqual(first, second)
+            self.assertEqual((first.suffix, first.parent), (".mkv", out.parent))
+
     @unittest.skipIf(sys.platform == "win32", "needs POSIX file modes")
     def test_rewrite_keeps_the_target_mode(self) -> None:
         with tempfile.TemporaryDirectory() as d:
@@ -203,7 +234,7 @@ class ToolSignalTests(unittest.TestCase):
         self.write_stub("ffmpeg", create_last_argument=True)
         args = [str(ROOT / "synthetic" / "synthesize.py"), "container-mp4", "--out", str(out)]
         self.check(args, self.env(), "synthesize.py")
-        self.assertEqual(sorted(p.name for p in self.dir.glob("out*")), [])
+        self.assertEqual(sorted(p.name for p in self.dir.iterdir() if "out" in p.name), [])
 
 
 class SyntheticDirectoryTests(unittest.TestCase):
