@@ -202,14 +202,9 @@ ProvisionDataset() {
     if [[ -n "$Origin" ]]; then
         CheckMountpoint
     fi
-    if [[ "$Origin" == "$CorpusSnap" ]]; then
-        if zfs list -H -t snapshot "$Snapshot" >/dev/null 2>&1; then
-            echo "Test clone current ($CorpusSnap) - rolling back"
-            zfs rollback "$Snapshot"
-        else
-            echo "Test clone current ($CorpusSnap) but missing $Snapshot - snapshotting it"
-            zfs snapshot "$Snapshot"
-        fi
+    if [[ "$Origin" == "$CorpusSnap" ]] && zfs list -H -t snapshot "$Snapshot" >/dev/null 2>&1; then
+        echo "Test clone current ($CorpusSnap) - rolling back"
+        zfs rollback "$Snapshot"
         return
     fi
 

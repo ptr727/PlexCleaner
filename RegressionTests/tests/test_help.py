@@ -255,6 +255,7 @@ class HarnessSignalTests(unittest.TestCase):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
+                    start_new_session=True,
                 )
                 try:
                     deadline = time.monotonic() + 30
@@ -265,9 +266,11 @@ class HarnessSignalTests(unittest.TestCase):
                     proc.send_signal(sig)
                     _, err = proc.communicate(timeout=30)
                 finally:
-                    if proc.poll() is None:
-                        proc.kill()
-                        proc.wait()
+                    try:
+                        os.killpg(proc.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    proc.wait()
                 self.assertEqual(proc.returncode, status, err)
                 self.assertIn(f"interrupted by {name}", err)
                 with self.assertRaises(ProcessLookupError):
@@ -326,11 +329,13 @@ esac
         self.assertEqual(destroyed, ["destroy -r pool/test-retired-1"])
         self.assertIn("Skipping pool/test-retired-backup", proc.stderr)
 
-    def test_current_clone_without_backup_takes_the_snapshot(self) -> None:
+    def test_current_clone_without_backup_is_replaced(self) -> None:
         proc, calls = self.provision("pool/corpus@s2", has_backup=False)
         self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(any(c.startswith("rename pool/test pool/test-retired-") for c in calls))
+        self.assertIn("clone pool/corpus@s2 pool/test", calls)
         self.assertIn("snapshot pool/test@backup", calls)
-        self.assertFalse(any(c.startswith(("rollback", "destroy", "rename")) for c in calls))
+        self.assertFalse(any(c.startswith("rollback") for c in calls))
 
     def test_current_clone_with_backup_rolls_back(self) -> None:
         proc, calls = self.provision("pool/corpus@s2", has_backup=True)
