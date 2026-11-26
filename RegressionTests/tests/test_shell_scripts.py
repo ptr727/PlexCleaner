@@ -60,6 +60,18 @@ class RefusalTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 64, proc.stderr)
         self.assertIn("extra", proc.stderr)
 
+    def test_dash_prefixed_integration_workdir_exits_64_naming_it(self) -> None:
+        proc = run_script(ROOT / "integration-test.sh", "image:tag", "-x", env=clean_env())
+        self.assertEqual(proc.returncode, 64, proc.stderr)
+        self.assertIn("unknown option: -x", proc.stderr)
+
+    def test_existing_integration_workdir_exits_64_before_the_tool_lookup(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            env = clean_env() | {"NUGET_PACKAGES": str(Path(d) / "none")}
+            proc = run_script(ROOT / "integration-test.sh", "image:tag", d, env=env)
+        self.assertEqual(proc.returncode, 64, proc.stderr)
+        self.assertIn("exists", proc.stderr)
+
     @unittest.skipUnless(Path("/etc/os-release").is_file(), "needs /etc/os-release")
     def test_failing_command_with_status_64_exits_1(self) -> None:
         with tempfile.TemporaryDirectory() as d:

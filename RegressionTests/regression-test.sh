@@ -76,6 +76,7 @@ Refuse() {
 }
 
 pids=()
+Container=""
 RunChild() {
     local Pid Status=0
     "$@" <&0 &
@@ -98,7 +99,10 @@ OnExit() {
 
 OnSignal() {
     if ((${#pids[@]})); then
-        kill -s TERM "${pids[@]}" 2>/dev/null || :
+        # A docker CLI holding a TTY passes no SIGTERM on, so stop its container by name.
+        if [[ -z "$Container" ]] || ! docker kill --signal TERM "$Container" >/dev/null 2>&1; then
+            kill -s TERM "${pids[@]}" 2>/dev/null || :
+        fi
         wait "${pids[@]}" || :
     fi
     echo "regression-test.sh: interrupted by SIG$1" >&2
@@ -172,6 +176,40 @@ declare -A PluginRegistry=(
 DefaultPlugin="MatroskaHeaderCleanup"
 PluginRepo="https://github.com/ptr727/PlexCleaner.git"
 
+Tag="${2-develop}"
+[[ -n "$Tag" ]] || UnknownArgument "$Tag"
+# A Docker tag cannot hold a colon, so one marks a local image, unless it names the published repository.
+Tag="${Tag#docker.io/}"
+Tag="${Tag#"${Image#docker.io/}:"}"
+if [[ "$Tag" == "${Image#docker.io/}@"* ]]; then
+    ImageRef="docker.io/$Tag"
+    Channel="${Tag#*@}"
+elif [[ "$Tag" == *:* ]]; then
+    ImageRef="$Tag"
+    Channel="local"
+else
+    ImageRef="$Image:$Tag"
+    Channel="$Tag"
+fi
+Corpus="${3-full}"
+case "$Corpus" in
+full | reduced) ;;
+*) UnknownArgument "$Corpus" ;;
+esac
+Plugins=("${@:4}")
+[[ ${#Plugins[@]} -eq 0 ]] && Plugins=("$DefaultPlugin")
+for Plugin in "${Plugins[@]}"; do
+    if [[ -z "$Plugin" || -z "${PluginRegistry[$Plugin]+set}" ]]; then
+        echo "Known plugins: ${!PluginRegistry[*]}" >&2
+        UnknownArgument "$Plugin"
+    fi
+done
+
+CoverageTool="${REGRESSION_COVERAGE_TOOL-}"
+if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet-coverage.dll") ]]; then
+    Refuse "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'"
+fi
+
 # Run as this host's nonroot user and users group, and abort when either does not exist rather than run as root.
 USER_NONROOT_ID=$(id -u nonroot)
 USERS_GROUP_ID=$(getent group users | cut -d: -f3)
@@ -180,13 +218,23 @@ USERS_GROUP_ID=$(getent group users | cut -d: -f3)
 # Allocate a TTY only when attached to one, so the script also runs non-interactively (CI, background)
 TtyArg=()
 [[ -t 0 ]] && TtyArg=(-it)
+ContainerName="PlexCleaner-RegressionTest"
 DockerCommon=(
     "${TtyArg[@]}"
     --rm
-    --name PlexCleaner-RegressionTest
+    --name "$ContainerName"
     --user "$USER_NONROOT_ID:$USERS_GROUP_ID"
     --env TZ
 )
+
+# RunContainer DockerRunArgument...
+RunContainer() {
+    local Status=0
+    Container="$ContainerName"
+    RunChild docker run "${DockerCommon[@]}" "$@" || Status=$?
+    Container=""
+    return "$Status"
+}
 
 # SetLaunch Report
 # Set Launch to the image and the PlexCleaner command, under dotnet-coverage writing Report when coverage is on.
@@ -321,8 +369,7 @@ RunProcess() {
     echo "Running PlexCleaner process on $ImageRef ($Mode)"
     local -a Launch
     SetLaunch "$ConfigDir/coverage_process.xml"
-    RunChild docker run \
-        "${DockerCommon[@]}" \
+    RunContainer \
         --volume "$HostMedia:$MediaPath:rw" \
         --volume "$HostConfig:$ConfigPath:rw" \
         "${Launch[@]}" process \
@@ -385,8 +432,7 @@ RunPlugin() {
     echo "Running PlexCleaner custom plugin $Dll on $ImageRef"
     local -a Launch
     SetLaunch "$ConfigDir/coverage_custom_${Dll%.dll}.xml"
-    RunChild docker run \
-        "${DockerCommon[@]}" \
+    RunContainer \
         --volume "$HostMedia:$MediaPath:rw" \
         --volume "$HostConfig:$ConfigPath:rw" \
         "${Launch[@]}" custom \
@@ -405,8 +451,7 @@ RunDefaultSettings() {
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
     echo "Running PlexCleaner defaultsettings on $ImageRef"
-    RunChild docker run \
-        "${DockerCommon[@]}" \
+    RunContainer \
         --volume "$HostConfig:$ConfigPath:rw" \
         "$ImageRef" \
         "$PlexCleanerApp" defaultsettings \
@@ -420,8 +465,7 @@ RunCreateSchema() {
     [[ "$Corpus" == "reduced" ]] && ConfigDir="$ConfigPath/$Version-reduced"
 
     echo "Running PlexCleaner createschema on $ImageRef"
-    RunChild docker run \
-        "${DockerCommon[@]}" \
+    RunContainer \
         --volume "$HostConfig:$ConfigPath:rw" \
         "$ImageRef" \
         "$PlexCleanerApp" createschema \
@@ -510,40 +554,6 @@ RunRegressionTests() {
     RestoreDataset
     Provisioned=0
 }
-
-Tag="${2-develop}"
-[[ -n "$Tag" ]] || UnknownArgument "$Tag"
-# A Docker tag cannot hold a colon, so one marks a local image, unless it names the published repository.
-Tag="${Tag#docker.io/}"
-Tag="${Tag#"${Image#docker.io/}:"}"
-if [[ "$Tag" == "${Image#docker.io/}@"* ]]; then
-    ImageRef="docker.io/$Tag"
-    Channel="${Tag#*@}"
-elif [[ "$Tag" == *:* ]]; then
-    ImageRef="$Tag"
-    Channel="local"
-else
-    ImageRef="$Image:$Tag"
-    Channel="$Tag"
-fi
-Corpus="${3-full}"
-case "$Corpus" in
-full | reduced) ;;
-*) UnknownArgument "$Corpus" ;;
-esac
-Plugins=("${@:4}")
-[[ ${#Plugins[@]} -eq 0 ]] && Plugins=("$DefaultPlugin")
-for Plugin in "${Plugins[@]}"; do
-    if [[ -z "$Plugin" || -z "${PluginRegistry[$Plugin]+set}" ]]; then
-        echo "Known plugins: ${!PluginRegistry[*]}" >&2
-        UnknownArgument "$Plugin"
-    fi
-done
-
-CoverageTool="${REGRESSION_COVERAGE_TOOL-}"
-if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet-coverage.dll") ]]; then
-    Refuse "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'"
-fi
 
 if [[ "$(id -u)" -ne 0 ]]; then
     echo "This script must be run as root" >&2

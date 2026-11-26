@@ -68,6 +68,7 @@ def interrupt(
     pidfile: Path,
     sig: signal.Signals,
     grace: float = 0,
+    stdin: int = subprocess.DEVNULL,
 ) -> str:
     """Run argv, signal it once the stub child records its pid, and return its stderr.
 
@@ -77,7 +78,7 @@ def interrupt(
     proc = subprocess.Popen(
         argv,
         env=env,
-        stdin=subprocess.DEVNULL,
+        stdin=stdin,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
