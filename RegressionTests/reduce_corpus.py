@@ -329,7 +329,7 @@ def human(n: float) -> str:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     ap.add_argument("sources", nargs="*", help="source basenames (default: all catalog files)")
     ap.add_argument("-s", "--seconds", type=int, default=60, help="head-clip length")
     ap.add_argument("--catalog", required=True, help="source catalog.json (from catalog_corpus.py)")

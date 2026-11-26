@@ -44,6 +44,20 @@ class HelpTests(unittest.TestCase):
                 self.assertEqual(proc.returncode, 0, proc.stderr)
                 self.assertIn("usage:", proc.stdout)
 
+    def test_abbreviated_option_is_refused(self) -> None:
+        for tool in TOOLS:
+            with self.subTest(tool=tool):
+                proc = subprocess.run(
+                    [sys.executable, str(ROOT / tool), "--hel"],
+                    env=clean_env(),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=60,
+                )
+                self.assertEqual(proc.returncode, 2)
+                self.assertNotIn("usage:", proc.stdout)
+
     def test_missing_variable_is_named(self) -> None:
         env = clean_env()
         proc = subprocess.run(
@@ -92,6 +106,13 @@ class InjectorTests(unittest.TestCase):
                     self.assertTrue(proc.stdout.startswith(f"usage: {Path(tool).name}"))
                 self.assertEqual(long_form.stdout, short_form.stdout)
                 self.assertEqual(sorted(p.name for p in Path(d).iterdir()), ["in.hevc"])
+
+    def test_abbreviated_help_is_refused(self) -> None:
+        for tool in INJECTORS:
+            with self.subTest(tool=tool):
+                proc = self.run_injector(tool, "--hel")
+                self.assertEqual(proc.returncode, 2)
+                self.assertIn("unrecognized arguments: --hel", proc.stderr)
 
     def test_help_wins_over_an_unknown_option(self) -> None:
         for tool in INJECTORS:

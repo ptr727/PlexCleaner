@@ -98,7 +98,10 @@ def insert_before_vcl(data: bytes, sei: bytes) -> bytes:
 def run_injector(prog: str, description: str, inject: Callable[[bytes], bytes], label: str) -> None:
     """Read the input stream, inject the SEI, and write the output stream, as an injector's CLI."""
     ap = argparse.ArgumentParser(
-        prog=prog, usage="%(prog)s [-h] input output", description=description
+        prog=prog,
+        usage="%(prog)s [-h] input output",
+        description=description,
+        allow_abbrev=False,
     )
     ap.add_argument("input", type=Path, nargs="?", help="input Annex-B HEVC stream")
     ap.add_argument("output", type=Path, nargs="?", help="output Annex-B HEVC stream")

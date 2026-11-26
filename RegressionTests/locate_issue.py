@@ -168,7 +168,7 @@ def write_region(rules_path: Path, name: str, start: int, end: int, note: str) -
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     ap.add_argument("--catalog", required=True, help="source catalog.json (from catalog_corpus.py)")
     ap.add_argument("-w", "--window", type=int, default=60, help="head-clip seconds")
     ap.add_argument("files", nargs="*", help="basenames (default: all decode-signature files)")

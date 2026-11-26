@@ -201,6 +201,7 @@ ProvisionDataset() {
     local Retired
     for Retired in $(zfs list -H -o name 2>/dev/null || true); do
         [[ "$Retired" == "$TestDataset-retired-"* ]] || continue
+        [[ "$(zfs get -H -o value origin "$Retired" 2>/dev/null)" == "$CorpusDataset@"* ]] || continue
         zfs destroy -r "$Retired" 2>/dev/null &&
             echo "Destroyed retired clone $Retired" ||
             echo "Retired clone $Retired still held; will retry next run" >&2
