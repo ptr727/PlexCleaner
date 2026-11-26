@@ -62,7 +62,7 @@ class HarnessTests(unittest.TestCase):
 
     def test_missing_variable_is_named_before_any_host_lookup(self) -> None:
         proc = self.run_harness("quick", env=clean_env())
-        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(proc.returncode, 64)
         self.assertIn("REGRESSION_HOST_CONFIG is not set", proc.stderr)
 
     def test_invalid_thread_count_is_named(self) -> None:
@@ -75,7 +75,7 @@ class HarnessTests(unittest.TestCase):
             "REGRESSION_THREAD_COUNT": "0",
         }
         proc = self.run_harness("quick", env=env)
-        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(proc.returncode, 64)
         self.assertIn("REGRESSION_THREAD_COUNT", proc.stderr)
 
 
@@ -84,10 +84,10 @@ class HarnessTests(unittest.TestCase):
 )
 class HarnessSignalTests(unittest.TestCase):
     def test_signal_stops_the_running_child(self) -> None:
-        cases = [(signal.SIGTERM, 143, "SIGTERM")]
+        cases = [(signal.SIGTERM, "SIGTERM")]
         if signal.getsignal(signal.SIGINT) is not signal.SIG_IGN:
-            cases.append((signal.SIGINT, 130, "SIGINT"))
-        for sig, status, name in cases:
+            cases.append((signal.SIGINT, "SIGINT"))
+        for sig, name in cases:
             with self.subTest(signal=name), tempfile.TemporaryDirectory() as d:
                 stubs = Path(d) / "bin"
                 stubs.mkdir()
@@ -132,7 +132,7 @@ class HarnessSignalTests(unittest.TestCase):
                     except ProcessLookupError:
                         pass
                     proc.wait()
-                self.assertEqual(proc.returncode, status, err)
+                self.assertEqual(proc.returncode, -sig, err)
                 self.assertIn(f"interrupted by {name}", err)
 
 
@@ -206,14 +206,14 @@ esac
 
     def test_wrong_mountpoint_is_refused_before_any_change(self) -> None:
         proc, calls = self.provision("pool/corpus@s2", has_backup=True, mountpoint="/elsewhere")
-        self.assertEqual(proc.returncode, 2, proc.stderr)
+        self.assertEqual(proc.returncode, 1, proc.stderr)
         self.assertIn("is not the mountpoint of pool/test", proc.stderr)
         changes = ("rollback", "rename", "clone", "snapshot", "destroy")
         self.assertEqual([c for c in calls if c.startswith(changes)], [])
 
     def test_dataset_that_is_not_a_corpus_clone_is_refused(self) -> None:
         proc, calls = self.provision("-", has_backup=False)
-        self.assertEqual(proc.returncode, 2, proc.stderr)
+        self.assertEqual(proc.returncode, 1, proc.stderr)
         self.assertIn("is not a clone of pool/corpus", proc.stderr)
         changes = ("rollback", "rename", "clone", "snapshot", "destroy")
         self.assertEqual([c for c in calls if c.startswith(changes)], [])
