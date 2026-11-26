@@ -23,7 +23,7 @@ The committed contents are code plus a synthetic example. No media and no media 
 - [`locate_issue.py`][locate-issue] -- find where a decode signature lives in a file, and optionally record the located window into the external rules file.
 - [`audit_physical.py`][audit-physical] -- physical-error-shape coverage audit of the reduced collection.
 - [`reduction-rules.example.json`][reduction-rules-example] -- synthetic example of the external rules schema.
-- [`synthetic/`][synthetic] -- the synthetic-targeting library: build small, fully synthetic fixtures that reproduce specific detections without any copyrighted media (see below).
+- [`synthetic/`][synthetic] -- the synthetic-targeting library: build small, fully synthetic fixtures that reproduce specific detections without any copyrighted media (see below). It also holds the interrupt helper every tool imports.
 - [`pyproject.toml`][pyproject] -- ruff and mypy configuration for the Python tooling.
 - [`tests/`][tests] -- the `unittest` suite for the pure helpers in the Python tooling, which CI runs under coverage.
 
@@ -169,6 +169,7 @@ Synthetic generation is a *targeted* tool, not a wholesale replacement for the r
 - [`synthetic/inject_cc_sei.py`][synthetic-inject-cc-sei] -- insert CEA-608 closed-caption SEI into an HEVC stream, preserving any HDR SEI. No common tool does this, since ffmpeg `-a53cc` is libx264 only and libx265 drops captions. Importable, or a standalone CLI.
 - [`synthetic/inject_hdr10plus_sei.py`][synthetic-inject-hdr10plus-sei] -- insert a minimal SMPTE ST 2094-40 (HDR10+) dynamic-metadata SEI (the shipped x265 builds lack `dhdr10`), so MediaInfo reports the stream as "SMPTE ST 2094 App 4". Importable, or a standalone CLI.
 - [`synthetic/hevc_nal.py`][synthetic-hevc-nal] -- shared HEVC helpers used by both injectors. They pack bits, wrap a T.35 payload into a prefix-SEI NAL, and insert a SEI before every VCL NAL.
+- [`synthetic/interrupts.py`][synthetic-interrupts] -- the interrupt and write helpers every Python tool here imports. It lives under `synthetic/` because the integration run mounts only that directory.
 - [`synthetic/expected-results.json`][synthetic-expected-results] -- the expected process result of every file in the integration run, see *CI integration run* below.
 - [`integration-test.sh`][integration-test] and [`check_results.py`][check-results] -- the integration run and its result check. The same script compares two harness runs, see *Comparing two runs* above.
 
@@ -294,6 +295,7 @@ These run the latest tools and are available as VSCode tasks. CI runs them throu
 [synthetic-hevc-nal]: synthetic/hevc_nal.py
 [synthetic-inject-cc-sei]: synthetic/inject_cc_sei.py
 [synthetic-inject-hdr10plus-sei]: synthetic/inject_hdr10plus_sei.py
+[synthetic-interrupts]: synthetic/interrupts.py
 [synthetic-synthesize]: synthetic/synthesize.py
 [tests]: tests/
 
