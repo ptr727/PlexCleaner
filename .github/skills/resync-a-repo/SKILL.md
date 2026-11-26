@@ -31,33 +31,40 @@ change from one resync to the next.
 
 Read RESYNC.md section 0. A repo with no instruction set at all, or a partial one, is not this
 skill's job. It is STANDUP.md sections 1A and 2 instead, since an absent carried file is a
-baseline that never arrived rather than drift to converge. Run `uv run --no-project --script spec/audit.py <RepoName>`,
+baseline that never arrived rather than drift to converge. First create the hub and target
+worktrees and verify the host, as the next section says, since no hub tool runs before the host gate.
+A stale tool answers `--version`, looks healthy, and produces a wrong answer. Then run
+`uv run --no-project --script spec/audit.py "<RepoName>"`,
 the target's `registry/repos.json` `name` field rather than an `owner/repo` slug or a checkout
-path. Then read whether the findings are letters (absent) or drift (present but stale). Do both before doing
+path. Then read whether the findings are letters (absent) or drift (present but stale). Do all of this before doing
 anything else. The finding kind names the procedure the repo is owed.
 
 ## Reach the hub and measure before changing anything
 
 Fetch a hub checkout of your own immediately before reading it, since a stale clone
-answers confidently instead of failing. This follows section 1 of the hub-only `RESYNC.md`.
+answers confidently instead of failing. Check out `main`, or `develop` while the target's registry entry has
+merged there but not yet reached `main`. This follows section 1 of the hub-only `RESYNC.md`.
 That file is fetched with the hub rather than present in a carrier. Never do the resync's own work in a checkout another task
 may be using, the maintainer's own primary checkout included, even one that looks current. For the
 hub and for the target repo alike, create a worktree of your own off that base clone and work
 there, per `repo-worktree`. Remove each one when the run ends, per that skill's "Listing and
 Cleanup". A merged pull request's worktree goes through
-`uv run --no-project --script scripts/pr_review.py cleanup <number> --repo <owner>/<repo> --checkout <base-clone>`. A
+`uv run --no-project --script scripts/pr_review.py cleanup "<number>" --repo "<owner>/<repo>" --checkout ~/repos/"<Repo>"`,
+`~/repos/<Repo>` being that repository's primary clone. That path is the convention layout, and a machine not yet migrated passes its actual primary clone instead. Spell every `scripts/pr_review.py` call this skill prints as
+`pr-review-conduct` "Expected review loop" says. A
 hub worktree that only read the hub is removed by hand once it is clean, its branch with it. On a machine carrying the hub's agent-safety install, Claude Code also
 refuses a mutating git command run directly in a primary checkout. However, its rules classify git
 and gh commands only. So a plain file write is never denied, and the re-vendoring this skill exists
 to govern goes uncaught. A compound command is judged whole, so a copy chained to a denied git
 write does not run either. Prose is the enforcement here, and following it is not optional. Verify
-the host with `python3 scripts/host_gate.py --repo <path-to-target-worktree>`, run from your hub
+the host with `python3 scripts/host_gate.py --repo "<path-to-target-worktree>"`, run from your hub
 worktree, since `scripts/` is hub-hosted and no carrier holds it. Then run the audit end to end,
-`RESYNC.md` section 2. `uv run --no-project --script spec/audit.py <RepoName>` measures the target's ground-truth
+`RESYNC.md` section 2. `uv run --no-project --script spec/audit.py "<RepoName>"` measures the target's ground-truth
 branch, which the registry's `groundTruthBranch` names and which is `main` for every cataloged
-repo today, never `develop`. That is the invocation "Confirm the procedure before starting"
-already ran, run again here. Convergence lands on a ref `main` does not hold yet, so a run that
-previews in-flight work names that ref: `uv run --no-project --script spec/audit.py --branch <ref> <RepoName>`. Use it
+repo today, never `develop`. "Confirm the procedure before starting" already ran that
+invocation after this host gate, so read its findings here. A re-run is still owed before
+acting on one, as below. Convergence lands on a ref `main` does not hold yet, so a run that
+previews in-flight work names that ref: `uv run --no-project --script spec/audit.py --branch "<ref>" "<RepoName>"`. Use it
 to check whether a fix landed, since a run against `main` still reports what the in-flight ref
 already fixed. Section 2 carries two further commands that neither of these replaces. A finding is
 a snapshot. So quote the run stamp in anything derived from it, and re-run before acting on a
@@ -79,20 +86,25 @@ conversion waits on a re-level of `develop` where an audit `branch:` finding nam
 covers a finding too large to classify and a path changed on both branches. Use the squash pull request `RESYNC.md`
 section 3 describes.
 
-1. **The instruction set first.** `CLAUDE.md`, then `AGENTS.md` and `GOVERNANCE.md` verbatim sections, then `CODESTYLE.md` and `WORKFLOW.md`. Include the `AGENTS.md` skill-dependency pointer paragraph in this same step, as one more verbatim unit and not a separate pass. The paragraph names `scripts/skills_install.py` and where the fleet's Skills live. `CLAUDE.md` is the single `@AGENTS.md`-import file that gets `AGENTS.md` into a Claude Code session's context at all. It is a separate baseline entry from `AGENTS.md` itself, so carrying one without the other still leaves that provider unconfigured. **Before touching `AGENTS.md`, `GOVERNANCE.md`, `CODESTYLE.md`, or `WORKFLOW.md` in this step, run the `carried-instruction-file-guard` skill's distinctive-phrase probe against the target file, every time, without exception.** **This holds regardless of whether the update is a verbatim re-vendor or an intent-fidelity edit.** This is not advisory language to weigh against how routine the diff looks. A diff that looks routine is exactly the shape the AGENTS.md-overwrite incident took. Do not proceed to the re-vendor until the probe has run and any local addition it finds has a destination. That gate follows that skill's own procedure. `CLAUDE.md` is outside that guard's scope. It carries no mixed or repo-specific content by design, so its re-vendor is an ordinary verbatim-fidelity copy, no probe needed.
+1. **The instruction set first.** `AGENTS.md` and `GOVERNANCE.md` verbatim sections, then `CODESTYLE.md` and `WORKFLOW.md`. Include the `AGENTS.md` skill-dependency pointer paragraph in this same step, as one more verbatim unit and not a separate pass. The paragraph names `scripts/skills_install.py` and where the fleet's Skills live. **Before touching `AGENTS.md`, `GOVERNANCE.md`, `CODESTYLE.md`, or `WORKFLOW.md` in this step, run the `carried-instruction-file-guard` skill's distinctive-phrase probe against the target file, every time, without exception.** **This holds regardless of whether the update is a verbatim re-vendor or an intent-fidelity edit.** This is not advisory language to weigh against how routine the diff looks. A diff that looks routine is exactly the shape the AGENTS.md-overwrite incident took. Do not proceed to the re-vendor until the probe has run and any local addition it finds has a destination. That gate follows that skill's own procedure.
 2. **Deletions second, before any re-vendor**, other than step 3's re-vendor of the manifest-owned
    trees, which "Ship it" below moves into step 1's pull request. Only a `retire` disposition in
-   `spec/divergences.json` authorizes removing a file. The removal is swept tree-wide, per
-   RESYNC.md section 4, before the deletion counts as done.
-3. **Verbatim re-vendors** for `CLAUDE.md` and everything else the probe in step 1 cleared. A
-   finding classified modified rather than stale gets its diff read before being overwritten.
+   `spec/divergences.json` authorizes removing a file. A retired `CLAUDE.md` is one, since Claude
+   Code reads `AGENTS.md` itself. The audit's finding says whether the copy matches one of the
+   hub's past versions. Delete it only where it does, and report any other copy to the maintainer
+   rather than deleting it. The removal is swept tree-wide, per RESYNC.md section 4,
+   before the deletion counts as done.
+3. **Verbatim re-vendors** for every verbatim finding, the four instruction files only once step 1's
+   probe cleared them. A finding classified modified rather than stale gets its diff read before being overwritten.
    The reason is that it may be an improvement the hub should adopt instead of a mistake to erase.
-4. **Interface workflows.** Honor the named contract, required jobs, the ruleset-bound check name,
-   the artifact-name handoff, rather than copying bytes.
-5. **Settings, rulesets, and secrets.** Run
+4. **Interface workflows.** Honor the named contract rather than copying bytes. `AUDIT.md`
+   section 0 lists the checks that contract covers.
+5. **Settings, rulesets, and secrets.** Set the first public-interaction limit by hand on one `collaborators` pilot repository, since `apply` sets none until a committed record says a pilot verified one. Verify there that Copilot, CodeRabbit, Qodo, and Dependabot still work under it. Then commit that record, `repo-config/interaction-verification.json`, through a hub pull request carrying the evidence.
+   This is `RESYNC.md` step 5. Run
    `repo-config/configure.sh check "<owner>/<repo>" release` (substitute `operational` for an
-   operational repo) from the hub at `main`, then `apply` for what it reports, never from a
-   carried copy. Run `uv run --no-project --script spec/audit.py <RepoName>` from the same checkout for secrets.
+   operational repo), then `apply` for what it reports, never from a carried copy. Both run from
+   the hub checkout this run fetched, at `main` or at `develop` for a registry entry not yet
+   promoted. Run `uv run --no-project --script spec/audit.py "<RepoName>"` from the same checkout for secrets.
 6. **Intent files last, and by hand,** since nothing mechanical judges these.
 
 Reconcile the registry entry (`status`, `types`, `releaseTrigger`, `workflowModel`,

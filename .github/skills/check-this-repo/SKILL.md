@@ -45,8 +45,15 @@ reach this particular repo.
      default, pass the re-run `--dir` or `-Dir` naming the parent of `live.checkout`. That is because re-running the installer from any other directory leaves an existing
      registration where it is.
    - Where `live` carries no `vcs` and a non-null `commit`, it names a git checkout. One that
-     is detached, `branch: null`, or on an old branch is an answer too. Moving that checkout
-     is the fix rather than re-installing.
+     is detached, `branch: null`, or on an old branch is an answer too. So is a `live.commit`
+     behind the hub's own tip of `live.branch`. A checkout on `main` that has not pulled names
+     the right branch and still serves stale content. Fetch that branch into the same hub
+     checkout with full history. Name its destination, since a single-branch clone records
+     none: `git fetch origin "+refs/heads/<live.branch>:refs/remotes/origin/<live.branch>"`,
+     adding `--unshallow` in a shallow clone. A `live.commit` other than `origin/<live.branch>` for which
+     `git merge-base --is-ancestor "<live.commit>" "origin/<live.branch>"` exits 0 is behind. An exit
+     other than 0 or 1 means the test could not judge, which is an answer to report as well.
+     Moving or fast-forwarding that checkout is the fix rather than re-installing.
    - Any other shape names no registration, or one this report could not read, and the `reason`
      it carries, where it carries one, says which.
 2. **Does this repo's own carried content still match the hub.** Compare `AGENTS.md`'s

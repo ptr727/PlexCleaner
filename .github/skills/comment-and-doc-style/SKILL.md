@@ -7,7 +7,8 @@ description: >-
   characters to type in agent-authored text, whenever the file being edited is CRLF, whenever naming
   a tool in prose or docs, whenever authoring a new Markdown file, whenever editing a carried
   instruction file (AGENTS.md, GOVERNANCE.md, CODESTYLE.md, WORKFLOW.md,
-  .github/copilot-instructions.md), and whenever text states how many items a list or a table holds.
+  .github/copilot-instructions.md), whenever text states how many items a list or a table holds,
+  and whenever a doc gives a command for a reader to copy and run.
   Triggers even when the task looks purely mechanical, such as "just fix a typo" or "add a one-line
   comment", because an em dash slipped into a sentence, a comment that grew by one more clause, or a
   text-mode edit that silently flattens a CRLF file to LF are each easy to miss.
@@ -86,8 +87,8 @@ Agent-specific authorization stays in provider-labeled bullets so one agent's co
 not read as a shared requirement:
 
 - **Codex:** execution rules match exact argument prefixes, so they cannot safely cover changing
-  worktree paths and digests. Smart Approvals can prompt per task. No-prompt operation is
-  supported only inside an external sandbox because it removes command-wide protection.
+  worktree paths and digests. Smart Approvals can prompt per task. No-prompt operation removes
+  command-wide protection, so it is supported only inside an external sandbox.
 
 ## Markdown formatting
 
@@ -196,9 +197,9 @@ left exported reaches the commit and never the merge gate.
 The facts below about reaching those escapes read as a broken gate until they are known. On a public
 repository the lint job reads the label when it runs, and its log says "Read the pull request's
 labels live". A label added before then applies, and a rerun picks up one added since. In a private
-repository, or where the log lacks that line, the event's snapshot decides. It misses a label
-applied after the event, `gh pr create --label` included, so
-there the label applies to the next push. The label reaches a repository only when the fleet label
+repository, or where the log lacks that line, the event's snapshot decides. A label given to
+`gh pr create` usually reaches the opened event, though it is sometimes missed. A label added
+after the create applies from the next push, or from a close and reopen. The label reaches a repository only when the fleet label
 set is applied to it. So a repository that has not had that applied since the label was declared
 cannot carry it. In such a repository the finding names a remedy that is not yet available. And the local
 escape reaches a commit before any of that. A commit is where a repository meets this rule first,
@@ -291,7 +292,7 @@ It is also because reading those would report a fixture rather than a claim abou
 Agent-authored text is ASCII by default: documentation, code, comments, commit messages, and PR
 descriptions. A non-ASCII character is read against the tiers below, because whether one is
 typography or meaning depends on where it sits. A character in no tier is a finding rather than a
-silent pass, a letter of a recorded name excepted per the bullet below.
+silent pass. A letter of a recorded name and quoted data are excepted, per the bullets below.
 
 - **Tier 1, never legitimate.** Typography carrying no meaning its ASCII form loses. Remove on
   sight:
@@ -324,12 +325,17 @@ silent pass, a letter of a recorded name excepted per the bullet below.
   document records as data is written with its own letters and the marks they carry.
   The reason is that folding such a name to ASCII records a different name. Anywhere else a letter the agent writes that no
   tier covers takes its ASCII form.
+- **A Markdown code span is quoted data, as a fenced block is.** A string quoted verbatim from
+  another source, such as a third party's output, keeps its bytes inside an inline code span. No
+  tier judges it there. Outside Markdown a backtick is structural, so a code line is read whole.
 - **An unrecognized non-ASCII character is reported, not allowed.** Classify it into a tier above
-  before using it. A letter of a recorded name is the one exception, per the bullet above.
+  before using it. A letter of a recorded name and quoted data are the exceptions, per the bullets
+  above.
 - **No semicolon in agent-authored prose.** Recast a mid-sentence semicolon as a comma or as two
   sentences. A semicolon separating items in a list that already contains commas, or a statement
   terminator in code, is unaffected. A single semicolon separates such a list only between two
   labeled items, as in `Inputs: a, b; outputs: c`, and a list item's bold opening label is not one.
+  A semicolon inside one token, such as `TL;DR`, joins no clause and is unaffected too.
 - **No spaced hyphen joining or interrupting a sentence** (` - `, or the paired aside ` - x - `).
   Recast as a comma, two sentences, or parentheses. A hyphen inside a compound word, a leading
   list marker, a range, and the `- **Label** - explanation` bullet separator are unaffected.
@@ -358,20 +364,31 @@ the `spec/` files and the carried `AUDIT.md` never reference the template repo
 behavior a carried rule needs, not the coordination flow that produced it, the maintainer supplies
 the destination out of band. A contextually relevant link to a related project (the image this
 config feeds, a library this depends on) is not a coordination reference. It is expected. The full
-exceptions are in `references/carried-doc-references.md`. They are a verbatim section that must
-name the hub to do its job, and a pointer to a hub-hosted tool the reader runs.
+exceptions are in `references/carried-doc-references.md`. One is a verbatim section that must
+name the hub to do its job. The other is a pointer to a hub-hosted tool the reader runs, or to a
+procedure the reader runs from a hub checkout.
 
 ## PR titles and commit messages
 
 - **Format**: an imperative subject, 72 characters or fewer, no trailing period ("Add 24-Hour
-  PM2.5 Average Sensor", not "Added X" or "Adds X"). An optional body, blank-line separated,
+  PM2.5 Average Sensor", not "Added X" or "Adds X"). The 72 measures the authored title or subject.
+  The `(#N)` suffix GitHub appends at a squash merge sits outside it, so a merged subject past 72
+  breaks no rule. An optional body, blank-line separated,
   explains *why* the change is being made when that is non-obvious, the diff already shows *what*.
+- **Closing keywords**: `branching-and-release-model` says where one may go. A form of `close`,
+  `fix`, or `resolve` directly before an issue reference closes that issue, even inside a sentence
+  that negates it. So `does not fix #N` closes #N. Write a reference to an issue left open with no
+  keyword beside it, as in `#N stays open`.
 - **Rules**: no vague titles (`update stuff`, `wip`). Dependabot's default `Bump X from Y to Z`
-  titles are fine as-is. No `Co-Authored-By:` lines unless the developer explicitly asks. No
+  titles are fine as-is. A `Co-Authored-By:` line is allowed unless the developer disallows it,
+  and a repository's own rules may change that default. A link to the agent's session, such as a
+  `Claude-Session:` trailer, is never allowed in a commit message or a pull request. Neither the
+  developer nor a repository's rules can allow one. No
   release-bump magnitude in the title ("minor", "patch", "release v0.2.0"), Nerdbank.GitVersioning
   computes the next version from `version.json` and git history. A dependency version in a
   dependency-bump title is fine and expected. US English spelling, and title case with lowercase
-  short bind words (a, an, the, and, but, or, of, in, on, at, to, by, for, from). A hyphenated
+  short bind words. The bind-word list is exhaustive: a, an, the, and, but, or, of, in, on, at, to,
+  by, for, from, with, as, via, into, over, per. A hyphenated
   compound capitalizes both parts unless the second is a short preposition (*Built-in*,
   *EPA-Corrected*, *24-Hour*).
 
@@ -382,6 +399,14 @@ Drop net8.0 Multi-Targeting from Console Project
 Bump xunit.v3 from 3.2.2 to 3.3.0
 Clarify Devcontainer Setup Steps in README
 ```
+
+## Copy-and-run commands
+
+<!-- include: GOVERNANCE.md > Copy-and-Run Commands -->
+
+A command in Markdown is text a reader copies and runs, so it has to run as written once pasted. That covers a code span opening with a command and every line of a shell fence. Such a command holds no bare `<placeholder>`, since the shell reads `<` as a redirection and the paste dies before the command runs. It holds no bracketed `[Placeholder]` either, since the shell reads that as a glob. The glob expands silently to any one-character file it matches. And it holds no bare `a|b` alternation, since the shell reads that as a pipe. The left-hand side then still runs, a live write included, while its own output vanishes behind an error from the right-hand side. A real pipe is spaced, so it never reads as an alternation. A placeholder is quoted instead, as in `git branch -d "<branch>"`, so the shell reads it as one word rather than as syntax. The quotes wrap the placeholder alone where its value may need the shell to expand it, such as a path opening `~`. The reader fills the value in inside the quotes. A value that is several arguments, such as a command and its own arguments, or one the shell must expand, replaces the quotes too. A single argument holding spaces keeps them. Inside a string handed to a second shell, such as the one `sh -c` runs, the placeholder is quoted within that string. A choice between values is written as the common value, with the other named in a parenthetical after the command. So `repo-config/configure.sh check "<owner>/<repo>" release` is followed by "(substitute `operational` for an operational repo)". In a shell fence that parenthetical is a trailing comment instead. An optional flag is not written in brackets, since that is a glob too. It is left out of the command and named in the parenthetical. The rule holds for every such command, one naming a single argument in prose included. That is because whether a reader pastes a span whole is a judgment no check can make. The prose gate's `paste-safe` rule enforces it for the commands its data file names. It also reads a string handed to a second shell, as `su -c`, `sh -c`, `bash -c`, and `ssh` take one, as the command that shell runs.
+
+<!-- /include -->
 
 ## Quantitative claims
 
