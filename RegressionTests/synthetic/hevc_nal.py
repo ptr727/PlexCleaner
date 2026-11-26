@@ -118,4 +118,6 @@ def run_injector(prog: str, description: str, inject: Callable[[bytes], bytes], 
     except KeyboardInterrupt:
         print(f"{prog}: interrupted by {'SIGTERM' if terminated else 'SIGINT'}", file=sys.stderr)
         sys.exit(143 if terminated else 130)
+    except OSError as e:
+        sys.exit(f"{prog}: {e}, fix the path, then re-run")
     print(f"injected {label} SEI before each VCL NAL -> {args.output}")

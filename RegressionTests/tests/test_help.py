@@ -77,6 +77,29 @@ class InjectorTests(unittest.TestCase):
                     self.assertEqual(proc.returncode, 0, proc.stderr)
                     self.assertTrue(proc.stdout.startswith(f"usage: {Path(tool).name}"))
 
+    def test_help_anywhere_writes_nothing(self) -> None:
+        for tool in INJECTORS:
+            with self.subTest(tool=tool), tempfile.TemporaryDirectory() as d:
+                src, out = Path(d) / "in.hevc", Path(d) / "out.hevc"
+                src.write_bytes(b"\x00\x00\x00\x01\x40\x01")
+                long_form = self.run_injector(tool, "--help", str(out))
+                short_form = self.run_injector(tool, str(src), "-h")
+                for proc in (long_form, short_form):
+                    self.assertEqual(proc.returncode, 0, proc.stderr)
+                    self.assertTrue(proc.stdout.startswith(f"usage: {Path(tool).name}"))
+                self.assertEqual(long_form.stdout, short_form.stdout)
+                self.assertEqual(sorted(p.name for p in Path(d).iterdir()), ["in.hevc"])
+
+    def test_missing_input_is_named_without_a_traceback(self) -> None:
+        for tool in INJECTORS:
+            with self.subTest(tool=tool), tempfile.TemporaryDirectory() as d:
+                missing = Path(d) / "missing.hevc"
+                proc = self.run_injector(tool, str(missing), str(Path(d) / "out.hevc"))
+                self.assertEqual(proc.returncode, 1)
+                self.assertIn(str(missing), proc.stderr)
+                self.assertNotIn("Traceback", proc.stderr)
+                self.assertEqual(list(Path(d).iterdir()), [])
+
     def test_unknown_argument_is_refused_before_any_write(self) -> None:
         for tool in INJECTORS:
             for extra in (["--bogus"], ["out.hevc", "-x"]):
