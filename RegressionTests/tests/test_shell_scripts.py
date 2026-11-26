@@ -93,6 +93,20 @@ class InterruptTests(unittest.TestCase):
                 zip_file = tmp / "PlexCleaner-Test" / "matroska-test-files.zip"
                 self.assertFalse(zip_file.exists())
 
+    def test_debug_tools_script_stops_its_download(self) -> None:
+        wget = '[[ "$*" == *"-O -"* ]] && exit 0\n' + PIDFILE_STUB
+        for sig in signals():
+            with self.subTest(signal=sig.name), tempfile.TemporaryDirectory() as d:
+                stubs = Path(d) / "bin"
+                stubs.mkdir()
+                write_stub(stubs, "wget", wget)
+                write_stub(stubs, "mkdir", "exit 0\n")
+                write_stub(stubs, "chmod", "exit 0\n")
+                pidfile = Path(d) / "child.pid"
+                env = stubbed_env(clean_env(), stubs, pidfile)
+                script = REPO / "Docker" / "install-debug-tools.sh"
+                interrupt(self, ["bash", str(script)], env, pidfile, sig)
+
     def test_integration_script_stops_its_container(self) -> None:
         tools = json.loads((REPO / ".config" / "dotnet-tools.json").read_text())
         version = tools["tools"]["dotnet-coverage"]["version"]
