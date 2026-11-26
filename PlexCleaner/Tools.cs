@@ -168,6 +168,10 @@ public static class Tools
                     || !mediaTool.GetInstalledVersion(out mediaToolInfo)
                 )
                 {
+                    if (Program.IsCancelledError())
+                    {
+                        return false;
+                    }
                     Log.Error(
                         "{Tool} not found in path {Directory}",
                         mediaTool.GetToolType(),

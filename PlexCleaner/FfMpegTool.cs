@@ -209,7 +209,17 @@ public partial class FfMpeg
                 // (see MediaTool.LogFailedResult); VerifyMedia streams stderr so it logs inline rather
                 // than through that helper.
                 string error = CleanForLog(string.Join(" | ", classifier.Errors));
-                if (string.IsNullOrEmpty(error))
+                if (Program.IsCancelledError())
+                {
+                    Log.Warning(
+                        "Cancelled execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
+                        GetToolType(),
+                        nameof(VerifyMedia),
+                        exitCode,
+                        fileName
+                    );
+                }
+                else if (string.IsNullOrEmpty(error))
                 {
                     Log.Error(
                         "Failed execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",

@@ -210,6 +210,18 @@ public abstract partial class MediaTool
         [CallerMemberName] string operation = ""
     )
     {
+        if (Program.IsCancelledError())
+        {
+            Log.Warning(
+                "Cancelled execution of {ToolType} : {Operation:l} : ExitCode: {ExitCode} : {FileName}",
+                GetToolType(),
+                operation,
+                result.ExitCode,
+                fileName
+            );
+            return false;
+        }
+
         // ffmpeg can exit 0 yet report a fatal error on stderr (see FfMpegTool), so failures may carry
         // an error summary. Log the summary as its own value with the " : " separator in the template.
         // Folding the separator into a quoted string value instead puts the quote right after the exit
