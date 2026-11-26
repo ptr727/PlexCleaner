@@ -54,7 +54,7 @@ run_child() {
 # A repo that keeps it declares dotnet required, and a missing tool fails the commit loudly, not silently.
 dotnet husky run || exit 1
 
-# Python: ruff format + ruff check + mypy over RegressionTests/, its lint-only profile, via uvx as CI runs them.
+# Python: ruff format + ruff check + mypy over RegressionTests/, its lint-only profile, via uvx at their latest releases.
 uvx ruff@latest format --check --extend-exclude ./hub_fetch_run.py --force-exclude RegressionTests || exit 1
 uvx ruff@latest check --extend-exclude ./hub_fetch_run.py --force-exclude RegressionTests || exit 1
 (cd RegressionTests && uvx mypy@latest) || exit 1
