@@ -539,7 +539,6 @@
                 "Lint: ShellCheck",
                 "Lint: shfmt",
                 "Lint: EOL",
-                "Lint: Prose",
                 "Lint: Ruff",
                 "Lint: Ruff Format",
                 "Lint: Mypy"
