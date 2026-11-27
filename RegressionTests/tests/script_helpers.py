@@ -12,6 +12,7 @@ from pathlib import Path
 NEEDS_BASH = unittest.skipUnless(
     sys.platform.startswith("linux") and shutil.which("bash") is not None, "needs Linux with bash"
 )
+NEEDS_JQ = unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
 PIDFILE_PUBLISH = 'echo $$ > "$STUB_PIDFILE.tmp"\nmv "$STUB_PIDFILE.tmp" "$STUB_PIDFILE"\n'
 PIDFILE_STUB = PIDFILE_PUBLISH + "exec sleep 120 </dev/null >/dev/null 2>&1\n"
 

@@ -52,6 +52,8 @@ Optional environment:
   REGRESSION_COVERAGE_TOOL  absolute host directory holding dotnet-coverage.dll, which runs
                             the process and plugin runs under coverage collection,
                             each writing a Cobertura coverage_<run>.xml beside its log
+  REGRESSION_CRASH_DUMP     1 to write a .NET crash dump and crash report into the
+                            version directory when a run ends on a fatal runtime error
 The corpus tools in this directory also read REGRESSION_CORPUS_DIR and REGRESSION_SCRATCH_DIR, see README.md.
 Exits 0 on success, and 64 when it refuses an argument or an unset or malformed variable before any change.
 Any other non-zero status is a run that failed.
@@ -209,6 +211,12 @@ CoverageTool="${REGRESSION_COVERAGE_TOOL-}"
 if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet-coverage.dll") ]]; then
     Refuse "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'"
 fi
+CrashDump=0
+case "${REGRESSION_CRASH_DUMP-}" in
+"") ;;
+1) CrashDump=1 ;;
+*) Refuse "regression-test.sh: REGRESSION_CRASH_DUMP is not 1: '$REGRESSION_CRASH_DUMP'" ;;
+esac
 
 # Run as this host's nonroot user and users group, and abort when either does not exist rather than run as root.
 USER_NONROOT_ID=$(id -u nonroot)
@@ -501,7 +509,15 @@ RunRegressionTests() {
     [[ "$Corpus" == "reduced" ]] && VersionDir="$HostConfig/$Version-reduced"
     mkdir -p "$VersionDir"
     # A report from an earlier run of this build would otherwise pass for this run's.
-    rm -f -- "$VersionDir"/coverage_*.xml "$VersionDir/Results_process.json"
+    rm -f -- "$VersionDir"/coverage_*.xml "$VersionDir/Results_process.json" "$VersionDir"/*.dmp "$VersionDir"/*.dmp.crashreport.json
+    if ((CrashDump)); then
+        DockerCommon+=(
+            --env DOTNET_DbgEnableMiniDump=1
+            --env DOTNET_DbgMiniDumpType=2
+            --env "DOTNET_DbgMiniDumpName=$ConfigPath/${VersionDir##*/}/%e.%p.%t.dmp"
+            --env DOTNET_EnableCrashReport=1
+        )
+    fi
 
     # Copy the live settings into the version directory for a durable record of what was run
     cp "$HostConfig/$Settings" "$VersionDir/$Settings"

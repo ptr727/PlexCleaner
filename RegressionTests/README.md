@@ -55,6 +55,14 @@ A `tag` holding a colon names a local image instead, such as `plexcleaner:local`
 
 Setting `REGRESSION_COVERAGE_TOOL` to the absolute path of a host directory holding `dotnet-coverage.dll` runs the process and plugin runs under `dotnet-coverage collect`. Each run writes a Cobertura report beside its log, `coverage_process.xml` and `coverage_custom_<plugin>.xml`, and each harness invocation first removes the reports an earlier one left. The image's sources are under `/Builder`, and each plugin is built with a path map to the same root. So [.codecov.yml][codecov]'s `fixes` rule maps every report. The version directory's name, less any `-reduced` suffix, is a published build's release tag or a local build's commit. So `git rev-parse "<version>^{commit}"` gives the run's commit. Pass it through `sudo env` with the other variables, as `REGRESSION_COVERAGE_TOOL="<dir>"`.
 
+Setting `REGRESSION_CRASH_DUMP` to `1` turns on the .NET crash dump in every run's container. A .NET process that ends on a fatal runtime error writes a heap dump and a JSON crash report beside the version directory's `buildinfo.json`. Each file is named for the executable, its process id, and the time in epoch seconds, which `date -u -d "@<time>"` converts. A rerun of the same build removes earlier dumps, as it replaces the earlier log and reports. So to keep a dump, move it and its crash report out, and copy the `buildinfo.json` beside them. The crash report holds every thread's native and managed stack, so it names the crashing thread without a debugger. Each dump holds the process heap, so leave the variable unset for a routine run. After a Ctrl+C, wait for `Dump successfully written` before pressing it again, since a second one also reaches `createdump`. Pass it through `sudo env` with the other variables, as `REGRESSION_CRASH_DUMP=1`.
+
+The image's runtime is Ubuntu's source build, so a host `dotnet-dump` finds no matching runtime. Analyze a dump in the image that the version directory's `buildinfo.json` names. Its `RepoDigest` pulls a published image again, and a local image has only its `ImageId`. The image's own `dotnet-dump` sits outside its `PATH`. Mount the directory holding the dump by its absolute host path, since Docker reads a bare name as a named volume:
+
+```sh
+docker run --rm -it --volume "<dump-dir>:/dumps" --entrypoint /dotnet-tools/dotnet-dump "<image>" analyze "/dumps/<dump>"
+```
+
 Provisioning uses ZFS clones rather than `rsync`: the clone is instant and drift-free, and a rollback to the clone's own snapshot works even while long-running media containers hold the mount.
 
 ### Environment
@@ -72,6 +80,7 @@ The harness and the Python tools take every host path and dataset from the envir
 | `REGRESSION_CORPUS_DIR` | Python tools | host directory of the collection, holding `full/` and `reduced/` |
 | `REGRESSION_SCRATCH_DIR` | Python tools | host scratch directory for clips and per-clip processing logs |
 | `REGRESSION_COVERAGE_TOOL` | harness, optional | absolute host directory holding `dotnet-coverage.dll`, as described above |
+| `REGRESSION_CRASH_DUMP` | harness, optional | `1` to write a crash dump and crash report into the version directory, as described above |
 | `TZ` | harness, `reduce_corpus.py`, optional | time zone handed to the container |
 
 A Python tool's command-line arguments, such as `--run`, `--out`, `--settings`, `--reduced`, and `--work`, still take explicit values, and their defaults come from these variables.

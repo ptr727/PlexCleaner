@@ -1,7 +1,6 @@
 """Tests that the regression harness script answers --help, validates its inputs, and stops on a signal."""
 
 import os
-import shutil
 import signal
 import subprocess
 import tempfile
@@ -10,6 +9,7 @@ from pathlib import Path
 
 from script_helpers import (
     NEEDS_BASH,
+    NEEDS_JQ,
     PIDFILE_PUBLISH,
     PIDFILE_STUB,
     interrupt,
@@ -31,6 +31,7 @@ HARNESS_VARIABLES = [
     "REGRESSION_THREAD_COUNT",
     "REGRESSION_CORPUS_DIR",
     "REGRESSION_SCRATCH_DIR",
+    "REGRESSION_CRASH_DUMP",
 ]
 
 HARNESS_ENV = {
@@ -41,6 +42,13 @@ HARNESS_ENV = {
     "REGRESSION_TEST_DATASET": "pool/test",
     "REGRESSION_THREAD_COUNT": "4",
 }
+
+
+def refusing_host(directory: str, env: dict[str, str]) -> dict[str, str]:
+    stubs = Path(directory)
+    write_stub(stubs, "id", "exit 1\n")
+    write_stub(stubs, "getent", "exit 2\n")
+    return with_stubs(env, stubs)
 
 
 @NEEDS_BASH
@@ -74,17 +82,20 @@ class HarnessTests(unittest.TestCase):
 
     def test_unknown_plugin_is_refused_before_any_host_lookup(self) -> None:
         with tempfile.TemporaryDirectory() as d:
-            stubs = Path(d)
-            write_stub(stubs, "id", "exit 1\n")
-            write_stub(stubs, "getent", "exit 2\n")
-            env = with_stubs(clean_env() | HARNESS_ENV, stubs)
+            env = refusing_host(d, clean_env() | HARNESS_ENV)
             proc = self.run_harness("quick", "develop", "full", "bogus", env=env)
         self.assertEqual(proc.returncode, 64, proc.stderr)
         self.assertIn("'bogus'", proc.stderr)
 
+    def test_crash_dump_other_than_one_is_refused_before_any_host_lookup(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            env = refusing_host(d, clean_env() | HARNESS_ENV | {"REGRESSION_CRASH_DUMP": "yes"})
+            proc = self.run_harness("quick", env=env)
+        self.assertEqual(proc.returncode, 64, proc.stderr)
+        self.assertIn("REGRESSION_CRASH_DUMP is not 1: 'yes'", proc.stderr)
 
-@NEEDS_BASH
-class HarnessSignalTests(unittest.TestCase):
+
+class StubbedHarnessTestCase(unittest.TestCase):
     def stub_host(self, d: str) -> tuple[Path, dict[str, str]]:
         stubs = Path(d) / "bin"
         stubs.mkdir()
@@ -96,6 +107,44 @@ class HarnessSignalTests(unittest.TestCase):
         write_stub(stubs, "getent", "echo users:x:100:\n")
         return stubs, stubbed_env(clean_env() | HARNESS_ENV, stubs, Path(d) / "child.pid")
 
+    def stub_full_run(
+        self, d: Path, docker_before: str, docker_after: str
+    ) -> tuple[dict[str, str], Path]:
+        stubs, env = self.stub_host(str(d))
+        log = d / "zfs.log"
+        log.write_text("")
+        config = d / "config"
+        config.mkdir()
+        (config / "PlexCleaner.json").write_text("{}")
+        env |= {
+            "REGRESSION_HOST_CONFIG": str(config),
+            "REGRESSION_PLUGIN_BUILD_DIR": str(d / "build"),
+            "STUB_LOG": str(log),
+        }
+        write_stub(
+            stubs,
+            "docker",
+            '[[ "$1 $2" == "image inspect" ]] && echo 1.2.3\n'
+            + docker_before
+            + '[[ " $* " == *" process "* ]] || exit 0\n'
+            'echo "docker $*" >> "$STUB_LOG"\n' + docker_after,
+        )
+        write_stub(stubs, "git", "exit 1\n")
+        write_stub(stubs, "chown", "exit 0\n")
+        write_stub(
+            stubs,
+            "zfs",
+            'echo "$*" >> "$STUB_LOG"\ncase "$*" in\n'
+            '"list -H -t snapshot -o name -s creation pool/corpus") echo pool/corpus@s2 ;;\n'
+            '"get -H -o value origin pool/test") echo pool/corpus@s2 ;;\n'
+            '"get -H -o value mountpoint pool/test") echo /m/test ;;\n'
+            "esac\n",
+        )
+        return env, log
+
+
+@NEEDS_BASH
+class HarnessSignalTests(StubbedHarnessTestCase):
     def test_signal_stops_the_running_child(self) -> None:
         for sig in signals():
             with self.subTest(signal=sig.name), tempfile.TemporaryDirectory() as d:
@@ -109,7 +158,7 @@ class HarnessSignalTests(unittest.TestCase):
                     sig,
                 )
 
-    @unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
+    @NEEDS_JQ
     def test_signal_restores_a_provisioned_dataset(self) -> None:
         for tty, kill_works in ((False, True), (True, True), (False, False)):
             for sig in signals():
@@ -122,17 +171,6 @@ class HarnessSignalTests(unittest.TestCase):
     def restore_after_signal(
         self, d: Path, sig: signal.Signals, tty: bool, kill_works: bool
     ) -> None:
-        stubs, env = self.stub_host(str(d))
-        log = Path(d) / "zfs.log"
-        log.write_text("")
-        config = Path(d) / "config"
-        config.mkdir()
-        (config / "PlexCleaner.json").write_text("{}")
-        env |= {
-            "REGRESSION_HOST_CONFIG": str(config),
-            "REGRESSION_PLUGIN_BUILD_DIR": str(Path(d) / "build"),
-            "STUB_LOG": str(log),
-        }
         stop = 'touch "$STUB_LOG.stopped"' if kill_works else "exit 1"
         process_run = (
             "trap '' TERM\n" + PIDFILE_PUBLISH + "for ((i = 0; i < 1200; i++)); do\n"
@@ -142,25 +180,10 @@ class HarnessSignalTests(unittest.TestCase):
             if kill_works
             else PIDFILE_STUB
         )
-        write_stub(
-            stubs,
-            "docker",
-            '[[ "$1 $2" == "image inspect" ]] && echo 1.2.3\n'
-            f'if [[ "$1" == kill ]]; then echo "docker $*" >> "$STUB_LOG"; {stop}; fi\n'
-            '[[ " $* " == *" process "* ]] || exit 0\n'
-            'echo "docker $*" >> "$STUB_LOG"\n'
+        env, log = self.stub_full_run(
+            d,
+            f'if [[ "$1" == kill ]]; then echo "docker $*" >> "$STUB_LOG"; {stop}; fi\n',
             'cp "$STUB_LOG" "$STUB_LOG.atstart"\n' + process_run,
-        )
-        write_stub(stubs, "git", "exit 1\n")
-        write_stub(stubs, "chown", "exit 0\n")
-        write_stub(
-            stubs,
-            "zfs",
-            'echo "$*" >> "$STUB_LOG"\ncase "$*" in\n'
-            '"list -H -t snapshot -o name -s creation pool/corpus") echo pool/corpus@s2 ;;\n'
-            '"get -H -o value origin pool/test") echo pool/corpus@s2 ;;\n'
-            '"get -H -o value mountpoint pool/test") echo /m/test ;;\n'
-            "esac\n",
         )
         controller, terminal = os.openpty() if tty else (-1, subprocess.DEVNULL)
         try:
@@ -182,6 +205,36 @@ class HarnessSignalTests(unittest.TestCase):
         after = lines[run + 1 :]
         self.assertEqual(after[0], "docker kill --signal TERM PlexCleaner-RegressionTest")
         self.assertIn("rollback pool/test@backup", after[1:])
+
+
+CRASH_DUMP_SETTINGS = (
+    "DOTNET_DbgEnableMiniDump=1",
+    "DOTNET_DbgMiniDumpType=2",
+    "DOTNET_DbgMiniDumpName=/Test/Config/1.2.3/%e.%p.%t.dmp",
+    "DOTNET_EnableCrashReport=1",
+)
+
+
+@NEEDS_BASH
+@NEEDS_JQ
+class HarnessCrashDumpTests(StubbedHarnessTestCase):
+    def process_run(self, crash_dump: dict[str, str]) -> str:
+        with tempfile.TemporaryDirectory() as d:
+            env, log = self.stub_full_run(Path(d), "", "")
+            proc = run_script(HARNESS, "quick", "develop", env=env | crash_dump)
+            runs = [line for line in log.read_text().splitlines() if line.startswith("docker ")]
+        self.assertEqual(len(runs), 1, proc.stderr)
+        return runs[0] + " "
+
+    def test_crash_dump_reaches_the_process_run(self) -> None:
+        run = self.process_run({"REGRESSION_CRASH_DUMP": "1"})
+        for setting in CRASH_DUMP_SETTINGS:
+            self.assertIn(f" --env {setting} ", run)
+
+    def test_unset_crash_dump_adds_no_dump_settings(self) -> None:
+        run = self.process_run({})
+        for setting in CRASH_DUMP_SETTINGS:
+            self.assertNotIn(setting, run)
 
 
 @NEEDS_BASH
