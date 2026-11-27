@@ -31,6 +31,7 @@ HARNESS_VARIABLES = [
     "REGRESSION_THREAD_COUNT",
     "REGRESSION_CORPUS_DIR",
     "REGRESSION_SCRATCH_DIR",
+    "REGRESSION_CRASH_DUMP",
 ]
 
 HARNESS_ENV = {
@@ -82,6 +83,16 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 64, proc.stderr)
         self.assertIn("'bogus'", proc.stderr)
 
+    def test_crash_dump_other_than_one_is_refused_before_any_host_lookup(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            stubs = Path(d)
+            write_stub(stubs, "id", "exit 1\n")
+            write_stub(stubs, "getent", "exit 2\n")
+            env = with_stubs(clean_env() | HARNESS_ENV | {"REGRESSION_CRASH_DUMP": "yes"}, stubs)
+            proc = self.run_harness("quick", env=env)
+        self.assertEqual(proc.returncode, 64, proc.stderr)
+        self.assertIn("REGRESSION_CRASH_DUMP is not 1: 'yes'", proc.stderr)
+
 
 @NEEDS_BASH
 class HarnessSignalTests(unittest.TestCase):
@@ -108,6 +119,48 @@ class HarnessSignalTests(unittest.TestCase):
                     Path(d) / "child.pid",
                     sig,
                 )
+
+    @unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
+    def test_crash_dump_reaches_the_process_run(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            stubs, env = self.stub_host(d)
+            log = Path(d) / "docker.log"
+            config = Path(d) / "config"
+            config.mkdir()
+            (config / "PlexCleaner.json").write_text("{}")
+            env |= {
+                "REGRESSION_HOST_CONFIG": str(config),
+                "REGRESSION_PLUGIN_BUILD_DIR": str(Path(d) / "build"),
+                "REGRESSION_CRASH_DUMP": "1",
+                "STUB_LOG": str(log),
+            }
+            write_stub(
+                stubs,
+                "docker",
+                '[[ "$1 $2" == "image inspect" ]] && echo 1.2.3\n'
+                '[[ " $* " == *" process "* ]] || exit 0\n'
+                'echo "docker $*" >> "$STUB_LOG"\n',
+            )
+            write_stub(stubs, "git", "exit 1\n")
+            write_stub(stubs, "chown", "exit 0\n")
+            write_stub(
+                stubs,
+                "zfs",
+                'case "$*" in\n'
+                '"list -H -t snapshot -o name -s creation pool/corpus") echo pool/corpus@s2 ;;\n'
+                '"get -H -o value origin pool/test") echo pool/corpus@s2 ;;\n'
+                '"get -H -o value mountpoint pool/test") echo /m/test ;;\n'
+                "esac\n",
+            )
+            run_script(HARNESS, "quick", "develop", env=env)
+            logged = log.read_text()
+        for setting in (
+            "DOTNET_DbgEnableMiniDump=1",
+            "DOTNET_DbgMiniDumpType=2",
+            "DOTNET_DbgMiniDumpName=/Test/Config/1.2.3/%e.%p.%t.dmp",
+            "DOTNET_EnableCrashReport=1",
+        ):
+            self.assertIn(f"--env {setting} ", logged)
 
     @unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
     def test_signal_restores_a_provisioned_dataset(self) -> None:
