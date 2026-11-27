@@ -509,7 +509,7 @@ RunRegressionTests() {
     [[ "$Corpus" == "reduced" ]] && VersionDir="$HostConfig/$Version-reduced"
     mkdir -p "$VersionDir"
     # A report from an earlier run of this build would otherwise pass for this run's.
-    rm -f -- "$VersionDir"/coverage_*.xml "$VersionDir/Results_process.json"
+    rm -f -- "$VersionDir"/coverage_*.xml "$VersionDir/Results_process.json" "$VersionDir"/*.dmp "$VersionDir"/*.dmp.crashreport.json
     if ((CrashDump)); then
         DockerCommon+=(
             --env DOTNET_DbgEnableMiniDump=1
