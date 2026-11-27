@@ -1,7 +1,6 @@
 """Tests that the regression harness script answers --help, validates its inputs, and stops on a signal."""
 
 import os
-import shutil
 import signal
 import subprocess
 import tempfile
@@ -10,6 +9,7 @@ from pathlib import Path
 
 from script_helpers import (
     NEEDS_BASH,
+    NEEDS_JQ,
     PIDFILE_PUBLISH,
     PIDFILE_STUB,
     interrupt,
@@ -158,7 +158,7 @@ class HarnessSignalTests(StubbedHarnessTestCase):
                     sig,
                 )
 
-    @unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
+    @NEEDS_JQ
     def test_signal_restores_a_provisioned_dataset(self) -> None:
         for tty, kill_works in ((False, True), (True, True), (False, False)):
             for sig in signals():
@@ -216,14 +216,14 @@ CRASH_DUMP_SETTINGS = (
 
 
 @NEEDS_BASH
-@unittest.skipUnless(shutil.which("jq") is not None, "needs jq")
+@NEEDS_JQ
 class HarnessCrashDumpTests(StubbedHarnessTestCase):
     def process_run(self, crash_dump: dict[str, str]) -> str:
         with tempfile.TemporaryDirectory() as d:
             env, log = self.stub_full_run(Path(d), "", "")
-            run_script(HARNESS, "quick", "develop", env=env | crash_dump)
+            proc = run_script(HARNESS, "quick", "develop", env=env | crash_dump)
             runs = [line for line in log.read_text().splitlines() if line.startswith("docker ")]
-        self.assertEqual(len(runs), 1, runs)
+        self.assertEqual(len(runs), 1, proc.stderr)
         return runs[0] + " "
 
     def test_crash_dump_reaches_the_process_run(self) -> None:
