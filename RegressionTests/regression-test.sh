@@ -219,6 +219,9 @@ fi
 # Run as this host's nonroot user and users group, and abort when either does not exist rather than run as root.
 USER_NONROOT_ID=$(id -u nonroot)
 USERS_GROUP_ID=$(getent group users | cut -d: -f3)
+if [[ -n "$DumpDir" ]] && ! setpriv --reuid "$USER_NONROOT_ID" --regid "$USERS_GROUP_ID" --clear-groups test -w "$DumpDir"; then
+    Refuse "regression-test.sh: REGRESSION_DUMP_DIR is not writable by nonroot:users: '$DumpDir'"
+fi
 
 # Common docker run arguments
 # Allocate a TTY only when attached to one, so the script also runs non-interactively (CI, background)
