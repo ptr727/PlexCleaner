@@ -220,7 +220,7 @@ fi
 USER_NONROOT_ID=$(id -u nonroot)
 USERS_GROUP_ID=$(getent group users | cut -d: -f3)
 if [[ -n "$DumpDir" ]] && ((EUID == 0)) && ! setpriv --reuid "$USER_NONROOT_ID" --regid "$USERS_GROUP_ID" --clear-groups test -w "$DumpDir" -a -x "$DumpDir"; then
-    Refuse "regression-test.sh: REGRESSION_DUMP_DIR is not writable by nonroot:users: '$DumpDir'"
+    Refuse "regression-test.sh: REGRESSION_DUMP_DIR is not writable by nonroot:users, or a parent directory is not searchable by them: '$DumpDir'"
 fi
 
 # Common docker run arguments
