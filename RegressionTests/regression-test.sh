@@ -52,6 +52,8 @@ Optional environment:
   REGRESSION_COVERAGE_TOOL  absolute host directory holding dotnet-coverage.dll, which runs
                             the process and plugin runs under coverage collection,
                             each writing a Cobertura coverage_<run>.xml beside its log
+  REGRESSION_DUMP_DIR       absolute host directory the container user can write, which every
+                            run mounts to write a .NET crash dump and crash report on a fatal error
 The corpus tools in this directory also read REGRESSION_CORPUS_DIR and REGRESSION_SCRATCH_DIR, see README.md.
 Exits 0 on success, and 64 when it refuses an argument or an unset or malformed variable before any change.
 Any other non-zero status is a run that failed.
@@ -209,6 +211,10 @@ CoverageTool="${REGRESSION_COVERAGE_TOOL-}"
 if [[ -n "$CoverageTool" && ("$CoverageTool" != /* || ! -f "$CoverageTool/dotnet-coverage.dll") ]]; then
     Refuse "regression-test.sh: REGRESSION_COVERAGE_TOOL is not an absolute directory holding dotnet-coverage.dll: '$CoverageTool'"
 fi
+DumpDir="${REGRESSION_DUMP_DIR-}"
+if [[ -n "$DumpDir" && ("$DumpDir" != /* || ! -d "$DumpDir") ]]; then
+    Refuse "regression-test.sh: REGRESSION_DUMP_DIR is not an absolute directory: '$DumpDir'"
+fi
 
 # Run as this host's nonroot user and users group, and abort when either does not exist rather than run as root.
 USER_NONROOT_ID=$(id -u nonroot)
@@ -226,6 +232,15 @@ DockerCommon=(
     --user "$USER_NONROOT_ID:$USERS_GROUP_ID"
     --env TZ
 )
+if [[ -n "$DumpDir" ]]; then
+    DockerCommon+=(
+        --volume "$DumpDir:/dumps"
+        --env DOTNET_DbgEnableMiniDump=1
+        --env DOTNET_DbgMiniDumpType=2
+        --env "DOTNET_DbgMiniDumpName=/dumps/%e.%p.%t.dmp"
+        --env DOTNET_EnableCrashReport=1
+    )
+fi
 
 # RunContainer DockerRunArgument...
 RunContainer() {
